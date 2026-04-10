@@ -1,0 +1,69 @@
+export type Category = "world" | "tech" | "science" | "business" | "health" | "sports" | "entertainment";
+export type CountryCode = "global" | "us" | "gb" | "ca" | "au" | "in" | "de" | "fr" | "jp" | "br" | "ae" | "sg";
+export type DateRange = "any" | "24h" | "7d" | "30d";
+export type SummarizationMode = "auto" | "fast" | "balanced" | "deep";
+
+export interface NewsSource {
+  id: string | null;
+  name: string;
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string;
+  imageUrl: string | null;
+  publishedAt: string;
+  source: NewsSource;
+  category: Category;
+}
+
+export interface DistilledSummary {
+  bullets: [string, string, string];
+  insight: string;
+  conclusion: string;
+  model: string;
+  confidence: number;
+  retrievedContext: string[];
+}
+
+export interface DistilledArticle extends NewsArticle {
+  summary: DistilledSummary;
+}
+
+export interface FeedResponse {
+  articles: DistilledArticle[];
+  totalResults: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
+export interface FeedRequest {
+  category: Category;
+  country?: CountryCode;
+  dateRange?: DateRange;
+  page?: number;
+  pageSize?: number;
+  mode?: SummarizationMode;
+  query?: string;
+}
+
+export interface ArticleChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ArticleChatRequest {
+  article: DistilledArticle;
+  question: string;
+  history?: ArticleChatMessage[];
+}
+
+export interface ArticleChatResponse {
+  answer: string;
+  model: string;
+  retrievedContext: string[];
+}
