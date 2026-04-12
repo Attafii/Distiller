@@ -42,7 +42,7 @@ export function NewsArticleModal({
     setMessages([
       {
         role: "assistant",
-        content: "Ask a follow-up about this story, and I’ll answer from the article and the distilled context."
+        content: "Let’s talk through this article. Ask about the framing, the implications, what it leaves out, or whether the story seems convincing."
       }
     ]);
     setQuestion("");
@@ -157,7 +157,7 @@ export function NewsArticleModal({
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="default">
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  News detail
+                  Article chat
                 </Badge>
                 <Badge variant="outline">{article.category}</Badge>
               </div>
@@ -264,7 +264,7 @@ export function NewsArticleModal({
                   <CardContent className="space-y-4 p-5 sm:p-6">
                     <div className="flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-zinc-500">
                       <MessageSquareMore className="h-4 w-4" />
-                      Ask AI
+                      Chat with Distiller
                     </div>
 
                     <div className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4">
@@ -318,13 +318,13 @@ export function NewsArticleModal({
                           id="news-question"
                           value={question}
                           onChange={(event) => setQuestion(event.target.value)}
-                          placeholder="Ask what changed, why it matters, or what to watch next..."
+                          placeholder="Ask for a take, critique the framing, or discuss what it means..."
                           rows={3}
                           className="w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
                         />
 
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs text-zinc-500">Questions stay grounded in the selected article.</p>
+                          <p className="text-xs text-zinc-500">Chat stays centered on the selected article.</p>
                           <Button type="submit" size="sm" variant="default" disabled={sending || !question.trim()}>
                             <Send className="h-4 w-4" />
                             Send

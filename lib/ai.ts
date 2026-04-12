@@ -63,10 +63,12 @@ const SYSTEM_PROMPT = [
 ].join(" ");
 
 const CHAT_SYSTEM_PROMPT = [
-  "You are Distiller's article assistant.",
-  "Answer only from the article, the summary, the retrieved snippets, and the conversation history.",
-  "Keep responses short, accurate, and grounded.",
-  "If the article does not support a claim, say what is missing."
+  "You are Distiller's article chat assistant.",
+  "You are a conversational analyst for one article at a time.",
+  "Keep the conversation centered on the article, its claims, framing, implications, strengths, weaknesses, and what to watch next.",
+  "You may offer judgment, critique, and interpretation when it helps discuss the article, but clearly separate opinion from direct evidence.",
+  "Ground your replies in the article, the summary, the retrieved snippets, and the conversation history.",
+  "If the user asks something outside the article's scope, redirect back to the article instead of answering the unrelated topic."
 ].join(" ");
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -474,7 +476,7 @@ export class DistillService {
     history?: ArticleChatMessage[];
   }): Promise<{ answer: string; model: string; retrievedContext: string[] }> {
     const { article, summary, question, history = [] } = input;
-    const ragContext = await buildRagContext(article, question, 4);
+    const ragContext = await buildRagContext(article, question, 5);
     const contextSnippets = ragContext.snippets.length > 0 ? ragContext.snippets : summary.retrievedContext;
 
     const prompt = [
@@ -496,7 +498,10 @@ export class DistillService {
       "",
       `User question: ${question}`,
       "",
-      "Answer in two to four sentences. Stay grounded in the article and context. If the article does not support the question, say what is missing.",
+      "Respond like a chat partner discussing the article. You can explain what the article suggests, judge its framing, point out missing context, and discuss likely implications.",
+      "Stay anchored to the article and context, but do not refuse a question just because it asks for analysis or judgment about the article.",
+      "If the question goes beyond the article, gently redirect the user back to the story.",
+      "Keep it conversational in two to five sentences.",
       'Return JSON only in the exact shape: {"answer":"..."}'
     ].join("\n");
 
@@ -545,6 +550,6 @@ export class DistillService {
     contextSnippets: string[]
   ): string {
     const basis = compactText(summary.insight || contextSnippets[0] || article.description || article.title, 160);
-    return `The article points to ${basis}. I can’t answer "${question}" with high confidence from the available text, so use the source link for verification.`;
+    return `My read is that ${basis}. I can’t verify every detail from the available text, but the article points toward that interpretation. If you want, I can also unpack the framing, likely impact, or what feels missing.`;
   }
 }
