@@ -6,7 +6,20 @@ import type { ArticleChatMessage, DistilledArticle } from "@/types/news";
 
 export const dynamic = "force-dynamic";
 
-const categoryValues = ["world", "tech", "science", "business", "health", "sports", "entertainment"] as const;
+const categoryValues = [
+  "world",
+  "politics",
+  "tech",
+  "science",
+  "business",
+  "finance",
+  "climate",
+  "health",
+  "education",
+  "sports",
+  "entertainment",
+  "culture"
+] as const;
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
