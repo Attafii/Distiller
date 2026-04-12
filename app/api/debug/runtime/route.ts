@@ -30,23 +30,23 @@ function readJsonSummary(text: string) {
 }
 
 export async function GET() {
-  const newsApiKey = normalizeEnvString(process.env.NEWSAPI_KEY);
-  const nvidiaApiKey = normalizeEnvString(process.env.NVIDIA_BUILD_API_KEY);
-  const newsBaseUrl = normalizeEnvString(process.env.NEWSAPI_BASE_URL, "https://newsapi.org/v2").replace(/\/$/, "");
-  const nvidiaBaseUrl = normalizeEnvString(process.env.NVIDIA_BUILD_BASE_URL, "https://integrate.api.nvidia.com/v1").replace(/\/$/, "");
-  const nvidiaModel = normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_FAST, "nvidia/llama-3.1-nemotron-nano-8b-v1");
+  const contentApiKey = normalizeEnvString(process.env.NEWSAPI_KEY);
+  const aiServiceKey = normalizeEnvString(process.env.NVIDIA_BUILD_API_KEY);
+  const contentBaseUrl = normalizeEnvString(process.env.NEWSAPI_BASE_URL, "https://newsapi.org/v2").replace(/\/$/, "");
+  const aiServiceBaseUrl = normalizeEnvString(process.env.NVIDIA_BUILD_BASE_URL, "https://integrate.api.nvidia.com/v1").replace(/\/$/, "");
+  const aiServiceModel = normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_FAST, "nvidia/llama-3.1-nemotron-nano-8b-v1");
 
-  const newsApiResult = await (async () => {
-    if (!newsApiKey) {
+  const contentApiResult = await (async () => {
+    if (!contentApiKey) {
       return { keyPresent: false, status: null, body: { message: "missing key" } };
     }
 
-    const url = new URL(`${newsBaseUrl}/top-headlines`);
+    const url = new URL(`${contentBaseUrl}/top-headlines`);
     url.searchParams.set("country", "us");
     url.searchParams.set("category", "technology");
     url.searchParams.set("language", "en");
     url.searchParams.set("pageSize", "1");
-    url.searchParams.set("apiKey", newsApiKey);
+    url.searchParams.set("apiKey", contentApiKey);
 
     const response = await fetchWithTimeout(url, {
       cache: "no-store"
@@ -59,19 +59,19 @@ export async function GET() {
     };
   })();
 
-  const nvidiaResult = await (async () => {
-    if (!nvidiaApiKey) {
+  const aiServiceResult = await (async () => {
+    if (!aiServiceKey) {
       return { keyPresent: false, status: null, body: { message: "missing key" } };
     }
 
-    const response = await fetchWithTimeout(`${nvidiaBaseUrl}/chat/completions`, {
+    const response = await fetchWithTimeout(`${aiServiceBaseUrl}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${nvidiaApiKey}`,
+        Authorization: `Bearer ${aiServiceKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: nvidiaModel,
+        model: aiServiceModel,
         messages: [
           { role: "system", content: 'Return JSON only: {"answer":"ok"}' },
           { role: "user", content: "Say ok" }
@@ -93,14 +93,14 @@ export async function GET() {
   return NextResponse.json(
     {
       env: {
-        newsApiKeyPresent: Boolean(newsApiKey),
-        nvidiaApiKeyPresent: Boolean(nvidiaApiKey),
-        newsBaseUrl,
-        nvidiaBaseUrl,
-        nvidiaModel
+        contentApiKeyPresent: Boolean(contentApiKey),
+        aiServiceKeyPresent: Boolean(aiServiceKey),
+        contentBaseUrl,
+        aiServiceBaseUrl,
+        aiServiceModel
       },
-      newsApi: newsApiResult,
-      nvidia: nvidiaResult
+      contentApi: contentApiResult,
+      aiService: aiServiceResult
     },
     { status: 200 }
   );

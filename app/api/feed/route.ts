@@ -8,8 +8,8 @@ import type { DistilledArticle, DistilledSummary, NewsArticle } from "@/types/ne
 export const dynamic = "force-dynamic";
 
 const querySchema = z.object({
-  category: z.enum(["world", "tech", "science", "business", "health", "sports", "entertainment"]).default("tech"),
-  country: z.enum(["global", "us", "gb", "ca", "au", "in", "de", "fr", "jp", "br", "ae", "sg"]).default("global"),
+  category: z.enum(["world", "politics", "tech", "science", "business", "finance", "climate", "health", "education", "sports", "entertainment", "culture"]).default("tech"),
+  country: z.enum(["global", "tn", "us", "gb", "ca", "au", "in", "de", "fr", "jp", "br", "ae", "sg"]).default("global"),
   dateRange: z.enum(["any", "24h", "7d", "30d"]).default("any"),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(12).default(6),

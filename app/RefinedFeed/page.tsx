@@ -49,7 +49,7 @@ function EmptyState() {
       <CardContent className="px-6 py-12 text-center">
         <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">No articles yet</p>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-          Try another category or switch the summary mode to load a different model tier.
+          Try another topic, switch the region, or change the summary mode to load a different briefing style.
         </p>
       </CardContent>
     </Card>
@@ -208,7 +208,7 @@ export default function RefinedFeedPage() {
           </Link>
 
           <Badge variant="outline" className="hidden border-zinc-700 text-zinc-400 sm:inline-flex">
-            NewsAPI + NVIDIA Build + RAG
+            RAG + embeddings + our AI and API service
           </Badge>
         </header>
 
@@ -221,15 +221,15 @@ export default function RefinedFeedPage() {
           <div className="space-y-4">
             <Badge variant="outline" className="border-zinc-700 text-zinc-300">
               <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
-              Category + model routing
+              Topic + region routing
             </Badge>
             <div className="space-y-3">
               <h1 className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
                 Refine the global feed into signals you can scan in seconds.
               </h1>
               <p className="max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-                Distiller fetches NewsAPI stories, grounds them with embeddings, routes them through NVIDIA Build models,
-                and renders exactly three concise bullets per article.
+                Distiller fetches stories from our API-backed pipeline, grounds them with embeddings, and uses RAG to
+                render exactly three concise bullets per article.
               </p>
             </div>
           </div>
@@ -246,6 +246,8 @@ export default function RefinedFeedPage() {
                 <p>Date window: <span className="text-zinc-100">{activeDateLabel}</span></p>
                 <p>Articles loaded: <span className="text-zinc-100">{articles.length}</span></p>
                 <p>Infinite scroll: <span className="text-zinc-100">{hasMore ? "active" : "complete"}</span></p>
+                <p>RAG: <span className="text-zinc-100">enabled</span></p>
+                <p>Embeddings: <span className="text-zinc-100">active</span></p>
               </div>
             </CardContent>
           </Card>
@@ -265,7 +267,7 @@ export default function RefinedFeedPage() {
               id="distiller-search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search topics, companies, or headlines"
+              placeholder="Search topics, regions, or headlines"
               className="h-11 w-full rounded-full border border-zinc-800 bg-zinc-950/80 pl-11 pr-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
             />
           </div>
@@ -291,6 +293,11 @@ export default function RefinedFeedPage() {
 
         <Card className="mb-4 border-zinc-800 bg-zinc-900/60 shadow-soft">
           <CardContent className="space-y-5 p-4 sm:p-5">
+            <p className="max-w-4xl text-sm leading-relaxed text-zinc-400">
+              Use the topic chips to widen or narrow the story set, the region chips to focus on Tunisia or another market,
+              and the mode chips to switch between faster and deeper summaries.
+            </p>
+
             <div className="grid gap-4 xl:grid-cols-3">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">

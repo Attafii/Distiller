@@ -1,5 +1,17 @@
-export type Category = "world" | "tech" | "science" | "business" | "health" | "sports" | "entertainment";
-export type CountryCode = "global" | "us" | "gb" | "ca" | "au" | "in" | "de" | "fr" | "jp" | "br" | "ae" | "sg";
+export type Category =
+  | "world"
+  | "politics"
+  | "tech"
+  | "science"
+  | "business"
+  | "finance"
+  | "climate"
+  | "health"
+  | "education"
+  | "sports"
+  | "entertainment"
+  | "culture";
+export type CountryCode = "global" | "tn" | "us" | "gb" | "ca" | "au" | "in" | "de" | "fr" | "jp" | "br" | "ae" | "sg";
 export type DateRange = "any" | "24h" | "7d" | "30d";
 export type SummarizationMode = "auto" | "fast" | "balanced" | "deep";
 

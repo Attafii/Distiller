@@ -8,6 +8,7 @@ import type { Category, CountryCode, DateRange, NewsArticle } from "@/types/news
 const NEWS_BASE_URL = normalizeEnvString(process.env.NEWSAPI_BASE_URL, "https://newsapi.org/v2").replace(/\/$/, "");
 const NEWS_API_KEY = normalizeEnvString(process.env.NEWSAPI_KEY);
 const NEWS_COUNTRY = normalizeEnvString(process.env.NEWS_COUNTRY, "us");
+const TUNISIA_SEARCH_TERM = "Tunisia";
 
 export class NewsApiError extends Error {
   constructor(message: string, public readonly statusCode = 500) {
@@ -219,6 +220,136 @@ const demoDeck: Record<Category, Array<DemoArticleSeed>> = {
       url: "https://example.com/distiller/entertainment/live-music-tours",
       imageUrl: null
     }
+  ],
+  politics: [
+    {
+      title: "Election teams test turnout strategies in crowded urban districts",
+      description: "Campaigns are using tighter field operations to reach undecided voters.",
+      content:
+        "Organizers are combining voter outreach, neighborhood events, and targeted messaging to improve turnout while keeping costs in check.",
+      url: "https://example.com/distiller/politics/turnout-strategies",
+      imageUrl: null
+    },
+    {
+      title: "Lawmakers debate a new transparency bill for digital platforms",
+      description: "The discussion centers on disclosure, moderation, and enforcement.",
+      content:
+        "Policy groups are weighing how new rules could affect public reporting, advertising clarity, and platform accountability.",
+      url: "https://example.com/distiller/politics/transparency-bill",
+      imageUrl: null
+    },
+    {
+      title: "Regional diplomats widen talks on cross-border cooperation",
+      description: "Officials are trying to reduce friction on trade and logistics.",
+      content:
+        "Negotiators are aligning on customs, transport, and emergency coordination to keep regional partnerships moving.",
+      url: "https://example.com/distiller/politics/regional-cooperation",
+      imageUrl: null
+    }
+  ],
+  finance: [
+    {
+      title: "Markets weigh cooling inflation against the next rate decision",
+      description: "Investors are trying to balance price pressure with slower growth.",
+      content:
+        "Analysts are watching consumer spending, labor data, and central bank language for clues about the next policy move.",
+      url: "https://example.com/distiller/finance/rate-decision",
+      imageUrl: null
+    },
+    {
+      title: "Banks roll out faster payment tools for smaller merchants",
+      description: "Financial firms want to improve checkout speed and cash flow.",
+      content:
+        "The new products are designed to shorten settlement times, reduce friction, and help merchants reconcile payments more easily.",
+      url: "https://example.com/distiller/finance/payment-tools",
+      imageUrl: null
+    },
+    {
+      title: "Founders lean on tighter cash-flow planning as funding cools",
+      description: "Startups are prioritizing runway, margins, and repeat customers.",
+      content:
+        "Teams are revisiting operating expenses and sales forecasts while delaying nonessential expansion plans.",
+      url: "https://example.com/distiller/finance/cash-flow-planning",
+      imageUrl: null
+    }
+  ],
+  climate: [
+    {
+      title: "Coastal planners race to upgrade flood defenses before storm season",
+      description: "Cities are raising barriers and reviewing evacuation routes.",
+      content:
+        "Local governments are combining infrastructure upgrades with emergency drills to reduce flood damage and improve response times.",
+      url: "https://example.com/distiller/climate/flood-defenses",
+      imageUrl: null
+    },
+    {
+      title: "Utilities add storage to balance larger renewable energy grids",
+      description: "Battery systems are helping smooth peaks and dips in supply.",
+      content:
+        "Power operators are pairing solar and wind projects with storage to keep the grid stable during shifting demand.",
+      url: "https://example.com/distiller/climate/renewable-storage",
+      imageUrl: null
+    },
+    {
+      title: "Scientists track heat stress in dense urban neighborhoods",
+      description: "The findings could inform cooler streets and public shade plans.",
+      content:
+        "Researchers are measuring how pavement, traffic, and tree cover change temperatures block by block during long heat waves.",
+      url: "https://example.com/distiller/climate/heat-stress",
+      imageUrl: null
+    }
+  ],
+  education: [
+    {
+      title: "Universities expand skills-based programs for changing job markets",
+      description: "Schools are pairing degrees with practical certificates.",
+      content:
+        "Administrators are redesigning courses so students can earn job-ready credentials alongside traditional academic credit.",
+      url: "https://example.com/distiller/education/skills-programs",
+      imageUrl: null
+    },
+    {
+      title: "Classrooms test AI tutoring with tighter guardrails",
+      description: "Teachers want personalization without losing oversight.",
+      content:
+        "Pilot programs are combining lesson planning, student feedback, and human review to keep digital tutoring aligned with curriculum goals.",
+      url: "https://example.com/distiller/education/ai-tutoring",
+      imageUrl: null
+    },
+    {
+      title: "Employers and colleges align on micro-credentials and apprenticeships",
+      description: "The goal is faster routes into work without lowering standards.",
+      content:
+        "Education leaders are building compact credential tracks that map more directly to specific skills employers need.",
+      url: "https://example.com/distiller/education/micro-credentials",
+      imageUrl: null
+    }
+  ],
+  culture: [
+    {
+      title: "Museums mix digital exhibits with local archives",
+      description: "Curators want younger audiences to interact with history online.",
+      content:
+        "Institutions are blending physical exhibits, online collections, and community storytelling to broaden participation.",
+      url: "https://example.com/distiller/culture/digital-exhibits",
+      imageUrl: null
+    },
+    {
+      title: "Film festivals favor tighter runs and audience-first programming",
+      description: "Organizers are trimming crowded slates to keep momentum high.",
+      content:
+        "Festival directors are shifting toward shorter lineups, more Q&A sessions, and stronger local partnerships.",
+      url: "https://example.com/distiller/culture/film-festivals",
+      imageUrl: null
+    },
+    {
+      title: "Creators build cultural coverage around community events",
+      description: "Independent voices are turning local stories into regular series.",
+      content:
+        "Digital publishers are using short-form video, live updates, and neighborhood reporting to create more intimate coverage.",
+      url: "https://example.com/distiller/culture/community-events",
+      imageUrl: null
+    }
   ]
 };
 
@@ -299,9 +430,11 @@ async function fetchNewsApi(
     const articles = applyDateFilter(normalizedArticles, dateRange);
 
     if (!articles.length) {
+      const demoArticles = buildDemoArticles(category);
+
       return {
-        articles: buildDemoArticles(category),
-        totalResults: buildDemoArticles(category).length
+        articles: demoArticles,
+        totalResults: demoArticles.length
       };
     }
 
@@ -310,15 +443,17 @@ async function fetchNewsApi(
       totalResults: payload.totalResults ?? articles.length
     };
   } catch (error) {
-    console.error("NewsAPI fetch failed", {
+    console.error("Content API fetch failed", {
       category,
       dateRange,
       error: error instanceof Error ? error.message : String(error)
     });
 
+    const demoArticles = buildDemoArticles(category);
+
     return {
-      articles: buildDemoArticles(category),
-      totalResults: buildDemoArticles(category).length
+      articles: demoArticles,
+      totalResults: demoArticles.length
     };
   }
 }
@@ -335,11 +470,13 @@ export async function fetchNewsArticles({
   totalResults: number;
 }> {
   if (!NEWS_API_KEY) {
-    console.warn("NEWSAPI_KEY is missing, using demo articles", { category, country, dateRange });
+    console.warn("API key is missing, using demo articles", { category, country, dateRange });
+
+    const demoArticles = buildDemoArticles(category);
 
     return {
-      articles: buildDemoArticles(category),
-      totalResults: buildDemoArticles(category).length
+      articles: demoArticles,
+      totalResults: demoArticles.length
     };
   }
 
@@ -347,14 +484,16 @@ export async function fetchNewsArticles({
   const resolvedPageSize = Math.max(1, Math.min(pageSize, 12));
   const currentCountry = country;
   const currentDateRange = dateRange;
-  const useEverything = currentCountry === "global" || Boolean(query?.trim());
+  const useEverything = currentCountry === "global" || currentCountry === "tn" || Boolean(query?.trim());
   const endpoint = new URL(useEverything ? `${NEWS_BASE_URL}/everything` : `${NEWS_BASE_URL}/top-headlines`);
 
   if (useEverything) {
     const searchQuery = buildGlobalQuery(category, query);
+    const regionalQuery = currentCountry === "tn" ? TUNISIA_SEARCH_TERM : undefined;
+    const combinedQuery = [regionalQuery, searchQuery].filter(Boolean).join(" ").trim();
 
-    if (searchQuery) {
-      endpoint.searchParams.set("q", searchQuery);
+    if (combinedQuery) {
+      endpoint.searchParams.set("q", combinedQuery);
       endpoint.searchParams.set("searchIn", "title,description,content");
     }
 

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     default: "Distiller",
     template: "%s · Distiller"
   },
-  description: "A monochrome AI news intelligence feed built with Next.js 15 and NVIDIA Build models."
+  description: "A grounded news feed powered by our AI and API service, RAG, and embeddings."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

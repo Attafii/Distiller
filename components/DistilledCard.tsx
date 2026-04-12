@@ -8,6 +8,7 @@ import { Copy, ExternalLink, Layers3, Sparkles } from "lucide-react";
 import { buttonStyles, Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { TOPIC_OPTIONS } from "@/lib/news-options";
 import type { DistilledArticle } from "@/types/news";
 
 function formatPublishedAt(publishedAt: string) {
@@ -29,6 +30,7 @@ export function DistilledCard({
   onOpenAction?: (article: DistilledArticle) => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const topicLabel = TOPIC_OPTIONS.find((option) => option.id === article.category)?.label ?? article.category;
 
   const copySummary = async () => {
     await navigator.clipboard.writeText(article.summary.bullets.join("\n"));
@@ -51,7 +53,7 @@ export function DistilledCard({
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
               AI Summary
             </Badge>
-            <Badge variant="outline">{article.category}</Badge>
+            <Badge variant="outline">{topicLabel}</Badge>
           </div>
 
           <div className="space-y-2">
@@ -90,7 +92,7 @@ export function DistilledCard({
           <section className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
               <Layers3 className="h-3.5 w-3.5" />
-              <span>Grounding</span>
+              <span>RAG grounding</span>
             </div>
             <p className="text-sm leading-relaxed text-zinc-400">
               {article.description ?? "The article did not include a description, so the summary relies on retrieved source context."}
