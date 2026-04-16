@@ -1,9 +1,10 @@
 import "server-only";
 
+import { classifyArticlePriority } from "@/lib/article-signals";
 import { fetchWithTimeout } from "@/lib/http";
 import { buildGlobalQuery, getDateRangeCutoff, NEWSAPI_CATEGORY_MAP } from "@/lib/news-options";
 import { normalizeEnvString } from "@/lib/utils";
-import type { Category, CountryCode, DateRange, NewsArticle } from "@/types/news";
+import type { ArticlePriority, Category, CountryCode, DateRange, NewsArticle } from "@/types/news";
 
 const NEWS_BASE_URL = normalizeEnvString(process.env.NEWSAPI_BASE_URL, "https://newsapi.org/v2").replace(/\/$/, "");
 const NEWS_API_KEY = normalizeEnvString(process.env.NEWSAPI_KEY);
@@ -36,7 +37,9 @@ interface NewsApiPayloadArticle {
   publishedAt?: string;
 }
 
-type DemoArticleSeed = Pick<NewsArticle, "title" | "description" | "content" | "url" | "imageUrl">;
+type DemoArticleSeed = Pick<NewsArticle, "title" | "description" | "content" | "url" | "imageUrl"> & {
+  priority?: ArticlePriority;
+};
 
 const demoDeck: Record<Category, Array<DemoArticleSeed>> = {
   world: [
@@ -369,7 +372,8 @@ function buildDemoArticles(category: Category): NewsArticle[] {
       id: null,
       name: "Distiller Demo"
     },
-    category
+    category,
+    priority: item.priority ?? classifyArticlePriority(item)
   }));
 }
 
@@ -400,7 +404,8 @@ function normalizeArticle(article: NewsApiPayloadArticle, category: Category, in
       id: article.source?.id ?? null,
       name: article.source?.name ?? "Unknown source"
     },
-    category
+    category,
+    priority: classifyArticlePriority(article)
   };
 }
 

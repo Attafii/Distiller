@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DistillService } from "@/lib/ai";
+import { annotateArticleReactions, getClientIp } from "@/lib/article-reactions";
 import { fetchNewsArticles } from "@/services/newsapi";
 import type { DistilledArticle, DistilledSummary, NewsArticle } from "@/types/news";
 
@@ -34,6 +35,7 @@ function fallbackSummary(article: NewsArticle): DistilledSummary {
 
 export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams.entries()));
+  const viewerIp = getClientIp(request.headers);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
     const { articles, totalResults } = await fetchNewsArticles({ category, country, dateRange, page, pageSize, query });
     const distillService = DistillService.fromEnv();
     const batchSize = Math.max(1, Number(process.env.DISTILL_BATCH_SIZE ?? "3"));
-    const distilled: DistilledArticle[] = [];
+    const distilled: Array<NewsArticle & { summary: DistilledSummary }> = [];
 
     for (let index = 0; index < articles.length; index += batchSize) {
       const batch = articles.slice(index, index + batchSize);
@@ -74,8 +76,10 @@ export async function GET(request: NextRequest) {
       distilled.push(...batchResults);
     }
 
+    const articlesWithReactions = await annotateArticleReactions(distilled, viewerIp);
+
     return NextResponse.json({
-      articles: distilled,
+      articles: articlesWithReactions,
       totalResults,
       page,
       pageSize,

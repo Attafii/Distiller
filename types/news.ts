@@ -1,3 +1,5 @@
+export type ArticlePriority = "normal" | "important" | "breaking";
+
 export type Category =
   | "world"
   | "politics"
@@ -30,6 +32,7 @@ export interface NewsArticle {
   publishedAt: string;
   source: NewsSource;
   category: Category;
+  priority: ArticlePriority;
 }
 
 export interface DistilledSummary {
@@ -43,6 +46,20 @@ export interface DistilledSummary {
 
 export interface DistilledArticle extends NewsArticle {
   summary: DistilledSummary;
+  likeCount: number;
+  likedByViewer: boolean;
+}
+
+export interface ArticleLikeResponse {
+  articleId: string;
+  likeCount: number;
+  likedByViewer: boolean;
+}
+
+export interface ArticleFullTextResponse {
+  fullText: string;
+  source: "remote" | "feed";
+  hadTruncation: boolean;
 }
 
 export interface FeedResponse {

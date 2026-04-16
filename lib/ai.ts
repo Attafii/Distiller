@@ -451,11 +451,13 @@ export class DistillService {
         retrievedContext: ragContext.snippets
       };
     } catch (error) {
-      console.error("Distill summary failed", {
-        articleId: article.id,
-        mode,
-        error: error instanceof Error ? error.message : String(error)
-      });
+      if (!(error instanceof DistillServiceError && error.statusCode === 504)) {
+        console.error("Distill summary failed", {
+          articleId: article.id,
+          mode,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
 
       return this.fallbackSummary(article, ragContext.snippets);
     }
@@ -530,10 +532,7 @@ export class DistillService {
         retrievedContext: contextSnippets
       };
     } catch {
-      console.error("Distill chat failed", {
-        articleId: article.id,
-        question: question.slice(0, 120)
-      });
+      // Chat falls back cleanly when the model times out or fails.
 
       return {
         answer: this.fallbackChatAnswer(article, summary, question, contextSnippets),

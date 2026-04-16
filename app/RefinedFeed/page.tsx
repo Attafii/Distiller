@@ -12,14 +12,21 @@ import { NewsArticleModal } from "@/components/NewsArticleModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getPriorityLabel } from "@/lib/article-signals";
 import { COUNTRY_OPTIONS, DATE_RANGE_OPTIONS, TOPIC_OPTIONS } from "@/lib/news-options";
-import type { Category, CountryCode, DateRange, DistilledArticle, FeedResponse, SummarizationMode } from "@/types/news";
+import type { ArticleLikeResponse, ArticlePriority, Category, CountryCode, DateRange, DistilledArticle, FeedResponse, SummarizationMode } from "@/types/news";
 
 const summaryModes: Array<{ id: SummarizationMode; label: string }> = [
   { id: "auto", label: "Auto" },
   { id: "fast", label: "Fast" },
   { id: "balanced", label: "Balanced" },
   { id: "deep", label: "Deep" }
+];
+
+const priorityFilters: Array<{ id: ArticlePriority | "all"; label: string }> = [
+  { id: "all", label: "All signals" },
+  { id: "important", label: "Important" },
+  { id: "breaking", label: "Breaking" }
 ];
 
 function FeedSkeleton() {
@@ -43,14 +50,12 @@ function FeedSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ title, description }: { title: string; description: string }) {
   return (
     <Card className="border-zinc-800 bg-zinc-900/70">
       <CardContent className="px-6 py-12 text-center">
-        <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">No articles yet</p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-          Try another topic, switch the region, or change the summary mode to load a different briefing style.
-        </p>
+        <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">{title}</p>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">{description}</p>
       </CardContent>
     </Card>
   );
@@ -63,12 +68,14 @@ export default function RefinedFeedPage() {
   const [summaryMode, setSummaryMode] = useState<SummarizationMode>("auto");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
+  const [priorityFilter, setPriorityFilter] = useState<ArticlePriority | "all">("all");
   const [articles, setArticles] = useState<DistilledArticle[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedArticle, setSelectedArticle] = useState<DistilledArticle | null>(null);
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [selectedArticleStartExpanded, setSelectedArticleStartExpanded] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -146,7 +153,8 @@ export default function RefinedFeedPage() {
     setHasMore(true);
     setLoading(true);
     setError(null);
-    setSelectedArticle(null);
+    setSelectedArticleId(null);
+    setSelectedArticleStartExpanded(false);
   };
 
   const resetFeed = (nextCategory: Category, nextMode = summaryMode) => {
@@ -189,9 +197,93 @@ export default function RefinedFeedPage() {
     resetResults();
   };
 
+  const handleOpenArticle = (article: DistilledArticle) => {
+    setSelectedArticleId(article.id);
+    setSelectedArticleStartExpanded(true);
+  };
+
+  const closeArticle = () => {
+    setSelectedArticleId(null);
+    setSelectedArticleStartExpanded(false);
+  };
+
+  const handleShareArticle = async (article: DistilledArticle) => {
+    const sharePayload = {
+      title: article.title,
+      text: article.description ?? article.summary.insight,
+      url: article.url
+    };
+
+    try {
+      const browserNavigator = window.navigator as Navigator & {
+        share?: (data: ShareData) => Promise<void>;
+        clipboard?: Clipboard;
+      };
+
+      if (typeof browserNavigator.share === "function") {
+        await browserNavigator.share(sharePayload);
+        return;
+      }
+
+      if (browserNavigator.clipboard) {
+        await browserNavigator.clipboard.writeText(`${article.title}\n${article.url}`);
+      }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        console.error("Unable to share article", error);
+      }
+    }
+  };
+
+  const handleLikeArticle = async (article: DistilledArticle) => {
+    if (article.likedByViewer) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/news/like", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ articleId: article.id })
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const payload = (await response.json()) as ArticleLikeResponse;
+
+      setArticles((current) =>
+        current.map((item) =>
+          item.id === payload.articleId
+            ? {
+                ...item,
+                likeCount: payload.likeCount,
+                likedByViewer: payload.likedByViewer
+              }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error("Unable to like article", error);
+    }
+  };
+
   const activeTopicLabel = TOPIC_OPTIONS.find((option) => option.id === category)?.label ?? category;
   const activeCountryLabel = COUNTRY_OPTIONS.find((option) => option.id === country)?.label ?? country;
   const activeDateLabel = DATE_RANGE_OPTIONS.find((option) => option.id === dateRange)?.label ?? dateRange;
+  const activePriorityLabel = priorityFilters.find((option) => option.id === priorityFilter)?.label ?? priorityFilter;
+  const visibleArticles = articles.filter((article) => (priorityFilter === "all" ? true : article.priority === priorityFilter));
+  const selectedArticle = selectedArticleId ? articles.find((article) => article.id === selectedArticleId) ?? null : null;
+  const emptyTitle = articles.length > 0 ? "No stories match this priority" : "No articles yet";
+  const emptyDescription =
+    articles.length > 0
+      ? priorityFilter === "all"
+        ? "Try another topic, switch the region, or change the summary mode to load a different briefing style."
+        : `The current feed does not have any ${activePriorityLabel.toLowerCase()} stories yet. Clear the priority filter or pick another topic.`
+      : "Try another topic, switch the region, or change the summary mode to load a different briefing style.";
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -245,9 +337,12 @@ export default function RefinedFeedPage() {
                 <p>Region: <span className="text-zinc-100">{activeCountryLabel}</span></p>
                 <p>Date window: <span className="text-zinc-100">{activeDateLabel}</span></p>
                 <p>Articles loaded: <span className="text-zinc-100">{articles.length}</span></p>
+                <p>Visible after filters: <span className="text-zinc-100">{visibleArticles.length}</span></p>
+                <p>Priority filter: <span className="text-zinc-100">{activePriorityLabel}</span></p>
                 <p>Infinite scroll: <span className="text-zinc-100">{hasMore ? "active" : "complete"}</span></p>
                 <p>RAG: <span className="text-zinc-100">enabled</span></p>
                 <p>Embeddings: <span className="text-zinc-100">active</span></p>
+                <p className="text-xs text-zinc-500">Red dot means important or breaking news.</p>
               </div>
             </CardContent>
           </Card>
@@ -298,7 +393,7 @@ export default function RefinedFeedPage() {
               and the mode chips to switch between faster and deeper summaries.
             </p>
 
-            <div className="grid gap-4 xl:grid-cols-3">
+            <div className="grid gap-4 xl:grid-cols-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Topics</p>
@@ -388,6 +483,37 @@ export default function RefinedFeedPage() {
                   })}
                 </div>
               </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Priority</p>
+                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                    {activePriorityLabel}
+                  </Badge>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {priorityFilters.map((option) => {
+                    const active = option.id === priorityFilter;
+
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setPriorityFilter(option.id)}
+                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.2em] transition ${
+                          active
+                            ? "border-red-400/70 bg-red-500/15 text-red-50"
+                            : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-100"
+                        }`}
+                      >
+                        {option.id === "all" ? null : <span className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]" />}
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -429,12 +555,20 @@ export default function RefinedFeedPage() {
 
         {loading && articles.length === 0 ? <FeedSkeleton /> : null}
 
-        {!loading && articles.length === 0 && !error ? <EmptyState /> : null}
+        {!loading && visibleArticles.length === 0 && !error ? (
+          <EmptyState title={emptyTitle} description={emptyDescription} />
+        ) : null}
 
-        {articles.length > 0 ? (
+        {visibleArticles.length > 0 ? (
           <div className="grid gap-5 lg:grid-cols-2">
-            {articles.map((article) => (
-              <DistilledCard key={article.id} article={article} onOpenAction={setSelectedArticle} />
+            {visibleArticles.map((article) => (
+              <DistilledCard
+                key={article.id}
+                article={article}
+                onOpenAction={handleOpenArticle}
+                onLikeAction={handleLikeArticle}
+                onShareAction={handleShareArticle}
+              />
             ))}
           </div>
         ) : null}
@@ -458,7 +592,10 @@ export default function RefinedFeedPage() {
       <NewsArticleModal
         article={selectedArticle}
         open={Boolean(selectedArticle)}
-        onCloseAction={() => setSelectedArticle(null)}
+        onCloseAction={closeArticle}
+        onLikeAction={handleLikeArticle}
+        onShareAction={handleShareArticle}
+        initialShowFullText={selectedArticleStartExpanded}
       />
     </main>
   );
