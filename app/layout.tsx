@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     default: "Distiller",
     template: "%s · Distiller"
   },
-  description: "A grounded news feed powered by our AI and API service, RAG, and embeddings."
+  description: "A grounded news feed and news assistant powered by our AI and API service, RAG, embeddings, and article search."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -7,6 +7,7 @@ import { ArrowUpRight, Database, Globe, Layers3, Newspaper, ShieldCheck, Sparkle
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { GitHubRepoWidget } from "@/components/GitHubRepoWidget";
 import { COUNTRY_OPTIONS, TOPIC_OPTIONS } from "@/lib/news-options";
 
 const featureCards = [
@@ -30,9 +31,9 @@ const featureCards = [
   },
   {
     icon: Globe,
-    title: "Broader regional coverage",
+    title: "Ask the assistant follow-ups",
     description:
-      "The region list starts with Global and Tunisia, then expands into other markets for a more useful daily scan."
+      "Readers can ask for a specific story, company, or event and get a grounded answer with the best matching sources."
   }
 ];
 
@@ -81,13 +82,16 @@ export default function HomePage() {
             </div>
           </div>
 
-          <Link
-            href="/RefinedFeed"
-            className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 transition hover:bg-zinc-300"
-          >
-            Open refined feed
-            <ArrowUpRight className="h-4 w-4" />
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <GitHubRepoWidget />
+            <Link
+              href="/RefinedFeed"
+              className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 transition hover:bg-zinc-300"
+            >
+              Open refined feed
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
         </nav>
 
         <div className="grid gap-8 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:py-24">
@@ -106,7 +110,8 @@ export default function HomePage() {
               </h1>
               <p className="max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">
                 Distiller turns broad coverage into a concise, monochrome interface using our AI and API service, RAG,
-                and embeddings. Each article is grounded before it is summarized, so readers can trust the brief and move on.
+                and embeddings. Each article is grounded before it is summarized, and the assistant can search for a
+                specific story or update when you need a deeper answer.
               </p>
             </div>
 

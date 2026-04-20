@@ -8,7 +8,9 @@ import { motion } from "framer-motion";
 import { Loader2, Newspaper, RefreshCcw, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { DistilledCard } from "@/components/DistilledCard";
+import { GitHubRepoWidget } from "@/components/GitHubRepoWidget";
 import { NewsArticleModal } from "@/components/NewsArticleModal";
+import { NewsAssistant } from "@/components/NewsAssistant";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -299,10 +301,15 @@ export default function RefinedFeedPage() {
             </div>
           </Link>
 
-          <Badge variant="outline" className="hidden border-zinc-700 text-zinc-400 sm:inline-flex">
-            RAG + embeddings + our AI and API service
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="hidden border-zinc-700 text-zinc-400 sm:inline-flex">
+              RAG + embeddings + our AI and API service
+            </Badge>
+            <GitHubRepoWidget />
+          </div>
         </header>
+
+        <NewsAssistant category={category} country={country} dateRange={dateRange} />
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}

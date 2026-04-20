@@ -96,3 +96,38 @@ export interface ArticleChatResponse {
   model: string;
   retrievedContext: string[];
 }
+
+export interface NewsAssistantArticleReference {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  relevance: number;
+  snippet: string;
+}
+
+export interface NewsAssistantArticleContext {
+  article: NewsArticle;
+  relevance: number;
+  snippets: string[];
+  context: string;
+}
+
+export interface NewsAssistantResponse {
+  answer: string;
+  model: string;
+  retrievedContext: string[];
+  searchQuery: string;
+  articles: NewsAssistantArticleReference[];
+}
+
+export interface GitHubRepoStats {
+  repoSlug: string;
+  repoUrl: string;
+  starUrl: string;
+  stars: number;
+  forks: number;
+  openIssues: number;
+  fetchedAt: string;
+}
