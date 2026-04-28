@@ -2,6 +2,9 @@ import { Readability } from "@mozilla/readability";
 import { JSDOM, VirtualConsole } from "jsdom";
 
 import { fetchWithTimeout } from "@/lib/http";
+import { normalizeEnvString } from "@/lib/utils";
+
+import type { ArticleTextSource } from "@/types/news";
 
 type ArticleTextInput = {
   title: string;
@@ -10,7 +13,17 @@ type ArticleTextInput = {
   url: string;
 };
 
+type CachedArticleText = {
+  fullText: string;
+  source: Exclude<ArticleTextSource, "feed">;
+  fetchedAt: number;
+};
+
 const TRUNCATION_SUFFIX = /\s*\[\+\d+\s+chars\]\s*$/i;
+const ARTICLE_TEXT_PROXY_BASE = normalizeEnvString(process.env.ARTICLE_TEXT_PROXY_BASE, "https://r.jina.ai").replace(/\/$/, "");
+const ARTICLE_TEXT_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
+const ARTICLE_TEXT_FAILURE_TTL_MS = 1000 * 60 * 10;
+const MAX_CACHE_ENTRIES = 120;
 
 const ENTITY_MAP: Record<string, string> = {
   amp: "&",
@@ -66,6 +79,150 @@ const BROWSER_LIKE_HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 } as const;
+
+const articleTextCache = new Map<string, CachedArticleText>();
+const articleTextFailureCache = new Map<string, { failedAt: number; reason: string }>();
+
+function trimCache<T>(cache: Map<string, T>) {
+  while (cache.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = cache.keys().next().value as string | undefined;
+
+    if (!oldestKey) {
+      break;
+    }
+
+    cache.delete(oldestKey);
+  }
+}
+
+function normalizeUrlKey(value: string) {
+  return value.trim();
+}
+
+function getRecentFailure(articleUrl: string) {
+  const key = normalizeUrlKey(articleUrl);
+  const failure = articleTextFailureCache.get(key);
+
+  if (!failure) {
+    return null;
+  }
+
+  if (Date.now() - failure.failedAt > ARTICLE_TEXT_FAILURE_TTL_MS) {
+    articleTextFailureCache.delete(key);
+    return null;
+  }
+
+  return failure;
+}
+
+function markFailure(articleUrl: string, reason: string) {
+  const key = normalizeUrlKey(articleUrl);
+  articleTextFailureCache.set(key, { failedAt: Date.now(), reason });
+  trimCache(articleTextFailureCache);
+}
+
+function getCachedArticleText(articleUrl: string) {
+  const key = normalizeUrlKey(articleUrl);
+  const cached = articleTextCache.get(key);
+
+  if (!cached) {
+    return null;
+  }
+
+  if (Date.now() - cached.fetchedAt > ARTICLE_TEXT_CACHE_TTL_MS) {
+    articleTextCache.delete(key);
+    return null;
+  }
+
+  return cached;
+}
+
+function cacheArticleText(articleUrl: string, fullText: string, source: Exclude<ArticleTextSource, "feed">) {
+  const key = normalizeUrlKey(articleUrl);
+  articleTextCache.set(key, {
+    fullText,
+    source,
+    fetchedAt: Date.now()
+  });
+  trimCache(articleTextCache);
+}
+
+function buildBrowserHeaders(articleUrl: string) {
+  let referer: string | undefined;
+
+  try {
+    referer = `${new URL(articleUrl).origin}/`;
+  } catch {
+    referer = undefined;
+  }
+
+  const headers: Record<string, string> = {
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cache-Control": "no-cache",
+    DNT: "1",
+    Pragma: "no-cache",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "cross-site",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+  };
+
+  if (referer) {
+    headers.Referer = referer;
+  }
+
+  return headers;
+}
+
+function buildProxyUrl(articleUrl: string) {
+  return `${ARTICLE_TEXT_PROXY_BASE}/http://${articleUrl}`;
+}
+
+function getRetryDelayMs(attempt: number) {
+  const baseDelay = 450 * 2 ** attempt;
+  const jitter = Math.round(Math.random() * 120);
+  return baseDelay + jitter;
+}
+
+function shouldRetryStatus(status: number) {
+  return status === 408 || status === 425 || status === 429 || (status >= 500 && status < 600);
+}
+
+function isRetryableFetchError(error: unknown) {
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return true;
+  }
+
+  if (error instanceof Error) {
+    return /(fetch failed|timed out|network|socket|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|TLS|certificate|reset)/i.test(error.message);
+  }
+
+  return false;
+}
+
+function extractProxyArticleText(text: string) {
+  const withoutMetadata = text
+    .replace(/\r/g, "")
+    .replace(/^Warning:.*$/gim, "")
+    .replace(/^Title:.*$/gim, "")
+    .replace(/^URL Source:.*$/gim, "")
+    .replace(/^Published Time:.*$/gim, "")
+    .replace(/^Markdown Content:\s*/gim, "");
+
+  return normalizeText(
+    withoutMetadata
+      .replace(/^#+\s*/gm, "")
+      .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
+  );
+}
+
+async function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
 
 function stripTruncationSuffix(value: string | null | undefined) {
   if (!value) {
@@ -246,50 +403,111 @@ function extractReadableArticleText(html: string, url: string, title: string) {
   return extractBestReadableText(html, title);
 }
 
-async function fetchRemoteArticleText(article: ArticleTextInput): Promise<string> {
-  const attemptTimeouts = [12000, 16000];
+async function fetchDirectArticleText(article: ArticleTextInput): Promise<string> {
+  const attemptTimeouts = [10000, 14000, 18000];
   let lastError: unknown = null;
 
-  for (const timeoutMs of attemptTimeouts) {
-    let response: Response;
+  for (let attempt = 0; attempt < attemptTimeouts.length; attempt += 1) {
+    const timeoutMs = attemptTimeouts[attempt] ?? attemptTimeouts[attemptTimeouts.length - 1];
 
     try {
-      response = await fetchWithTimeout(
+      const response = await fetchWithTimeout(
         article.url,
         {
           cache: "no-store",
-          headers: BROWSER_LIKE_HEADERS,
+          headers: buildBrowserHeaders(article.url),
           redirect: "follow"
         },
         timeoutMs
       );
-    } catch (error) {
-      lastError = error;
-      continue;
-    }
 
-    if (!response.ok) {
-      if (response.status >= 500 && timeoutMs !== attemptTimeouts[attemptTimeouts.length - 1]) {
+      if (!response.ok) {
+        lastError = new Error(`Source request failed with status ${response.status}`);
+
+        if (!shouldRetryStatus(response.status) || attempt === attemptTimeouts.length - 1) {
+          break;
+        }
+
+        await sleep(getRetryDelayMs(attempt));
         continue;
       }
 
-      throw new Error(`Source request failed with status ${response.status}`);
+      const html = await response.text();
+      const remoteBody = extractReadableArticleText(html, article.url, article.title);
+
+      return [article.title, article.description, remoteBody]
+        .filter((value): value is string => Boolean(value && value.trim()))
+        .join("\n\n")
+        .trim();
+    } catch (error) {
+      lastError = error;
+
+      if (!isRetryableFetchError(error) || attempt === attemptTimeouts.length - 1) {
+        break;
+      }
+
+      await sleep(getRetryDelayMs(attempt));
     }
-
-    const html = await response.text();
-    const remoteBody = extractReadableArticleText(html, article.url, article.title);
-
-    return [article.title, article.description, remoteBody]
-      .filter((value): value is string => Boolean(value && value.trim()))
-      .join("\n\n")
-      .trim();
   }
 
-  if (lastError instanceof Error) {
-    throw lastError;
+  throw lastError instanceof Error ? lastError : new Error("Unable to fetch a readable article body");
+}
+
+async function fetchProxyArticleText(article: ArticleTextInput): Promise<string> {
+  const attemptTimeouts = [10000, 14000];
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < attemptTimeouts.length; attempt += 1) {
+    const timeoutMs = attemptTimeouts[attempt] ?? attemptTimeouts[attemptTimeouts.length - 1];
+
+    try {
+      const response = await fetchWithTimeout(
+        buildProxyUrl(article.url),
+        {
+          cache: "no-store",
+          headers: {
+            Accept: "text/plain,text/markdown,text/html;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Cache-Control": "no-cache",
+            DNT: "1",
+            Pragma: "no-cache",
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          },
+          redirect: "follow"
+        },
+        timeoutMs
+      );
+
+      if (!response.ok) {
+        lastError = new Error(`Reader proxy request failed with status ${response.status}`);
+
+        if (!shouldRetryStatus(response.status) || attempt === attemptTimeouts.length - 1) {
+          break;
+        }
+
+        await sleep(getRetryDelayMs(attempt));
+        continue;
+      }
+
+      const proxyText = extractProxyArticleText(await response.text());
+
+      return [article.title, article.description, proxyText]
+        .filter((value): value is string => Boolean(value && value.trim()))
+        .join("\n\n")
+        .trim();
+    } catch (error) {
+      lastError = error;
+
+      if (!isRetryableFetchError(error) || attempt === attemptTimeouts.length - 1) {
+        break;
+      }
+
+      await sleep(getRetryDelayMs(attempt));
+    }
   }
 
-  throw new Error("Unable to fetch a readable article body");
+  throw lastError instanceof Error ? lastError : new Error("Unable to fetch article through reader proxy");
 }
 
 export function buildLocalArticleText(article: Pick<ArticleTextInput, "title" | "description" | "content">) {
@@ -302,22 +520,101 @@ export function buildLocalArticleText(article: Pick<ArticleTextInput, "title" | 
 export async function fetchFullArticleText(article: ArticleTextInput) {
   const localText = buildLocalArticleText(article);
   const hadTruncation = Boolean(article.content && TRUNCATION_SUFFIX.test(article.content));
+  const cacheKey = normalizeUrlKey(article.url);
+
+  const cachedText = getCachedArticleText(article.url);
+  if (cachedText && cachedText.fullText.length >= localText.length) {
+    return {
+      fullText: cachedText.fullText,
+      source: "cache" as const,
+      hadTruncation
+    };
+  }
+
+  const recentFailure = getRecentFailure(article.url);
+  if (recentFailure && !cachedText) {
+    return {
+      fullText: localText,
+      source: "feed" as const,
+      hadTruncation
+    };
+  }
 
   try {
-    const remoteText = await fetchRemoteArticleText(article);
+    const remoteText = await fetchDirectArticleText(article);
 
     if (remoteText.length >= localText.length) {
+      cacheArticleText(cacheKey, remoteText, "remote");
       return {
         fullText: remoteText,
         source: "remote" as const,
         hadTruncation
       };
     }
+
+    markFailure(article.url, "Direct article fetch was shorter than the feed text");
+
+    try {
+      const proxyText = await fetchProxyArticleText(article);
+
+      if (proxyText.length >= localText.length) {
+        cacheArticleText(cacheKey, proxyText, "proxy");
+        return {
+          fullText: proxyText,
+          source: "proxy" as const,
+          hadTruncation
+        };
+      }
+
+      markFailure(article.url, "Reader proxy text was shorter than the feed text");
+    } catch (proxyError) {
+      console.warn("Reader proxy fetch failed after a short direct extract", {
+        articleUrl: article.url,
+        proxyError: proxyError instanceof Error ? proxyError.message : String(proxyError)
+      });
+    }
   } catch (error) {
-    console.warn("Unable to fetch article full text", {
+    console.warn("Direct article fetch failed", {
       articleUrl: article.url,
       error: error instanceof Error ? error.message : String(error)
     });
+
+    try {
+      const proxyText = await fetchProxyArticleText(article);
+
+      if (proxyText.length >= localText.length) {
+        cacheArticleText(cacheKey, proxyText, "proxy");
+        return {
+          fullText: proxyText,
+          source: "proxy" as const,
+          hadTruncation
+        };
+      }
+
+      markFailure(article.url, "Reader proxy text was shorter than the feed text");
+    } catch (proxyError) {
+      const recentCachedText = getCachedArticleText(article.url);
+
+      console.warn("Unable to fetch article full text", {
+        articleUrl: article.url,
+        directError: error instanceof Error ? error.message : String(error),
+        proxyError: proxyError instanceof Error ? proxyError.message : String(proxyError),
+        cachedTextAvailable: Boolean(recentCachedText)
+      });
+
+      markFailure(
+        article.url,
+        proxyError instanceof Error ? proxyError.message : String(proxyError) || "Unknown proxy failure"
+      );
+
+      if (recentCachedText && recentCachedText.fullText.length >= localText.length) {
+        return {
+          fullText: recentCachedText.fullText,
+          source: "cache" as const,
+          hadTruncation
+        };
+      }
+    }
   }
 
   return {

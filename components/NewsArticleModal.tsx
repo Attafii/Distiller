@@ -138,6 +138,10 @@ export function NewsArticleModal({
         setFullTextNotice(
           payload.source === "remote"
             ? "Loaded from the original article page."
+            : payload.source === "proxy"
+              ? "Loaded through a reader proxy because the source page blocked direct fetches."
+              : payload.source === "cache"
+                ? "Loaded from a cached article copy from an earlier successful fetch."
             : payload.hadTruncation
               ? "The source page could not be expanded, so this shows the feed excerpt without the truncation marker."
               : "This shows the article text provided by the feed."

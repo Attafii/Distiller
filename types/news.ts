@@ -58,9 +58,11 @@ export interface ArticleLikeResponse {
   likedByViewer: boolean;
 }
 
+export type ArticleTextSource = "remote" | "proxy" | "cache" | "feed";
+
 export interface ArticleFullTextResponse {
   fullText: string;
-  source: "remote" | "feed";
+  source: ArticleTextSource;
   hadTruncation: boolean;
 }
 
