@@ -65,19 +65,22 @@ const SYSTEM_PROMPT = [
 
 const CHAT_SYSTEM_PROMPT = [
   "You are Distiller's article chat assistant.",
-  "You are a conversational analyst for one article at a time.",
+  "Speak like a sharp, approachable human analyst instead of a template or summary engine.",
   "Keep the conversation centered on the article, its claims, framing, implications, strengths, weaknesses, and what to watch next.",
   "You may offer judgment, critique, and interpretation when it helps discuss the article, but clearly separate opinion from direct evidence.",
   "Ground your replies in the article, the summary, the retrieved snippets, and the conversation history.",
-  "If the user asks something outside the article's scope, redirect back to the article instead of answering the unrelated topic."
+  "If the user asks something outside the article's scope, redirect back to the article instead of answering the unrelated topic.",
+  "When the user is vague, ask one short clarifying question rather than over-explaining."
 ].join(" ");
 
 const NEWS_ASSISTANT_SYSTEM_PROMPT = [
   "You are Distiller's news assistant.",
+  "Respond like a real news analyst in a live conversation.",
   "Synthesize the supplied news articles into a detailed, grounded answer.",
   "Use only the provided articles, retrieved snippets, and conversation history.",
   "Clearly separate what is supported by the articles from any interpretation or caveat.",
   "If the coverage is thin or conflicting, say that directly instead of guessing.",
+  "If the user asks a follow-up, keep the thread flowing naturally and refer back to prior context when useful.",
   'Return JSON only in the exact shape: {"answer":"..."}'
 ].join(" ");
 
@@ -347,7 +350,7 @@ export class DistillService {
     model: string,
     prompt: string,
     systemPrompt = SYSTEM_PROMPT,
-    options: { maxTokens?: number } = {}
+    options: { maxTokens?: number; temperature?: number; topP?: number } = {}
   ): Promise<string> {
     if (!this.config.apiKey) {
       throw new DistillServiceError("Missing NVIDIA_BUILD_API_KEY");
@@ -371,8 +374,8 @@ export class DistillService {
               { role: "system", content: systemPrompt },
               { role: "user", content: prompt }
             ],
-            temperature: 0.2,
-            top_p: 0.9,
+            temperature: options.temperature ?? 0.2,
+            top_p: options.topP ?? 0.9,
             max_tokens: options.maxTokens ?? 220,
             response_format: {
               type: "json_object"
@@ -424,7 +427,7 @@ export class DistillService {
     tier: ModelTier,
     prompt: string,
     systemPrompt = SYSTEM_PROMPT,
-    options: { maxTokens?: number } = {}
+    options: { maxTokens?: number; temperature?: number; topP?: number } = {}
   ): Promise<{ model: string; content: string }> {
     let lastError: unknown = null;
 
@@ -446,6 +449,36 @@ export class DistillService {
     }
 
     throw new DistillServiceError(`Unable to summarize with any ${tier} tier model`);
+  }
+
+  private pickArticleChatTier(article: NewsArticle, question: string, history: ArticleChatMessage[]) {
+    const questionLength = question.trim().length;
+    const articleTokens = estimateTokens([article.title, article.description, article.content].filter(Boolean).join("\n\n"));
+    const complexityHints = /(compare|contrast|why|how|impact|implication|framing|missing|context|analyze|analysis|think|explain|detail)/i;
+
+    if (history.length > 4 || questionLength > 180 || complexityHints.test(question) || articleTokens > 1200) {
+      return "deep" as const;
+    }
+
+    if (questionLength > 80 || articleTokens > 600) {
+      return "balanced" as const;
+    }
+
+    return "fast" as const;
+  }
+
+  private pickNewsAssistantTier(question: string, analysis: NewsQueryAnalysis, articles: NewsAssistantArticleContext[], history: ArticleChatMessage[]) {
+    const complexityHints = /(compare|contrast|why|how|impact|implication|debate|difference|evaluate|analyze|analysis|tradeoff|follow-up)/i;
+
+    if (articles.length > 3 || history.length > 4 || question.trim().length > 220 || complexityHints.test(question) || analysis.intent === "explain") {
+      return "deep" as const;
+    }
+
+    if (articles.length > 1 || question.trim().length > 120 || analysis.intent === "specific") {
+      return "balanced" as const;
+    }
+
+    return "fast" as const;
   }
 
   async summarizeArticle(input: SummarizeArticleInput): Promise<DistilledSummary> {
@@ -496,6 +529,7 @@ export class DistillService {
     const { article, summary, question, history = [] } = input;
     const ragContext = await buildRagContext(article, question, 5);
     const contextSnippets = ragContext.snippets.length > 0 ? ragContext.snippets : summary.retrievedContext;
+    const tier = this.pickArticleChatTier(article, question, history);
 
     const prompt = [
       `Article title: ${article.title}`,
@@ -524,7 +558,11 @@ export class DistillService {
     ].join("\n");
 
     try {
-      const { model, content } = await this.callModelForTier("balanced", prompt, CHAT_SYSTEM_PROMPT);
+      const { model, content } = await this.callModelForTier(tier, prompt, CHAT_SYSTEM_PROMPT, {
+        maxTokens: 260,
+        temperature: 0.35,
+        topP: 0.95
+      });
       const cleaned = cleanFenceBlocks(content);
 
       try {
@@ -599,6 +637,7 @@ export class DistillService {
     const prompt = [
       `Search query: ${analysis.searchQuery}`,
       `Detected category: ${analysis.category ?? "uncategorized"}`,
+      `Detected country: ${analysis.country ?? "uncertain"}`,
       `Detected intent: ${analysis.intent}`,
       `Keywords: ${analysis.keywords.join(", ") || "none"}`,
       `Phrases: ${analysis.phrases.join(", ") || "none"}`,
@@ -620,9 +659,11 @@ export class DistillService {
     ].join("\n");
 
     try {
-      const tier = articles.length > 2 ? "deep" : "balanced";
+      const tier = this.pickNewsAssistantTier(question, analysis, articles, history);
       const { model, content } = await this.callModelForTier(tier, prompt, NEWS_ASSISTANT_SYSTEM_PROMPT, {
-        maxTokens: 360
+        maxTokens: tier === "deep" ? 420 : 360,
+        temperature: 0.35,
+        topP: 0.95
       });
       const cleaned = cleanFenceBlocks(content);
 

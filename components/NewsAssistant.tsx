@@ -33,6 +33,14 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function shortModelName(model: string | null) {
+  if (!model) {
+    return null;
+  }
+
+  return model === "fallback" ? "fallback" : model.split("/").pop() ?? model;
+}
+
 export function NewsAssistant({
   category,
   country,
@@ -45,22 +53,26 @@ export function NewsAssistant({
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<NewsAssistantMessage[]>([]);
   const [latestSources, setLatestSources] = useState<NewsAssistantResponse["articles"]>([]);
+  const [latestModel, setLatestModel] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const categoryLabel = TOPIC_OPTIONS.find((option) => option.id === category)?.label ?? category;
   const countryLabel = COUNTRY_OPTIONS.find((option) => option.id === country)?.label ?? country;
   const dateRangeLabel = DATE_RANGE_OPTIONS.find((option) => option.id === dateRange)?.label ?? dateRange;
+  const displayedModel = shortModelName(latestModel);
 
   const starterPrompts = useMemo(
     () => [
-      `What is the latest ${categoryLabel.toLowerCase()} story right now?`,
+      category === "ai" || category === "llm"
+        ? "What is the latest AI and LLM news right now?"
+        : `What is the latest ${categoryLabel.toLowerCase()} story right now?`,
       country === "global"
         ? `Find the most important story in ${categoryLabel.toLowerCase()} and explain why it matters.`
-        : `What is happening in ${countryLabel} news right now?`,
-      `Give me the details, context, and sources for the strongest match.`
+        : `What is happening in ${countryLabel} news right now, especially in ${categoryLabel.toLowerCase()}?`,
+      "Talk through the strongest match like a human analyst, including what it means and what to watch next."
     ],
-    [categoryLabel, country, countryLabel]
+    [category, categoryLabel, country, countryLabel]
   );
 
   const conversationHistory = messages.map((message) => ({
@@ -87,6 +99,7 @@ export function NewsAssistant({
     setQuestion("");
     setLoading(true);
     setError(null);
+    setLatestModel(null);
 
     try {
       const response = await fetch("/api/news/assistant", {
@@ -110,6 +123,7 @@ export function NewsAssistant({
 
       const payload = (await response.json()) as NewsAssistantResponse;
       setLatestSources(payload.articles);
+      setLatestModel(payload.model);
       setMessages((current) => [
         ...current,
         {
@@ -122,6 +136,7 @@ export function NewsAssistant({
       const message = submitError instanceof Error ? submitError.message : "Unknown assistant error";
       setError(message);
       setLatestSources([]);
+      setLatestModel(null);
       setMessages((current) => [
         ...current,
         {
@@ -159,11 +174,11 @@ export function NewsAssistant({
 
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl">
-                  Ask for a specific story, fact, or update and get a detailed answer.
+                  Ask naturally, follow up freely, and get a grounded answer you can keep talking to.
                 </h2>
                 <p className="max-w-3xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-                  The assistant parses your question, searches the current coverage, ranks the best matches, and answers
-                  with the strongest source material it can find.
+                  The assistant parses your question, searches the current coverage, expands article text when available,
+                  and answers like a human analyst instead of a static summary box.
                 </p>
               </div>
             </div>
@@ -178,6 +193,11 @@ export function NewsAssistant({
               <Badge variant="outline" className="border-zinc-700 text-zinc-400">
                 {dateRangeLabel}
               </Badge>
+              {displayedModel ? (
+                <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  Model {displayedModel}
+                </Badge>
+              ) : null}
             </div>
           </div>
 
@@ -191,7 +211,7 @@ export function NewsAssistant({
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               rows={3}
-              placeholder="Ask for a specific story, person, company, or issue..."
+              placeholder="Ask a follow-up, compare stories, or tell it what angle you want..."
               className="min-h-28 w-full resize-y rounded-3xl border border-zinc-800 bg-zinc-950/80 px-4 py-3 text-sm leading-relaxed text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
             />
 
@@ -220,7 +240,7 @@ export function NewsAssistant({
             {messages.length === 0 ? (
               <div className="space-y-2 text-sm leading-relaxed text-zinc-500">
                 <p>Try asking about a named person, a headline, a company, or a current event.</p>
-                <p>The assistant will search the current news coverage and return a grounded answer.</p>
+                <p>The assistant will search the current news coverage, pull in the full article text when available, and keep the conversation natural.</p>
               </div>
             ) : (
               messages.map((message) => (

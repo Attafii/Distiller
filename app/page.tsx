@@ -141,7 +141,7 @@ export default function HomePage() {
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-soft">
                 <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">Coverage</p>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-                  Global, Tunisia, and a wider set of topics across policy, markets, science, culture, and more.
+                  Global, Tunisia, China, Russia, and a wider set of topics across policy, markets, science, culture, AI, and LLM news.
                 </p>
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function HomePage() {
               </div>
 
               <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
-                More topic chips mean more ways to browse the feed, from politics and finance to climate, education, and culture.
+                More topic chips mean more ways to browse the feed, from politics and finance to climate, education, AI, LLMs, and culture.
               </p>
 
               <div className="flex flex-wrap gap-2 pt-2">
@@ -243,7 +243,7 @@ export default function HomePage() {
               </div>
 
               <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
-                The region list starts with Global, then Tunisia, and then the broader international set so local coverage stays easy to reach.
+                The region list starts with Global, then Tunisia, China, Russia, and the broader international set so local coverage stays easy to reach.
               </p>
 
               <div className="flex flex-wrap gap-2 pt-2">

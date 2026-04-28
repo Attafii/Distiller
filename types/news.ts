@@ -4,6 +4,8 @@ export type Category =
   | "world"
   | "politics"
   | "tech"
+  | "ai"
+  | "llm"
   | "science"
   | "business"
   | "finance"
@@ -13,7 +15,7 @@ export type Category =
   | "sports"
   | "entertainment"
   | "culture";
-export type CountryCode = "global" | "tn" | "us" | "gb" | "ca" | "au" | "in" | "de" | "fr" | "jp" | "br" | "ae" | "sg";
+export type CountryCode = "global" | "tn" | "us" | "gb" | "ca" | "au" | "in" | "de" | "fr" | "jp" | "cn" | "ru" | "br" | "ae" | "sg";
 export type DateRange = "any" | "24h" | "7d" | "30d";
 export type SummarizationMode = "auto" | "fast" | "balanced" | "deep";
 

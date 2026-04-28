@@ -2,32 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DistillService } from "@/lib/ai";
-import { fetchFullArticleText } from "@/lib/article-text";
 import { analyzeNewsQuestion, rankNewsArticles } from "@/lib/news-assistant";
+import { CATEGORY_VALUES, COUNTRY_VALUES, DATE_RANGE_VALUES } from "@/lib/news-options";
 import { buildRagContext } from "@/lib/rag";
 import { fetchNewsArticles } from "@/services/newsapi";
 import type { ArticleChatMessage, Category, CountryCode, DateRange, NewsAssistantArticleContext, NewsAssistantResponse } from "@/types/news";
 
 export const dynamic = "force-dynamic";
-
-const categoryValues = [
-  "world",
-  "politics",
-  "tech",
-  "science",
-  "business",
-  "finance",
-  "climate",
-  "health",
-  "education",
-  "sports",
-  "entertainment",
-  "culture"
-] as const;
-
-const countryValues = ["global", "tn", "us", "gb", "ca", "au", "in", "de", "fr", "jp", "br", "ae", "sg"] as const;
-
-const dateRangeValues = ["any", "24h", "7d", "30d"] as const;
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -37,37 +18,16 @@ const chatMessageSchema = z.object({
 const requestSchema = z.object({
   question: z.string().trim().min(1).max(800),
   history: z.array(chatMessageSchema).max(12).optional(),
-  category: z.enum(categoryValues).optional(),
-  country: z.enum(countryValues).optional(),
-  dateRange: z.enum(dateRangeValues).optional()
+  category: z.enum(CATEGORY_VALUES).optional(),
+  country: z.enum(COUNTRY_VALUES).optional(),
+  dateRange: z.enum(DATE_RANGE_VALUES).optional()
 });
 
 async function enrichArticle(article: ReturnType<typeof rankNewsArticles>[number], question: string): Promise<NewsAssistantArticleContext> {
-  let resolvedArticle = article;
-
-  try {
-    const articleText = await fetchFullArticleText({
-      title: article.title,
-      description: article.description,
-      content: article.content,
-      url: article.url
-    });
-
-    resolvedArticle = {
-      ...article,
-      content: articleText.fullText
-    };
-  } catch (error) {
-    console.warn("Unable to fetch full article text for assistant", {
-      articleUrl: article.url,
-      error: error instanceof Error ? error.message : String(error)
-    });
-  }
-
-  const ragContext = await buildRagContext(resolvedArticle, question, 3);
+  const ragContext = await buildRagContext(article, question, 3);
 
   return {
-    article: resolvedArticle,
+    article,
     relevance: article.relevance,
     snippets: ragContext.snippets,
     context: ragContext.context
@@ -98,7 +58,7 @@ export async function POST(request: NextRequest) {
   const { question, history, category, country, dateRange } = parsed.data;
   const analysis = analyzeNewsQuestion(question);
   const resolvedCategory = category ?? analysis.category ?? "world";
-  const resolvedCountry = country ?? "global";
+  const resolvedCountry = country ?? analysis.country ?? "global";
   const resolvedDateRange = dateRange ?? "any";
 
   try {

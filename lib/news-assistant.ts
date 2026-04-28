@@ -2,13 +2,15 @@ import "server-only";
 
 import nlp from "compromise";
 
-import type { Category, NewsArticle } from "@/types/news";
+import { REGION_QUERY_MAP } from "@/lib/news-options";
+import type { Category, CountryCode, NewsArticle } from "@/types/news";
 
 export type NewsAssistantIntent = "latest" | "specific" | "explain" | "general";
 
 export interface NewsQueryAnalysis {
   question: string;
   category: Category | null;
+  country: CountryCode | null;
   intent: NewsAssistantIntent;
   phrases: string[];
   keywords: string[];
@@ -95,9 +97,11 @@ const STOP_WORDS = new Set([
 ]);
 
 const CATEGORY_HINTS: Record<Category, string[]> = {
+  ai: ["ai", "artificial intelligence", "machine learning", "generative ai", "agentic", "inference", "copilot", "foundation model", "model release", "benchmark"],
+  llm: ["llm", "large language model", "language model", "foundation model", "prompt", "token", "context window", "reasoning model", "chatbot", "generative ai"],
   world: ["world", "global", "international", "diplomacy", "summit", "border", "conflict", "war", "peace"],
   politics: ["politics", "election", "government", "policy", "parliament", "senate", "congress", "minister", "lawmakers"],
-  tech: ["tech", "technology", "ai", "artificial intelligence", "software", "chip", "chips", "startup", "platform", "cyber"],
+  tech: ["tech", "technology", "software", "chip", "chips", "startup", "platform", "cyber", "semiconductor", "cloud"],
   science: ["science", "research", "study", "laboratory", "space", "biology", "physics", "astronomy", "medical"],
   business: ["business", "company", "revenue", "merger", "trade", "supply chain", "logistics", "startup", "industry"],
   finance: ["finance", "markets", "stocks", "inflation", "interest rates", "earnings", "bond", "bank", "fed", "central bank"],
@@ -109,12 +113,31 @@ const CATEGORY_HINTS: Record<Category, string[]> = {
   culture: ["culture", "art", "museum", "books", "literature", "design", "theater", "heritage", "festival"]
 };
 
+const COUNTRY_HINTS: Record<CountryCode, string[]> = {
+  global: [],
+  tn: ["tunisia", "tunisian", "tunis", "تونس"],
+  us: ["united states", "u.s.", "america", "american", "washington", "new york"],
+  gb: ["united kingdom", "uk", "britain", "british", "london"],
+  ca: ["canada", "canadian", "ottawa", "toronto", "montreal"],
+  au: ["australia", "australian", "sydney", "melbourne", "canberra"],
+  in: ["india", "indian", "new delhi", "mumbai", "bengaluru"],
+  de: ["germany", "german", "berlin", "munich"],
+  fr: ["france", "french", "paris", "lyon"],
+  jp: ["japan", "japanese", "tokyo", "osaka"],
+  cn: ["china", "chinese", "beijing", "shanghai", "shenzhen", "中国", "北京", "上海"],
+  ru: ["russia", "russian", "moscow", "st petersburg", "россия", "москва", "санкт-петербург"],
+  br: ["brazil", "brazilian", "brasilia", "sao paulo", "rio de janeiro"],
+  ae: ["united arab emirates", "uae", "dubai", "abu dhabi"],
+  sg: ["singapore"]
+};
+
 const LATEST_HINTS = ["latest", "today", "recent", "new", "now", "currently", "this week", "this month"];
 const EXPLAIN_HINTS = ["why", "how", "impact", "means", "explain", "what does", "what happened", "why did"];
 const SPECIFIC_HINTS = ["specific", "exact", "who", "which", "where", "when", "what happened", "find", "look up"];
+const WORD_PATTERN = /[\p{L}\p{N}]{2,}/gu;
 
 function normalizeText(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ").trim();
+  return value.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, " ").replace(/\s+/g, " ").trim();
 }
 
 function unique(values: string[]) {
@@ -122,10 +145,7 @@ function unique(values: string[]) {
 }
 
 function tokenize(value: string) {
-  return normalizeText(value)
-    .split(" ")
-    .map((term) => term.trim())
-    .filter((term) => term.length > 2 && !STOP_WORDS.has(term));
+  return unique(normalizeText(value).match(WORD_PATTERN) ?? []).filter((term) => term.length > 2 && !STOP_WORDS.has(term));
 }
 
 function flattenCompromiseTerms(question: string) {
@@ -139,7 +159,7 @@ function flattenCompromiseTerms(question: string) {
       ...(doc.nouns().out("array") as string[])
     ]
       .flatMap((phrase) => normalizeText(phrase).split(" "))
-      .filter((term) => term.length > 2 && !STOP_WORDS.has(term))
+      .filter((term) => term.length > 1 && !STOP_WORDS.has(term))
   );
 }
 
@@ -154,8 +174,24 @@ function extractPhrases(question: string) {
       ...(doc.nouns().out("array") as string[])
     ]
       .map((phrase) => normalizeText(phrase))
-      .filter((phrase) => phrase.length > 3 && !STOP_WORDS.has(phrase))
+      .filter((phrase) => phrase.length > 1 && !STOP_WORDS.has(phrase))
   );
+}
+
+function detectCountry(question: string): CountryCode | null {
+  const normalized = normalizeText(question);
+
+  for (const [country, hints] of Object.entries(COUNTRY_HINTS) as Array<[CountryCode, string[]]>) {
+    if (country === "global") {
+      continue;
+    }
+
+    if (hints.some((hint) => normalized.includes(normalizeText(hint)))) {
+      return country;
+    }
+  }
+
+  return null;
 }
 
 function detectIntent(question: string): NewsAssistantIntent {
@@ -193,8 +229,9 @@ function detectCategory(question: string, phrases: string[], keywords: string[])
   return highestScore > 0 ? winner : null;
 }
 
-function buildSearchQuery(phrases: string[], keywords: string[], question: string) {
-  const queryParts = unique([...phrases.slice(0, 3), ...keywords.slice(0, 6)]);
+function buildSearchQuery(phrases: string[], keywords: string[], question: string, country: CountryCode | null) {
+  const regionParts = country ? (REGION_QUERY_MAP[country] ?? "").split(/\s+/).filter(Boolean) : [];
+  const queryParts = unique([...regionParts, ...phrases.slice(0, 3), ...keywords.slice(0, 6)]);
   return queryParts.length > 0 ? queryParts.join(" ") : question.trim();
 }
 
@@ -252,15 +289,17 @@ export function analyzeNewsQuestion(question: string): NewsQueryAnalysis {
   const phrases = extractPhrases(trimmedQuestion);
   const keywords = unique([...flattenCompromiseTerms(trimmedQuestion), ...tokenize(trimmedQuestion)]);
   const category = detectCategory(trimmedQuestion, phrases, keywords);
+  const country = detectCountry(trimmedQuestion);
   const intent = detectIntent(trimmedQuestion);
 
   return {
     question: trimmedQuestion,
     category,
+    country,
     intent,
     phrases,
     keywords,
-    searchQuery: buildSearchQuery(phrases, keywords, trimmedQuestion)
+    searchQuery: buildSearchQuery(phrases, keywords, trimmedQuestion, country)
   };
 }
 

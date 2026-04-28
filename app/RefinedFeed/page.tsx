@@ -396,7 +396,7 @@ export default function RefinedFeedPage() {
         <Card className="mb-4 border-zinc-800 bg-zinc-900/60 shadow-soft">
           <CardContent className="space-y-5 p-4 sm:p-5">
             <p className="max-w-4xl text-sm leading-relaxed text-zinc-400">
-              Use the topic chips to widen or narrow the story set, the region chips to focus on Tunisia or another market,
+              Use the topic chips to widen or narrow the story set, the region chips to focus on Tunisia, China, Russia, or another market,
               and the mode chips to switch between faster and deeper summaries.
             </p>
 

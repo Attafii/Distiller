@@ -1,15 +1,15 @@
 import "server-only";
 
 import { classifyArticlePriority } from "@/lib/article-signals";
+import { fetchFullArticleText } from "@/lib/article-text";
 import { fetchWithTimeout } from "@/lib/http";
-import { buildGlobalQuery, getDateRangeCutoff, NEWSAPI_CATEGORY_MAP } from "@/lib/news-options";
+import { buildGlobalQuery, buildRegionalQuery, getDateRangeCutoff, getRegionLanguage, NEWSAPI_CATEGORY_MAP } from "@/lib/news-options";
 import { normalizeEnvString } from "@/lib/utils";
 import type { ArticlePriority, Category, CountryCode, DateRange, NewsArticle } from "@/types/news";
 
 const NEWS_BASE_URL = normalizeEnvString(process.env.NEWSAPI_BASE_URL, "https://newsapi.org/v2").replace(/\/$/, "");
 const NEWS_API_KEY = normalizeEnvString(process.env.NEWSAPI_KEY);
 const NEWS_COUNTRY = normalizeEnvString(process.env.NEWS_COUNTRY, "us");
-const TUNISIA_SEARCH_TERM = "Tunisia";
 
 export class NewsApiError extends Error {
   constructor(message: string, public readonly statusCode = 500) {
@@ -91,6 +91,26 @@ const demoDeck: Record<Category, Array<DemoArticleSeed>> = {
       content:
         "Routing short queries to smaller models and harder tasks to larger ones is becoming a core optimization strategy for cost and latency control in production AI systems.",
       url: "https://example.com/distiller/tech/inference-routing",
+      imageUrl: null
+    }
+  ],
+  ai: [
+    {
+      title: "AI copilots move from demos into daily editorial work",
+      description: "Newsrooms are pairing retrieval-first assistants with tighter citation checks.",
+      content:
+        "Editorial teams are using AI copilots to draft first passes, surface source passages, and flag factual changes before publication. The strongest workflows keep retrieval, verification, and generation separated so the model stays grounded.",
+      url: "https://example.com/distiller/ai/copilots-editorial-work",
+      imageUrl: null
+    }
+  ],
+  llm: [
+    {
+      title: "LLM routing becomes a first-class product decision",
+      description: "Developers are splitting short queries from harder reasoning tasks to control cost and latency.",
+      content:
+        "Engineering teams are sending simple questions to smaller language models and reserving larger LLMs for long-context reasoning, tool use, and multi-step analysis.",
+      url: "https://example.com/distiller/llm/routing-product-decision",
       imageUrl: null
     }
   ],
@@ -443,8 +463,44 @@ async function fetchNewsApi(
       };
     }
 
+    const enrichedArticles = await Promise.all(
+      articles.map(async (article) => {
+        try {
+          const fullText = await fetchFullArticleText({
+            title: article.title,
+            description: article.description,
+            content: article.content,
+            url: article.url
+          });
+
+          const content = fullText.fullText.trim();
+
+          if (!content || content.length <= (article.content ?? "").length) {
+            return article;
+          }
+
+          return {
+            ...article,
+            content,
+            priority: classifyArticlePriority({
+              title: article.title,
+              description: article.description,
+              content
+            })
+          };
+        } catch (error) {
+          console.warn("Unable to expand article text from source", {
+            articleUrl: article.url,
+            error: error instanceof Error ? error.message : String(error)
+          });
+
+          return article;
+        }
+      })
+    );
+
     return {
-      articles,
+      articles: enrichedArticles,
       totalResults: payload.totalResults ?? articles.length
     };
   } catch (error) {
@@ -489,21 +545,19 @@ export async function fetchNewsArticles({
   const resolvedPageSize = Math.max(1, Math.min(pageSize, 12));
   const currentCountry = country;
   const currentDateRange = dateRange;
-  const useEverything = currentCountry === "global" || currentCountry === "tn" || Boolean(query?.trim());
+  const useEverything = currentCountry === "global" || currentCountry === "tn" || currentCountry === "cn" || currentCountry === "ru" || Boolean(query?.trim());
   const endpoint = new URL(useEverything ? `${NEWS_BASE_URL}/everything` : `${NEWS_BASE_URL}/top-headlines`);
 
   if (useEverything) {
-    const searchQuery = buildGlobalQuery(category, query);
-    const regionalQuery = currentCountry === "tn" ? TUNISIA_SEARCH_TERM : undefined;
-    const combinedQuery = [regionalQuery, searchQuery].filter(Boolean).join(" ").trim();
+    const searchQuery = currentCountry === "global" ? buildGlobalQuery(category, query) : buildRegionalQuery(currentCountry, category, query);
 
-    if (combinedQuery) {
-      endpoint.searchParams.set("q", combinedQuery);
+    if (searchQuery) {
+      endpoint.searchParams.set("q", searchQuery);
       endpoint.searchParams.set("searchIn", "title,description,content");
     }
 
     endpoint.searchParams.set("sortBy", "publishedAt");
-    endpoint.searchParams.set("language", "en");
+    endpoint.searchParams.set("language", getRegionLanguage(currentCountry));
 
     const cutoff = getDateRangeCutoff(currentDateRange);
     if (cutoff) {

@@ -2,24 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DistillService } from "@/lib/ai";
+import { CATEGORY_VALUES } from "@/lib/news-options";
 import type { ArticleChatMessage, DistilledArticle } from "@/types/news";
 
 export const dynamic = "force-dynamic";
-
-const categoryValues = [
-  "world",
-  "politics",
-  "tech",
-  "science",
-  "business",
-  "finance",
-  "climate",
-  "health",
-  "education",
-  "sports",
-  "entertainment",
-  "culture"
-] as const;
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -38,7 +24,7 @@ const articleSchema = z.object({
     id: z.string().nullable(),
     name: z.string()
   }),
-  category: z.enum(categoryValues),
+  category: z.enum(CATEGORY_VALUES),
   summary: z.object({
     bullets: z.tuple([z.string(), z.string(), z.string()]),
     insight: z.string(),

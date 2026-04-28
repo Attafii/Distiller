@@ -3,15 +3,16 @@ import { z } from "zod";
 
 import { DistillService } from "@/lib/ai";
 import { annotateArticleReactions, getClientIp } from "@/lib/article-reactions";
+import { CATEGORY_VALUES, COUNTRY_VALUES, DATE_RANGE_VALUES } from "@/lib/news-options";
 import { fetchNewsArticles } from "@/services/newsapi";
 import type { DistilledArticle, DistilledSummary, NewsArticle } from "@/types/news";
 
 export const dynamic = "force-dynamic";
 
 const querySchema = z.object({
-  category: z.enum(["world", "politics", "tech", "science", "business", "finance", "climate", "health", "education", "sports", "entertainment", "culture"]).default("tech"),
-  country: z.enum(["global", "tn", "us", "gb", "ca", "au", "in", "de", "fr", "jp", "br", "ae", "sg"]).default("global"),
-  dateRange: z.enum(["any", "24h", "7d", "30d"]).default("any"),
+  category: z.enum(CATEGORY_VALUES).default("tech"),
+  country: z.enum(COUNTRY_VALUES).default("global"),
+  dateRange: z.enum(DATE_RANGE_VALUES).default("any"),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(12).default(6),
   mode: z.enum(["auto", "fast", "balanced", "deep"]).default("auto"),
