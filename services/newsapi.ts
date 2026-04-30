@@ -301,6 +301,32 @@ const demoDeck: Record<Category, Array<DemoArticleSeed>> = {
       imageUrl: null
     }
   ],
+  stocks: [
+    {
+      title: "Stocks rally as investors price in steadier rate expectations",
+      description: "Equity desks are rotating into sectors tied to resilient demand.",
+      content:
+        "Market participants are reassessing valuation risk as macro data points to slower but stable growth and less policy uncertainty.",
+      url: "https://example.com/distiller/stocks/rate-expectations",
+      imageUrl: null
+    },
+    {
+      title: "Earnings season highlights divergence between megacaps and midcaps",
+      description: "Guidance quality is driving wider stock-level dispersion.",
+      content:
+        "Analysts say stronger cash generation and pricing power are separating market leaders from companies with weaker demand visibility.",
+      url: "https://example.com/distiller/stocks/earnings-dispersion",
+      imageUrl: null
+    },
+    {
+      title: "Retail traders focus on volatility around policy headlines",
+      description: "Short-term positioning is increasing around macro event windows.",
+      content:
+        "Broker data indicates a rise in short-duration trades as investors respond quickly to inflation, jobs, and central-bank updates.",
+      url: "https://example.com/distiller/stocks/volatility-positioning",
+      imageUrl: null
+    }
+  ],
   climate: [
     {
       title: "Coastal planners race to upgrade flood defenses before storm season",

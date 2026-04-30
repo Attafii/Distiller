@@ -96,25 +96,25 @@ const STOP_WORDS = new Set([
   "would"
 ]);
 
-const CATEGORY_HINTS: Record<Category, string[]> = {
-  ai: ["ai", "artificial intelligence", "machine learning", "generative ai", "agentic", "inference", "copilot", "foundation model", "model release", "benchmark"],
-  llm: ["llm", "large language model", "language model", "foundation model", "prompt", "token", "context window", "reasoning model", "chatbot", "generative ai"],
-  world: ["world", "global", "international", "diplomacy", "summit", "border", "conflict", "war", "peace"],
-  politics: ["politics", "election", "government", "policy", "parliament", "senate", "congress", "minister", "lawmakers"],
-  tech: ["tech", "technology", "ai", "artificial intelligence", "software", "chip", "chips", "startup", "platform", "cyber", "semiconductor", "cloud"],
-  ai: ["ai", "artificial intelligence", "machine learning", "generative ai", "model", "inference", "agent", "copilot", "foundation model", "benchmark"],
-  llm: ["llm", "large language model", "foundation model", "transformer", "prompt", "context window", "token", "reasoning model", "chatbot"],
-  science: ["science", "research", "study", "laboratory", "space", "biology", "physics", "astronomy", "medical"],
-  business: ["business", "company", "revenue", "merger", "trade", "supply chain", "logistics", "startup", "industry"],
-  finance: ["finance", "markets", "stocks", "inflation", "interest rates", "earnings", "bond", "bank", "fed", "central bank"],
-  stocks: ["stocks", "stock market", "equities", "shares", "nasdaq", "dow", "s&p", "ticker", "portfolio", "valuation"],
-  climate: ["climate", "warming", "flood", "wildfire", "weather", "emissions", "renewable", "energy", "environment"],
-  health: ["health", "hospital", "medicine", "medical", "vaccine", "disease", "nutrition", "public health", "patient"],
-  education: ["education", "school", "classroom", "university", "students", "teachers", "curriculum", "campus"],
-  sports: ["sports", "game", "match", "league", "tournament", "playoff", "coach", "athlete", "football", "basketball"],
-  entertainment: ["entertainment", "film", "movie", "music", "streaming", "celebrity", "festival", "show", "tv"],
-  culture: ["culture", "art", "museum", "books", "literature", "design", "theater", "heritage", "festival"]
-};
+const _CATEGORY_HINTS_ENTRIES: Array<[Category, string[]]> = [
+  ["ai", ["ai", "artificial intelligence", "machine learning", "generative ai", "agentic", "inference", "copilot", "foundation model", "model release", "benchmark"]],
+  ["llm", ["llm", "large language model", "language model", "foundation model", "prompt", "token", "context window", "reasoning model", "chatbot", "generative ai"]],
+  ["world", ["world", "global", "international", "diplomacy", "summit", "border", "conflict", "war", "peace"]],
+  ["politics", ["politics", "election", "government", "policy", "parliament", "senate", "congress", "minister", "lawmakers"]],
+  ["tech", ["tech", "technology", "ai", "artificial intelligence", "software", "chip", "chips", "startup", "platform", "cyber", "semiconductor", "cloud"]],
+  ["science", ["science", "research", "study", "laboratory", "space", "biology", "physics", "astronomy", "medical"]],
+  ["business", ["business", "company", "revenue", "merger", "trade", "supply chain", "logistics", "startup", "industry"]],
+  ["finance", ["finance", "markets", "stocks", "inflation", "interest rates", "earnings", "bond", "bank", "fed", "central bank"]],
+  ["stocks", ["stocks", "stock market", "equities", "shares", "nasdaq", "dow", "s&p", "ticker", "portfolio", "valuation"]],
+  ["climate", ["climate", "warming", "flood", "wildfire", "weather", "emissions", "renewable", "energy", "environment"]],
+  ["health", ["health", "hospital", "medicine", "medical", "vaccine", "disease", "nutrition", "public health", "patient"]],
+  ["education", ["education", "school", "classroom", "university", "students", "teachers", "curriculum", "campus"]],
+  ["sports", ["sports", "game", "match", "league", "tournament", "playoff", "coach", "athlete", "football", "basketball"]],
+  ["entertainment", ["entertainment", "film", "movie", "music", "streaming", "celebrity", "festival", "show", "tv"]],
+  ["culture", ["culture", "art", "museum", "books", "literature", "design", "theater", "heritage", "festival"]]
+];
+
+const CATEGORY_HINTS: Record<Category, string[]> = Object.fromEntries(_CATEGORY_HINTS_ENTRIES) as Record<Category, string[]>;
 
 const COUNTRY_HINTS: Record<CountryCode, string[]> = {
   global: [],
