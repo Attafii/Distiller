@@ -56,8 +56,8 @@ export function DistilledCard({
       whileHover={{ y: -4 }}
       className="h-full"
     >
-      <Card className="flex h-full flex-col overflow-hidden border-zinc-800/90 bg-zinc-950/90 shadow-soft backdrop-blur">
-        <CardHeader className="space-y-4 border-b border-zinc-800/80 bg-zinc-900/20">
+      <Card className="flex h-full flex-col overflow-hidden border-border/90 bg-card/90 shadow-soft backdrop-blur">
+        <CardHeader className="space-y-4 border-b border-border/80 bg-card/20">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="default">
@@ -74,17 +74,17 @@ export function DistilledCard({
             </div>
 
             {article.likeCount > 0 ? (
-              <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+              <Badge variant="outline" className="border-border text-muted-foreground">
                 {article.likeCount} likes
               </Badge>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold leading-snug text-zinc-100 sm:text-xl">
+            <h2 className="text-lg font-semibold leading-snug text-foreground sm:text-xl">
               {article.title}
             </h2>
-            <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
+              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
               <span>{article.source.name}</span>
               <span aria-hidden="true">·</span>
               <span>{formatPublishedAt(article.publishedAt)}</span>
@@ -94,45 +94,43 @@ export function DistilledCard({
 
         <CardContent className="flex flex-1 flex-col gap-5 p-6">
           <section className="space-y-3" aria-label="AI summary">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
               <span>Distilled insights</span>
-              <span className="font-mono text-[11px] text-zinc-400">
+              <span className="font-mono text-[11px] text-muted-foreground">
                 {Math.round(article.summary.confidence * 100)}% confidence
               </span>
             </div>
 
             <ul className="space-y-3">
               {article.summary.bullets.map((bullet, index) => (
-                <li
+                  <li
                   key={`${article.id}-bullet-${index}`}
-                  className="rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm leading-relaxed text-zinc-200"
+                  className="rounded-2xl border border-border bg-card/75 px-4 py-3 text-sm leading-relaxed text-muted-foreground"
                 >
                   {bullet}
                 </li>
               ))}
             </ul>
           </section>
-
-          <section className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
+          <section className="space-y-3 rounded-2xl border border-border bg-card/40 p-4">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
               <Layers3 className="h-3.5 w-3.5" />
               <span>RAG grounding</span>
             </div>
-            <p className="text-sm leading-relaxed text-zinc-400">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               {article.description ?? "The article did not include a description, so the summary relies on retrieved source context."}
             </p>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="outline">Model {shortModelName(article.summary.model)}</Badge>
               <Badge variant="outline">{article.summary.retrievedContext.length} snippets</Badge>
             </div>
           </section>
         </CardContent>
-
-        <CardFooter className="flex flex-wrap gap-2 border-t border-zinc-800 p-6 pt-5">
+        <CardFooter className="flex flex-wrap gap-2 border-t border-border p-6 pt-5">
           <Button
             variant="outline"
             size="sm"
-            className={article.likedByViewer ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/10" : "border-zinc-700 text-zinc-100 hover:bg-zinc-900"}
+            className={article.likedByViewer ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/10" : "border-border text-foreground hover:bg-card"}
             onClick={() => onLikeAction?.(article)}
             disabled={article.likedByViewer}
           >
@@ -140,17 +138,16 @@ export function DistilledCard({
             {article.likedByViewer ? "Liked" : "Like"}
           </Button>
 
-          <Button variant="ghost" size="sm" className="text-zinc-300 hover:text-zinc-100" onClick={() => onShareAction?.(article)}>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => onShareAction?.(article)}>
             <Share2 className="h-4 w-4" />
             Share
           </Button>
 
-          <Button variant="ghost" size="sm" className="text-zinc-300 hover:text-zinc-100" onClick={copySummary}>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={copySummary}>
             <Copy className="h-4 w-4" />
             {copied ? "Copied" : "Copy summary"}
           </Button>
-
-          <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-100 hover:bg-zinc-900" onClick={() => onOpenAction?.(article)}>
+          <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-card" onClick={() => onOpenAction?.(article)}>
             See more
           </Button>
 

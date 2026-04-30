@@ -1,4 +1,4 @@
-import "server-only";
+﻿import "server-only";
 
 import { classifyArticlePriority } from "@/lib/article-signals";
 import { fetchFullArticleText } from "@/lib/article-text";
@@ -10,6 +10,11 @@ import type { ArticlePriority, Category, CountryCode, DateRange, NewsArticle } f
 const NEWS_BASE_URL = normalizeEnvString(process.env.NEWSAPI_BASE_URL, "https://newsapi.org/v2").replace(/\/$/, "");
 const NEWS_API_KEY = normalizeEnvString(process.env.NEWSAPI_KEY);
 const NEWS_COUNTRY = normalizeEnvString(process.env.NEWS_COUNTRY, "us");
+const REGION_QUERY_HINTS: Partial<Record<CountryCode, string>> = {
+  tn: "Tunisia",
+  cn: "China",
+  ru: "Russia"
+};
 
 export class NewsApiError extends Error {
   constructor(message: string, public readonly statusCode = 500) {
@@ -545,14 +550,16 @@ export async function fetchNewsArticles({
   const resolvedPageSize = Math.max(1, Math.min(pageSize, 12));
   const currentCountry = country;
   const currentDateRange = dateRange;
-  const useEverything = currentCountry === "global" || currentCountry === "tn" || currentCountry === "cn" || currentCountry === "ru" || Boolean(query?.trim());
+  const useEverything = currentCountry === "global" || Boolean(REGION_QUERY_HINTS[currentCountry]) || Boolean(query?.trim());
   const endpoint = new URL(useEverything ? `${NEWS_BASE_URL}/everything` : `${NEWS_BASE_URL}/top-headlines`);
 
   if (useEverything) {
+    const regionalQuery = REGION_QUERY_HINTS[currentCountry];
     const searchQuery = currentCountry === "global" ? buildGlobalQuery(category, query) : buildRegionalQuery(currentCountry, category, query);
+    const combinedQuery = [regionalQuery, searchQuery].filter(Boolean).join(" ").trim();
 
     if (searchQuery) {
-      endpoint.searchParams.set("q", searchQuery);
+      endpoint.searchParams.set("q", combinedQuery || searchQuery);
       endpoint.searchParams.set("searchIn", "title,description,content");
     }
 

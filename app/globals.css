@@ -3,27 +3,49 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
-  --background: 240 10% 4%;
-  --foreground: 0 0% 98%;
-  --card: 240 6% 8%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 6% 8%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 10% 4%;
-  --secondary: 240 4% 12%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 4% 12%;
-  --muted-foreground: 240 5% 64%;
-  --accent: 240 4% 16%;
-  --accent-foreground: 0 0% 98%;
+  color-scheme: light;
+  --background: 196 100% 97%;
+  --foreground: 224 41% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 41% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 41% 14%;
+  --primary: 196 82% 44%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 194 62% 91%;
+  --secondary-foreground: 224 41% 14%;
+  --muted: 194 42% 93%;
+  --muted-foreground: 218 15% 42%;
+  --accent: 169 65% 45%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 4% 16%;
-  --input: 240 4% 16%;
-  --ring: 240 5% 84%;
+  --border: 194 35% 82%;
+  --input: 194 35% 82%;
+  --ring: 196 82% 44%;
   --radius: 1rem;
+}
+
+[data-theme="mint"] {
+  --background: 154 52% 96%;
+  --primary: 163 78% 34%;
+  --secondary: 159 44% 89%;
+  --muted: 158 34% 91%;
+  --accent: 204 88% 45%;
+  --border: 156 28% 79%;
+  --input: 156 28% 79%;
+  --ring: 163 78% 34%;
+}
+
+[data-theme="sunset"] {
+  --background: 27 100% 97%;
+  --primary: 17 89% 54%;
+  --secondary: 23 95% 90%;
+  --muted: 22 62% 92%;
+  --accent: 342 85% 53%;
+  --border: 24 44% 80%;
+  --input: 24 44% 80%;
+  --ring: 17 89% 54%;
 }
 
 @layer base {
@@ -36,13 +58,60 @@
   }
 
   body {
-    @apply min-h-screen bg-zinc-950 text-zinc-100 antialiased font-sans;
-    background-image: radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 36%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 28%);
+    @apply min-h-screen bg-background text-foreground antialiased font-sans;
+    background-image: radial-gradient(circle at top, rgba(56, 189, 248, 0.2), transparent 42%),
+      radial-gradient(circle at 88% 12%, rgba(20, 184, 166, 0.18), transparent 34%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(240, 249, 255, 0.7));
   }
 
   ::selection {
-    background: rgba(255, 255, 255, 0.12);
-    color: rgb(255 255 255);
+    background: rgba(14, 165, 233, 0.22);
+    color: rgb(15 23 42);
   }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: 220 6% 6%;
+  --foreground: 210 8% 96%;
+  --card: 220 6% 10%;
+  --card-foreground: 210 8% 96%;
+  --popover: 220 6% 12%;
+  --popover-foreground: 210 8% 96%;
+  --primary: 196 82% 44%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 8% 18%;
+  --secondary-foreground: 210 8% 96%;
+  --muted: 220 10% 14%;
+  --muted-foreground: 210 8% 76%;
+  --accent: 169 65% 45%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 220 6% 14%;
+  --input: 220 6% 14%;
+  --ring: 196 82% 44%;
+}
+
+[data-theme="spectrum"] {
+  /* Palette inspired by the attached image: deep navy, royal blue, white, maroon, near-black */
+  --background: 220 12% 6%;
+  --foreground: 0 0% 100%;
+  --card: 220 12% 8%;
+  --card-foreground: 0 0% 100%;
+  --popover: 220 12% 10%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 220 90% 55%; /* royal blue */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 345 65% 30%; /* maroon */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 220 18% 14%;
+  --muted-foreground: 0 0% 80%;
+  --accent: 0 0% 6%; /* near-black */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 220 10% 12%;
+  --input: 220 10% 12%;
+  --ring: 220 90% 55%;
 }

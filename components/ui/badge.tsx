@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 export type BadgeVariant = "default" | "secondary" | "outline";
 
 const badgeStyles: Record<BadgeVariant, string> = {
-  default: "border border-zinc-100 bg-zinc-100 text-zinc-950",
-  secondary: "border border-zinc-800 bg-zinc-900 text-zinc-200",
-  outline: "border border-zinc-800 bg-transparent text-zinc-300"
+  default: "border border-primary/20 bg-primary/15 text-primary",
+  secondary: "border border-secondary bg-secondary text-secondary-foreground",
+  outline: "border border-border bg-transparent text-muted-foreground"
 };
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

@@ -51,10 +51,10 @@ const config: Config = {
         ring: "hsl(var(--ring))"
       },
       boxShadow: {
-        soft: "0 12px 32px rgba(0, 0, 0, 0.35)"
+        soft: "0 14px 34px rgba(14, 116, 144, 0.12)"
       },
       backgroundImage: {
-        "radial-soft": "radial-gradient(circle at top, rgba(255,255,255,0.05), transparent 38%)"
+        "radial-soft": "radial-gradient(circle at top, rgba(56,189,248,0.18), transparent 42%)"
       }
     }
   },

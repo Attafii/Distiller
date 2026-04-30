@@ -8,6 +8,7 @@ import { ArrowUpRight, Database, Globe, Layers3, Newspaper, ShieldCheck, Sparkle
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { GitHubRepoWidget } from "@/components/GitHubRepoWidget";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { COUNTRY_OPTIONS, TOPIC_OPTIONS } from "@/lib/news-options";
 
 const featureCards = [
@@ -64,29 +65,30 @@ const workflowSteps = [
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-zinc-950 text-zinc-100">
+    <main className="relative min-h-screen overflow-hidden bg-transparent text-foreground">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_60%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.22),_transparent_62%)]"
       />
 
       <section className="relative mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <nav className="flex items-center justify-between rounded-full border border-zinc-800 bg-zinc-900/70 px-4 py-3 backdrop-blur">
+        <nav className="flex items-center justify-between rounded-full border border-border bg-white/85 px-4 py-3 backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 text-zinc-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary text-foreground">
               <Newspaper className="h-4 w-4" />
             </div>
             <div>
               <p className="text-sm font-semibold tracking-tight">Distiller</p>
-              <p className="text-xs text-zinc-500">AI news intelligence</p>
+              <p className="text-xs text-muted-foreground">AI news intelligence</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <ThemeSwitcher />
             <GitHubRepoWidget />
             <Link
               href="/RefinedFeed"
-              className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 transition hover:bg-zinc-300"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:brightness-95"
             >
               Open refined feed
               <ArrowUpRight className="h-4 w-4" />
@@ -102,13 +104,13 @@ export default function HomePage() {
             className="space-y-8"
           >
             <div className="space-y-4">
-              <Badge variant="outline" className="border-zinc-700 text-zinc-300">
+              <Badge variant="outline" className="border-border text-muted-foreground">
                 RAG · embeddings · our AI and API service
               </Badge>
-              <h1 className="max-w-2xl text-5xl font-semibold tracking-tight text-zinc-50 sm:text-6xl">
+              <h1 className="max-w-2xl text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
                 News distilled into a feed that reads like an executive brief.
               </h1>
-              <p className="max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">
+              <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                 Distiller turns broad coverage into a concise, monochrome interface using our AI and API service, RAG,
                 and embeddings. Each article is grounded before it is summarized, and the assistant can search for a
                 specific story or update when you need a deeper answer.
@@ -118,29 +120,29 @@ export default function HomePage() {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/RefinedFeed"
-                className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-5 py-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-300"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:brightness-95"
               >
                 Start reading
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
               <a
                 href="#why"
-                className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:border-zinc-700 hover:bg-zinc-900"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-secondary"
               >
                 Why it works
               </a>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-soft">
-                <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">What readers get</p>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+              <div className="rounded-2xl border border-border bg-card/80 p-4 shadow-soft">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">What readers get</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Three bullet summaries, source context, and an easy path back to the original article.
                 </p>
               </div>
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-soft">
-                <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">Coverage</p>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+              <div className="rounded-2xl border border-border bg-card/80 p-4 shadow-soft">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Coverage</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Global, Tunisia, China, Russia, and a wider set of topics across policy, markets, science, culture, AI, and LLM news.
                 </p>
               </div>
@@ -152,7 +154,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: "easeOut", delay: 0.08 }}
           >
-            <Card className="border-zinc-800 bg-zinc-900/70 shadow-soft backdrop-blur">
+            <Card className="border-border bg-card/90 shadow-soft backdrop-blur">
               <CardContent className="space-y-5 p-6 sm:p-8">
                 <div className="flex items-center justify-between gap-3">
                   <Badge variant="default">Live preview</Badge>
@@ -160,8 +162,8 @@ export default function HomePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h2 className="text-2xl font-semibold tracking-tight text-zinc-100">How the summary stays grounded</h2>
-                  <p className="text-sm leading-relaxed text-zinc-400">
+                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">How the summary stays grounded</h2>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
                     Embeddings find the best source passages first, and RAG uses that context to keep the summary specific,
                     readable, and easier to trust.
                   </p>
@@ -171,7 +173,7 @@ export default function HomePage() {
                   {sampleBullets.map((bullet) => (
                     <li
                       key={bullet}
-                      className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-4 py-3 text-sm leading-relaxed text-zinc-200"
+                      className="rounded-2xl border border-border bg-card/75 px-4 py-3 text-sm leading-relaxed text-muted-foreground"
                     >
                       {bullet}
                     </li>
@@ -180,9 +182,9 @@ export default function HomePage() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   {workflowSteps.map((step) => (
-                    <div key={step.title} className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                      <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">{step.title}</p>
-                      <p className="mt-2 text-sm leading-relaxed text-zinc-300">{step.copy}</p>
+                    <div key={step.title} className="rounded-2xl border border-border bg-card/75 p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{step.title}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.copy}</p>
                     </div>
                   ))}
                 </div>
@@ -196,13 +198,13 @@ export default function HomePage() {
             const Icon = item.icon;
 
             return (
-              <Card key={item.title} className="border-zinc-800 bg-zinc-900/60 shadow-soft">
+              <Card key={item.title} className="border-border bg-card/60 shadow-soft">
                 <CardContent className="space-y-4 p-6">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-secondary text-foreground">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-100">{item.title}</h3>
-                  <p className="text-sm leading-relaxed text-zinc-400">{item.description}</p>
+                      <h3 className="text-lg font-semibold text-foreground">{item.title}</h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
                 </CardContent>
               </Card>
             );
@@ -210,22 +212,22 @@ export default function HomePage() {
         </section>
 
         <section className="grid gap-5 pb-16 lg:grid-cols-[1.05fr_0.95fr]">
-          <Card className="border-zinc-800 bg-zinc-900/60 shadow-soft">
+          <Card className="border-border bg-card/80 shadow-soft">
             <CardContent className="space-y-4 p-6">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Topics</p>
-                <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Topics</p>
+                <Badge variant="outline" className="border-border text-muted-foreground">
                   {TOPIC_OPTIONS.length} topics
                 </Badge>
               </div>
 
-              <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
                 More topic chips mean more ways to browse the feed, from politics and finance to climate, education, AI, LLMs, and culture.
               </p>
 
               <div className="flex flex-wrap gap-2 pt-2">
                 {TOPIC_OPTIONS.map((option) => (
-                  <Badge key={option.id} variant="outline" className="border-zinc-800 bg-zinc-950/70 text-zinc-300">
+                  <Badge key={option.id} variant="outline" className="border-border bg-card/75 text-muted-foreground">
                     {option.label}
                   </Badge>
                 ))}
@@ -233,22 +235,22 @@ export default function HomePage() {
             </CardContent>
           </Card>
 
-          <Card className="border-zinc-800 bg-zinc-900/60 shadow-soft">
+          <Card className="border-border bg-card/80 shadow-soft">
             <CardContent className="space-y-4 p-6">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Regions</p>
-                <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Regions</p>
+                <Badge variant="outline" className="border-border text-muted-foreground">
                   {COUNTRY_OPTIONS.length} regions
                 </Badge>
               </div>
 
-              <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
                 The region list starts with Global, then Tunisia, China, Russia, and the broader international set so local coverage stays easy to reach.
               </p>
 
               <div className="flex flex-wrap gap-2 pt-2">
                 {COUNTRY_OPTIONS.map((option) => (
-                  <Badge key={option.id} variant="outline" className="border-zinc-800 bg-zinc-950/70 text-zinc-300">
+                  <Badge key={option.id} variant="outline" className="border-border bg-card/75 text-muted-foreground">
                     {option.label}
                   </Badge>
                 ))}

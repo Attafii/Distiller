@@ -173,6 +173,12 @@ export function NewsArticleModal({
   const priorityLabel = getPriorityLabel(currentArticle.priority);
   const fallbackArticleText = buildLocalArticleText(currentArticle);
   const visibleFullArticleText = fullText ?? fallbackArticleText;
+  const quickPrompts = [
+    "What is your POV on this story and what evidence supports it?",
+    "What are the likely short-term and long-term impacts?",
+    "What is missing from the article that I should verify?",
+    `How does this affect ${currentArticle.category} right now?`
+  ];
 
   const submitQuestion = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -229,7 +235,7 @@ export function NewsArticleModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 px-3 py-4 backdrop-blur-sm sm:px-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 px-3 py-4 backdrop-blur-sm sm:px-4"
         onClick={onCloseAction}
       >
         <motion.div
@@ -237,10 +243,10 @@ export function NewsArticleModal({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 18, scale: 0.98 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="flex h-[min(92vh,940px)] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-zinc-800 bg-zinc-950 shadow-2xl"
+          className="flex h-[min(92vh,940px)] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-border bg-background shadow-2xl"
           onClick={(event) => event.stopPropagation()}
         >
-          <header className="flex items-start justify-between gap-4 border-b border-zinc-800 bg-zinc-900/40 px-5 py-4 sm:px-6">
+          <header className="flex items-start justify-between gap-4 border-b border-border bg-card/60 px-5 py-4 sm:px-6">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="default">
@@ -255,20 +261,20 @@ export function NewsArticleModal({
                   </Badge>
                 ) : null}
                 {article.likeCount > 0 ? (
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  <Badge variant="outline" className="border-border text-muted-foreground">
                     {article.likeCount} likes
                   </Badge>
                 ) : null}
               </div>
-              <h2 className="text-xl font-semibold tracking-tight text-zinc-50 sm:text-2xl">{article.title}</h2>
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{article.title}</h2>
+              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
                 <span>{article.source.name}</span>
                 <span aria-hidden="true">·</span>
                 <span>{formatPublishedAt(article.publishedAt)}</span>
               </div>
             </div>
 
-            <Button variant="ghost" size="sm" onClick={onCloseAction} className="shrink-0 text-zinc-300 hover:text-zinc-100">
+            <Button variant="ghost" size="sm" onClick={onCloseAction} className="shrink-0 text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4" />
               Close
             </Button>
@@ -276,25 +282,25 @@ export function NewsArticleModal({
 
           <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
             <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-              <Card className="overflow-hidden border-zinc-800 bg-zinc-900/50">
+              <Card className="overflow-hidden border-border bg-card/85">
                 {article.imageUrl ? (
-                  <div className="aspect-[16/9] border-b border-zinc-800 bg-zinc-950">
+                  <div className="aspect-[16/9] border-b border-border bg-card">
                     <img src={article.imageUrl} alt={article.title} className="h-full w-full object-cover" />
                   </div>
                 ) : null}
 
                 <CardContent className="space-y-4 p-5 sm:p-6">
-                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
+                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
                     <Badge variant="outline">Topic: {article.category}</Badge>
-                    <Badge variant="outline" className="border-zinc-700 text-zinc-300">
+                    <Badge variant="outline" className="border-border text-muted-foreground">
                       <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
                       {formatPublishedAt(article.publishedAt)}
                     </Badge>
                   </div>
 
                   <div className="space-y-3">
-                    <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">Article context</p>
-                    <p className="text-sm leading-relaxed text-zinc-300">
+                    <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Article context</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
                       {article.description ?? "This article does not include a description, so use the full-text button to inspect the source wording."}
                     </p>
 
@@ -303,7 +309,7 @@ export function NewsArticleModal({
                         href={article.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:border-zinc-700 hover:bg-zinc-900"
+                        className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-secondary"
                       >
                         Read original
                         <ExternalLink className="h-4 w-4" />
@@ -313,7 +319,7 @@ export function NewsArticleModal({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="border-zinc-700 text-zinc-100 hover:bg-zinc-900"
+                        className="border-border text-foreground hover:bg-secondary"
                         onClick={() => setShowFullText((current) => !current)}
                         aria-expanded={showFullText}
                         aria-controls="full-article-text"
@@ -323,7 +329,7 @@ export function NewsArticleModal({
                       </Button>
 
                       {onShareAction ? (
-                        <Button type="button" variant="ghost" size="sm" className="text-zinc-300 hover:text-zinc-100" onClick={() => onShareAction(article)}>
+                        <Button type="button" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => onShareAction(article)}>
                           <Share2 className="h-4 w-4" />
                           Share
                         </Button>
@@ -336,7 +342,7 @@ export function NewsArticleModal({
                         className={
                           article.likedByViewer
                             ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/10"
-                            : "border-zinc-700 text-zinc-100 hover:bg-zinc-900"
+                            : "border-border text-foreground hover:bg-secondary"
                         }
                         onClick={() => onLikeAction?.(article)}
                         disabled={article.likedByViewer}
@@ -349,19 +355,19 @@ export function NewsArticleModal({
                     {showFullText ? (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">Full article text</p>
-                          {fullTextLoading ? <p className="text-xs text-zinc-500">Loading full text...</p> : null}
+                          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Full article text</p>
+                          {fullTextLoading ? <p className="text-xs text-muted-foreground">Loading full text...</p> : null}
                         </div>
                         <div
                           id="full-article-text"
                           aria-busy={fullTextLoading}
-                          className="max-h-80 overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 text-sm leading-relaxed whitespace-pre-wrap text-zinc-300"
+                          className="max-h-80 overflow-y-auto rounded-2xl border border-border bg-card/80 p-4 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground"
                         >
                           {fullTextLoading
                             ? "Loading full article text..."
                             : visibleFullArticleText || "No additional article text was provided by the source feed."}
                         </div>
-                        {fullTextNotice ? <p className="text-xs text-zinc-500">{fullTextNotice}</p> : null}
+                        {fullTextNotice ? <p className="text-xs text-muted-foreground">{fullTextNotice}</p> : null}
                       </div>
                     ) : null}
                   </div>
@@ -369,11 +375,11 @@ export function NewsArticleModal({
               </Card>
 
               <div className="space-y-5">
-                <Card className="border-zinc-800 bg-zinc-900/50">
+                <Card className="border-border bg-card/85">
                   <CardContent className="space-y-4 p-5 sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">AI summary</p>
-                      <Badge variant="outline" className="border-zinc-700 text-zinc-300">
+                      <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">AI summary</p>
+                      <Badge variant="outline" className="border-border text-muted-foreground">
                         Model {article.summary.model === "fallback" ? "fallback" : article.summary.model.split("/").pop() ?? article.summary.model}
                       </Badge>
                     </div>
@@ -382,7 +388,7 @@ export function NewsArticleModal({
                       {article.summary.bullets.map((bullet, index) => (
                         <li
                           key={`${article.id}-bullet-${index}`}
-                          className="rounded-2xl border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-sm leading-relaxed text-zinc-200"
+                          className="rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground"
                         >
                           {bullet}
                         </li>
@@ -390,38 +396,38 @@ export function NewsArticleModal({
                     </ul>
 
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-                        <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
                           <Bot className="h-3.5 w-3.5" />
                           AI insight
                         </div>
-                        <p className="text-sm leading-relaxed text-zinc-300">{article.summary.insight}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{article.summary.insight}</p>
                       </div>
 
-                      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-                        <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-zinc-500">
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
                           <Globe className="h-3.5 w-3.5" />
                           Conclusion
                         </div>
-                        <p className="text-sm leading-relaxed text-zinc-300">{article.summary.conclusion}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{article.summary.conclusion}</p>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <Badge variant="outline">{Math.round(article.summary.confidence * 100)}% confidence</Badge>
                       <Badge variant="outline">{article.summary.retrievedContext.length} snippets</Badge>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-zinc-800 bg-zinc-900/50">
+                <Card className="border-border bg-card/85">
                   <CardContent className="space-y-4 p-5 sm:p-6">
-                    <div className="flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-zinc-500">
+                    <div className="flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground">
                       <MessageSquareMore className="h-4 w-4" />
                       Chat with Distiller
                     </div>
 
-                    <div className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4">
+                    <div className="space-y-3 rounded-2xl border border-border bg-card/70 p-4">
                       <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
                         {messages.map((message, index) => (
                           <div
@@ -429,7 +435,7 @@ export function NewsArticleModal({
                             className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                           >
                             {message.role === "assistant" ? (
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-zinc-200">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-foreground">
                                 <Bot className="h-4 w-4" />
                               </div>
                             ) : null}
@@ -437,15 +443,15 @@ export function NewsArticleModal({
                             <div
                               className={`max-w-[85%] rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
                                 message.role === "user"
-                                  ? "border-zinc-700 bg-zinc-100 text-zinc-950"
-                                  : "border-zinc-800 bg-zinc-900 text-zinc-200"
+                                  ? "border-primary/25 bg-primary/12 text-foreground"
+                                  : "border-border bg-white text-foreground"
                               }`}
                             >
                               {message.content}
                             </div>
 
                             {message.role === "user" ? (
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-100 text-zinc-950">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/12 text-foreground">
                                 <User2 className="h-4 w-4" />
                               </div>
                             ) : null}
@@ -453,7 +459,7 @@ export function NewsArticleModal({
                         ))}
 
                         {sending ? (
-                          <div className="flex items-center gap-2 text-sm text-zinc-500">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             Thinking through the article...
                           </div>
@@ -462,7 +468,20 @@ export function NewsArticleModal({
                         <div ref={bottomRef} />
                       </div>
 
-                      {error ? <p className="text-xs text-zinc-500">{error}</p> : null}
+                      {error ? <p className="text-xs text-muted-foreground">{error}</p> : null}
+
+                      <div className="flex flex-wrap gap-2">
+                        {quickPrompts.map((prompt) => (
+                          <button
+                            key={prompt}
+                            type="button"
+                            onClick={() => setQuestion(prompt)}
+                            className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/45 hover:bg-secondary hover:text-foreground"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
 
                       <form onSubmit={submitQuestion} className="space-y-3">
                         <label htmlFor="news-question" className="sr-only">
@@ -474,11 +493,11 @@ export function NewsArticleModal({
                           onChange={(event) => setQuestion(event.target.value)}
                           placeholder="Ask for a take, critique the framing, or discuss what it means..."
                           rows={3}
-                          className="w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                          className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
                         />
 
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs text-zinc-500">Chat stays centered on the selected article.</p>
+                          <p className="text-xs text-muted-foreground">Chat stays centered on the selected article.</p>
                           <Button type="submit" size="sm" variant="default" disabled={sending || !question.trim()}>
                             <Send className="h-4 w-4" />
                             Send

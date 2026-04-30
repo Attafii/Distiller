@@ -9,6 +9,7 @@ export type Category =
   | "science"
   | "business"
   | "finance"
+  | "stocks"
   | "climate"
   | "health"
   | "education"

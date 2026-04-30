@@ -69,8 +69,15 @@ export function NewsAssistant({
         : `What is the latest ${categoryLabel.toLowerCase()} story right now?`,
       country === "global"
         ? `Find the most important story in ${categoryLabel.toLowerCase()} and explain why it matters.`
-        : `What is happening in ${countryLabel} news right now, especially in ${categoryLabel.toLowerCase()}?`,
-      "Talk through the strongest match like a human analyst, including what it means and what to watch next."
+        : `What is happening in ${countryLabel} news right now?`,
+      category === "ai" || category === "llm"
+        ? "Give your view on the likely impact, risks, and winners or losers from this AI story."
+        : category === "stocks"
+          ? "What is the market impact and what signals should investors watch next?"
+          : "Give me the details, context, and sources for the strongest match.",
+      country === "cn" || country === "ru"
+        ? `Explain regional context in ${countryLabel} and why this story matters globally.`
+        : "Where is coverage still thin, and what questions should I ask next?"
     ],
     [category, categoryLabel, country, countryLabel]
   );
@@ -157,7 +164,7 @@ export function NewsAssistant({
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="mb-6"
     >
-      <Card className="overflow-hidden border-zinc-800/90 bg-zinc-900/60 shadow-soft">
+      <Card className="overflow-hidden border-border bg-card/80 shadow-soft">
         <CardContent className="space-y-5 p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-3">
@@ -166,35 +173,35 @@ export function NewsAssistant({
                   <Bot className="mr-1.5 h-3.5 w-3.5" />
                   News assistant
                 </Badge>
-                <Badge variant="outline" className="border-zinc-700 text-zinc-300">
+                <Badge variant="outline" className="border-border text-muted-foreground">
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                   Search + answer
                 </Badge>
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl">
-                  Ask naturally, follow up freely, and get a grounded answer you can keep talking to.
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  Ask for a specific story, fact, or update and get a detailed answer.
                 </h2>
-                <p className="max-w-3xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-                  The assistant parses your question, searches the current coverage, expands article text when available,
-                  and answers like a human analyst instead of a static summary box.
+                <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  The assistant parses your question, searches the current coverage, ranks the best matches, and answers
+                  with the strongest source material it can find.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+              <Badge variant="outline" className="border-border text-muted-foreground">
                 {categoryLabel}
               </Badge>
-              <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+              <Badge variant="outline" className="border-border text-muted-foreground">
                 {countryLabel}
               </Badge>
-              <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+              <Badge variant="outline" className="border-border text-muted-foreground">
                 {dateRangeLabel}
               </Badge>
               {displayedModel ? (
-                <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                <Badge variant="outline" className="border-border text-muted-foreground">
                   Model {displayedModel}
                 </Badge>
               ) : null}
@@ -211,8 +218,8 @@ export function NewsAssistant({
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               rows={3}
-              placeholder="Ask a follow-up, compare stories, or tell it what angle you want..."
-              className="min-h-28 w-full resize-y rounded-3xl border border-zinc-800 bg-zinc-950/80 px-4 py-3 text-sm leading-relaxed text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+              placeholder="Ask for a specific story, person, company, or issue..."
+              className="min-h-28 w-full resize-y rounded-3xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
             />
 
             <Button type="submit" size="lg" className="lg:self-stretch" disabled={loading || question.trim().length === 0}>
@@ -228,7 +235,7 @@ export function NewsAssistant({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="border border-zinc-800 bg-zinc-950/60 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900"
+                className="border border-border bg-card text-muted-foreground hover:border-primary/40 hover:bg-secondary hover:text-foreground"
                 onClick={() => setQuestion(prompt)}
               >
                 {prompt}
@@ -236,9 +243,9 @@ export function NewsAssistant({
             ))}
           </div>
 
-          <div aria-live="polite" className="space-y-3 rounded-3xl border border-zinc-800 bg-zinc-950/70 p-4 sm:p-5">
+          <div aria-live="polite" className="space-y-3 rounded-3xl border border-border bg-card/75 p-4 sm:p-5">
             {messages.length === 0 ? (
-              <div className="space-y-2 text-sm leading-relaxed text-zinc-500">
+              <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
                 <p>Try asking about a named person, a headline, a company, or a current event.</p>
                 <p>The assistant will search the current news coverage, pull in the full article text when available, and keep the conversation natural.</p>
               </div>
@@ -248,11 +255,11 @@ export function NewsAssistant({
                   key={message.id}
                   className={`flex gap-3 rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
                     message.role === "user"
-                      ? "ml-auto max-w-3xl border-zinc-700 bg-zinc-100 text-zinc-950"
-                      : "mr-auto max-w-4xl border-zinc-800 bg-zinc-900/80 text-zinc-200"
+                      ? "ml-auto max-w-3xl border-primary/25 bg-primary/12 text-foreground"
+                      : "mr-auto max-w-4xl border-border bg-white text-foreground"
                   }`}
                 >
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-zinc-100">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
                     {message.role === "user" ? <User2 className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
                   <p className="whitespace-pre-wrap">{message.content}</p>
@@ -261,7 +268,7 @@ export function NewsAssistant({
             )}
 
             {loading ? (
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Searching articles and drafting the answer...
               </div>
@@ -273,8 +280,8 @@ export function NewsAssistant({
           {latestSources.length > 0 ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Top sources</p>
-                <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Top sources</p>
+                <Badge variant="outline" className="border-border text-muted-foreground">
                   {latestSources.length} matches
                 </Badge>
               </div>
@@ -286,22 +293,22 @@ export function NewsAssistant({
                     href={source.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-4 transition hover:border-zinc-700 hover:bg-zinc-900/80"
+                    className="rounded-3xl border border-border bg-card p-4 transition hover:border-primary/45 hover:bg-secondary/40"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="text-sm font-medium leading-snug text-zinc-100">{source.title}</p>
-                        <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">
+                        <p className="text-sm font-medium leading-snug text-foreground">{source.title}</p>
+                        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
                           {source.source} · {formatPublishedAt(source.publishedAt)}
                         </p>
                       </div>
 
-                      <Badge variant="outline" className="border-zinc-700 text-zinc-300">
+                      <Badge variant="outline" className="border-border text-muted-foreground">
                         {source.relevance}%
                       </Badge>
                     </div>
 
-                    <p className="mt-3 text-sm leading-relaxed text-zinc-400">{source.snippet}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{source.snippet}</p>
                   </a>
                 ))}
               </div>

@@ -11,6 +11,7 @@ import { DistilledCard } from "@/components/DistilledCard";
 import { GitHubRepoWidget } from "@/components/GitHubRepoWidget";
 import { NewsArticleModal } from "@/components/NewsArticleModal";
 import { NewsAssistant } from "@/components/NewsAssistant";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,14 +38,14 @@ function FeedSkeleton() {
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-soft"
+          className="animate-pulse rounded-3xl border border-border bg-card p-6 shadow-soft"
         >
-          <div className="mb-4 h-4 w-28 rounded-full bg-zinc-800" />
-          <div className="mb-3 h-6 w-4/5 rounded-full bg-zinc-800" />
+          <div className="mb-4 h-4 w-28 rounded-full bg-muted" />
+          <div className="mb-3 h-6 w-4/5 rounded-full bg-muted" />
           <div className="space-y-3">
-            <div className="h-16 rounded-2xl bg-zinc-800/80" />
-            <div className="h-16 rounded-2xl bg-zinc-800/80" />
-            <div className="h-16 rounded-2xl bg-zinc-800/80" />
+            <div className="h-16 rounded-2xl bg-muted/80" />
+            <div className="h-16 rounded-2xl bg-muted/80" />
+            <div className="h-16 rounded-2xl bg-muted/80" />
           </div>
         </div>
       ))}
@@ -54,10 +55,10 @@ function FeedSkeleton() {
 
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <Card className="border-zinc-800 bg-zinc-900/70">
+    <Card className="border-border bg-card/70">
       <CardContent className="px-6 py-12 text-center">
-        <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">{title}</p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">{description}</p>
+        <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">{title}</p>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );
@@ -288,21 +289,22 @@ export default function RefinedFeedPage() {
       : "Try another topic, switch the region, or change the summary mode to load a different briefing style.";
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+    <main className="min-h-screen bg-transparent text-foreground">
       <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-8 flex items-center justify-between rounded-full border border-zinc-800 bg-zinc-900/70 px-4 py-3 backdrop-blur">
+        <header className="mb-8 flex items-center justify-between rounded-full border border-border bg-white/85 px-4 py-3 backdrop-blur">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 text-zinc-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary text-foreground">
               <Newspaper className="h-4 w-4" />
             </div>
             <div>
               <p className="text-sm font-semibold tracking-tight">Distiller</p>
-              <p className="text-xs text-zinc-500">Refined feed</p>
+              <p className="text-xs text-muted-foreground">Refined feed</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="hidden border-zinc-700 text-zinc-400 sm:inline-flex">
+            <ThemeSwitcher />
+            <Badge variant="outline" className="hidden border-border text-muted-foreground sm:inline-flex">
               RAG + embeddings + our AI and API service
             </Badge>
             <GitHubRepoWidget />
@@ -315,41 +317,41 @@ export default function RefinedFeedPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="mb-8 grid gap-5 rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-soft lg:grid-cols-[1.25fr_0.75fr] lg:p-8"
+          className="mb-8 grid gap-5 rounded-3xl border border-border bg-white/75 p-6 shadow-soft lg:grid-cols-[1.25fr_0.75fr] lg:p-8"
         >
           <div className="space-y-4">
-            <Badge variant="outline" className="border-zinc-700 text-zinc-300">
+            <Badge variant="outline" className="border-border text-muted-foreground">
               <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
               Topic + region routing
             </Badge>
             <div className="space-y-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                 Refine the global feed into signals you can scan in seconds.
               </h1>
-              <p className="max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                 Distiller fetches stories from our API-backed pipeline, grounds them with embeddings, and uses RAG to
                 render exactly three concise bullets per article.
               </p>
             </div>
           </div>
 
-          <Card className="border-zinc-800 bg-zinc-950/80">
+          <Card className="border-border bg-card/90">
             <CardContent className="space-y-4 p-6">
               <div className="flex items-center justify-between gap-3">
                 <Badge variant="default">Current mode</Badge>
                 <Badge variant="outline">{summaryMode}</Badge>
               </div>
-              <div className="space-y-2 text-sm leading-relaxed text-zinc-400">
-                <p>Category: <span className="text-zinc-100">{activeTopicLabel}</span></p>
-                <p>Region: <span className="text-zinc-100">{activeCountryLabel}</span></p>
-                <p>Date window: <span className="text-zinc-100">{activeDateLabel}</span></p>
-                <p>Articles loaded: <span className="text-zinc-100">{articles.length}</span></p>
-                <p>Visible after filters: <span className="text-zinc-100">{visibleArticles.length}</span></p>
-                <p>Priority filter: <span className="text-zinc-100">{activePriorityLabel}</span></p>
-                <p>Infinite scroll: <span className="text-zinc-100">{hasMore ? "active" : "complete"}</span></p>
-                <p>RAG: <span className="text-zinc-100">enabled</span></p>
-                <p>Embeddings: <span className="text-zinc-100">active</span></p>
-                <p className="text-xs text-zinc-500">Red dot means important or breaking news.</p>
+              <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+                <p>Category: <span className="text-foreground">{activeTopicLabel}</span></p>
+                <p>Region: <span className="text-foreground">{activeCountryLabel}</span></p>
+                <p>Date window: <span className="text-foreground">{activeDateLabel}</span></p>
+                <p>Articles loaded: <span className="text-foreground">{articles.length}</span></p>
+                <p>Visible after filters: <span className="text-foreground">{visibleArticles.length}</span></p>
+                <p>Priority filter: <span className="text-foreground">{activePriorityLabel}</span></p>
+                <p>Infinite scroll: <span className="text-foreground">{hasMore ? "active" : "complete"}</span></p>
+                <p>RAG: <span className="text-foreground">enabled</span></p>
+                <p>Embeddings: <span className="text-foreground">active</span></p>
+                <p className="text-xs text-muted-foreground">Red dot means important or breaking news.</p>
               </div>
             </CardContent>
           </Card>
@@ -357,20 +359,20 @@ export default function RefinedFeedPage() {
 
         <form
           onSubmit={submitSearch}
-          className="mb-4 grid gap-3 rounded-3xl border border-zinc-800 bg-zinc-900/60 p-4 shadow-soft sm:grid-cols-[1fr_auto_auto]"
+          className="mb-4 grid gap-3 rounded-3xl border border-border bg-card/80 p-4 shadow-soft sm:grid-cols-[1fr_auto_auto]"
         >
           <label htmlFor="distiller-search" className="sr-only">
             Search news topics
           </label>
 
           <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               id="distiller-search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search topics, regions, or headlines"
-              className="h-11 w-full rounded-full border border-zinc-800 bg-zinc-950/80 pl-11 pr-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+              className="h-11 w-full rounded-full border border-border bg-card/90 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
 
@@ -385,17 +387,17 @@ export default function RefinedFeedPage() {
         </form>
 
         {searchQuery ? (
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.28em] text-zinc-500">
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.28em] text-muted-foreground">
             <span>Search:</span>
-            <Badge variant="outline" className="border-zinc-700 text-zinc-300 normal-case tracking-normal">
+            <Badge variant="outline" className="border-border text-muted-foreground normal-case tracking-normal">
               {searchQuery}
             </Badge>
           </div>
         ) : null}
 
-        <Card className="mb-4 border-zinc-800 bg-zinc-900/60 shadow-soft">
+        <Card className="mb-4 border-border bg-card/80 shadow-soft">
           <CardContent className="space-y-5 p-4 sm:p-5">
-            <p className="max-w-4xl text-sm leading-relaxed text-zinc-400">
+            <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
               Use the topic chips to widen or narrow the story set, the region chips to focus on Tunisia, China, Russia, or another market,
               and the mode chips to switch between faster and deeper summaries.
             </p>
@@ -403,8 +405,8 @@ export default function RefinedFeedPage() {
             <div className="grid gap-4 xl:grid-cols-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Topics</p>
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Topics</p>
+                  <Badge variant="outline" className="border-border text-muted-foreground">
                     {TOPIC_OPTIONS.length} topics
                   </Badge>
                 </div>
@@ -420,8 +422,8 @@ export default function RefinedFeedPage() {
                         onClick={() => resetFeed(option.id)}
                         className={`rounded-full border px-4 py-2 text-sm transition ${
                           active
-                            ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                            : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100"
+                            ? "border-primary bg-primary-foreground text-primary"
+                            : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
                         }`}
                       >
                         {option.label}
@@ -433,8 +435,8 @@ export default function RefinedFeedPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Region</p>
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Region</p>
+                  <Badge variant="outline" className="border-border text-muted-foreground">
                     {activeCountryLabel}
                   </Badge>
                 </div>
@@ -450,8 +452,8 @@ export default function RefinedFeedPage() {
                         onClick={() => updateCountry(option.id)}
                         className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.18em] transition ${
                           active
-                            ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                            : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-100"
+                            ? "border-primary bg-primary-foreground text-primary"
+                            : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
                         }`}
                       >
                         {option.label}
@@ -463,8 +465,8 @@ export default function RefinedFeedPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Date range</p>
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Date range</p>
+                  <Badge variant="outline" className="border-border text-muted-foreground">
                     {activeDateLabel}
                   </Badge>
                 </div>
@@ -480,8 +482,8 @@ export default function RefinedFeedPage() {
                         onClick={() => updateDateRange(option.id)}
                         className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.2em] transition ${
                           active
-                            ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                            : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-100"
+                            ? "border-primary bg-primary-foreground text-primary"
+                            : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
                         }`}
                       >
                         {option.label}
@@ -492,8 +494,8 @@ export default function RefinedFeedPage() {
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Priority</p>
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Priority</p>
+                  <Badge variant="outline" className="border-border text-muted-foreground">
                     {activePriorityLabel}
                   </Badge>
                 </div>
@@ -510,7 +512,7 @@ export default function RefinedFeedPage() {
                         className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.2em] transition ${
                           active
                             ? "border-red-400/70 bg-red-500/15 text-red-50"
-                            : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-100"
+                            : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
                         }`}
                       >
                         {option.id === "all" ? null : <span className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]" />}
@@ -533,10 +535,10 @@ export default function RefinedFeedPage() {
                     type="button"
                     onClick={() => updateMode(mode.id)}
                     className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${
-                      active
-                        ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                        : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-100"
-                    }`}
+                        active
+                          ? "border-primary bg-primary-foreground text-primary"
+                          : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
+                      }`}
                   >
                     {mode.label}
                   </button>
@@ -552,10 +554,10 @@ export default function RefinedFeedPage() {
         </Card>
 
         {error ? (
-          <Card className="mb-6 border-zinc-800 bg-zinc-900/70">
+          <Card className="mb-6 border-border bg-card/90">
             <CardContent className="space-y-2 px-6 py-5">
-              <p className="text-sm font-medium text-zinc-100">Unable to load the feed</p>
-              <p className="text-sm leading-relaxed text-zinc-400">{error}</p>
+              <p className="text-sm font-medium text-foreground">Unable to load the feed</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{error}</p>
             </CardContent>
           </Card>
         ) : null}
@@ -583,14 +585,14 @@ export default function RefinedFeedPage() {
         <div ref={sentinelRef} className="h-12" />
 
         {loading && articles.length > 0 ? (
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-zinc-500">
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading more stories
           </div>
         ) : null}
 
         {!hasMore && articles.length > 0 ? (
-          <p className="mt-8 text-center text-xs uppercase tracking-[0.3em] text-zinc-500">
+          <p className="mt-8 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
             You reached the end of the current feed
           </p>
         ) : null}
