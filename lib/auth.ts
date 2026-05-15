@@ -5,15 +5,12 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 
-if (!db) {
-  throw new Error("DATABASE_URL environment variable is not set. Add it to .env.local to enable authentication.");
-}
-
 export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema
-  }),
+  database: db
+    ? drizzleAdapter(db, { provider: "pg", schema })
+    : (() => {
+        throw new Error("DATABASE_URL is not set — auth requires a database connection");
+      })(),
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false
