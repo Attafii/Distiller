@@ -1,19 +1,25 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
-import { motion } from "framer-motion";
-import { Loader2, Newspaper, RefreshCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, Loader2, Newspaper, RefreshCcw, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { DistilledCard } from "@/components/DistilledCard";
-import { NewsArticleModal } from "@/components/NewsArticleModal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { COUNTRY_OPTIONS, DATE_RANGE_OPTIONS, TOPIC_OPTIONS } from "@/lib/news-options";
 import type { Category, CountryCode, DateRange, DistilledArticle, FeedResponse, SummarizationMode } from "@/types/news";
+
+const NewsArticleModal = dynamic(
+  () => import("@/components/NewsArticleModal").then((mod) => mod.NewsArticleModal),
+  { ssr: false, loading: () => null }
+);
 
 const summaryModes: Array<{ id: SummarizationMode; label: string }> = [
   { id: "auto", label: "Auto" },
@@ -24,32 +30,36 @@ const summaryModes: Array<{ id: SummarizationMode; label: string }> = [
 
 function FeedSkeleton() {
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
+    <div className="grid gap-5 lg:grid-cols-2" role="status" aria-label="Loading articles">
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-soft"
+          className="animate-pulse rounded-2xl border border-border bg-card p-6 shadow-card"
         >
-          <div className="mb-4 h-4 w-28 rounded-full bg-zinc-800" />
-          <div className="mb-3 h-6 w-4/5 rounded-full bg-zinc-800" />
+          <div className="mb-4 h-4 w-24 rounded-full bg-muted" />
+          <div className="mb-3 h-5 w-4/5 rounded-full bg-muted" />
           <div className="space-y-3">
-            <div className="h-16 rounded-2xl bg-zinc-800/80" />
-            <div className="h-16 rounded-2xl bg-zinc-800/80" />
-            <div className="h-16 rounded-2xl bg-zinc-800/80" />
+            <div className="h-14 rounded-xl bg-muted" />
+            <div className="h-14 rounded-xl bg-muted" />
+            <div className="h-14 rounded-xl bg-muted" />
           </div>
         </div>
       ))}
+      <span className="sr-only">Loading more articles...</span>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <Card className="border-zinc-800 bg-zinc-900/70">
-      <CardContent className="px-6 py-12 text-center">
-        <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">No articles yet</p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-          Try another topic, switch the region, or change the summary mode to load a different briefing style.
+    <Card className="border-border bg-card" role="status">
+      <CardContent className="px-6 py-16 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+          <Newspaper className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+        </div>
+        <p className="text-sm font-medium text-foreground">No articles found</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+          Try adjusting your filters, switching regions, or clearing your search to discover new stories.
         </p>
       </CardContent>
     </Card>
@@ -70,9 +80,11 @@ export default function RefinedFeedPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<DistilledArticle | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     const controller = new AbortController();
+    const currentRequestId = ++requestIdRef.current;
 
     async function loadFeed() {
       setLoading(true);
@@ -97,23 +109,26 @@ export default function RefinedFeedPage() {
           cache: "no-store"
         });
 
-        if (!response.ok) {
-          const message = await response.text();
-          throw new Error(message || "Failed to load feed");
+        if (response.ok && currentRequestId === requestIdRef.current) {
+          const data = (await response.json()) as FeedResponse;
+
+          setArticles((current) => (page === 1 ? data.articles : [...current, ...data.articles]));
+          setHasMore(data.hasMore);
+        } else if (currentRequestId !== requestIdRef.current) {
+          return;
         }
-
-        const data = (await response.json()) as FeedResponse;
-
-        setArticles((current) => (page === 1 ? data.articles : [...current, ...data.articles]));
-        setHasMore(data.hasMore);
       } catch (fetchError) {
         if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
           return;
         }
 
-        setError(fetchError instanceof Error ? fetchError.message : "Unknown error");
+        if (currentRequestId === requestIdRef.current) {
+          setError(fetchError instanceof Error ? fetchError.message : "Unknown error");
+        }
       } finally {
-        setLoading(false);
+        if (currentRequestId === requestIdRef.current) {
+          setLoading(false);
+        }
       }
     }
 
@@ -194,120 +209,155 @@ export default function RefinedFeedPage() {
   const activeDateLabel = DATE_RANGE_OPTIONS.find((option) => option.id === dateRange)?.label ?? dateRange;
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-8 flex items-center justify-between rounded-full border border-zinc-800 bg-zinc-900/70 px-4 py-3 backdrop-blur">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 text-zinc-100">
-              <Newspaper className="h-4 w-4" />
+    <main className="min-h-screen bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Distiller",
+            url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.news",
+            description: "AI-powered news intelligence with RAG-grounded summaries.",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: {
+                "@type": "EntryPoint",
+                urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.news"}/RefinedFeed?query={search_term_string}`
+              },
+              "query-input": "required name=search_term_string"
+            }
+          })
+        }}
+      />
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+
+      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8" id="main-content" role="main" aria-label="News feed">
+        <header className="mb-8 flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 shadow-card">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
+              <Newspaper className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
               <p className="text-sm font-semibold tracking-tight">Distiller</p>
-              <p className="text-xs text-zinc-500">Refined feed</p>
+              <p className="text-xs text-muted-foreground">Refined feed</p>
             </div>
           </Link>
 
-          <Badge variant="outline" className="hidden border-zinc-700 text-zinc-400 sm:inline-flex">
-            RAG + embeddings + our AI and API service
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="hidden border-border text-muted-foreground sm:inline-flex font-normal">
+              RAG · embeddings · NVIDIA Build
+            </Badge>
+            <ThemeToggle />
+          </div>
         </header>
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="mb-8 grid gap-5 rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-soft lg:grid-cols-[1.25fr_0.75fr] lg:p-8"
+          className="mb-8 grid gap-5 rounded-2xl border border-border bg-card p-6 shadow-card lg:grid-cols-[1.25fr_0.75fr] lg:p-8"
         >
           <div className="space-y-4">
-            <Badge variant="outline" className="border-zinc-700 text-zinc-300">
-              <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
-              Topic + region routing
+            <Badge variant="outline" className="border-primary/20 text-primary font-medium">
+              <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Smart filtering
             </Badge>
             <div className="space-y-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
-                Refine the global feed into signals you can scan in seconds.
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Refine the feed into signals you can scan in seconds.
               </h1>
-              <p className="max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-                Distiller fetches stories from our API-backed pipeline, grounds them with embeddings, and uses RAG to
-                render exactly three concise bullets per article.
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                AI-powered summaries grounded with RAG and embeddings. Three concise bullets per story, sourced from top news.
               </p>
             </div>
           </div>
 
-          <Card className="border-zinc-800 bg-zinc-950/80">
+          <Card className="border-border bg-muted/30">
             <CardContent className="space-y-4 p-6">
               <div className="flex items-center justify-between gap-3">
-                <Badge variant="default">Current mode</Badge>
-                <Badge variant="outline">{summaryMode}</Badge>
+                <Badge variant="default" className="font-medium">Current mode</Badge>
+                <Badge variant="outline" className="font-mono text-xs">{summaryMode}</Badge>
               </div>
-              <div className="space-y-2 text-sm leading-relaxed text-zinc-400">
-                <p>Category: <span className="text-zinc-100">{activeTopicLabel}</span></p>
-                <p>Region: <span className="text-zinc-100">{activeCountryLabel}</span></p>
-                <p>Date window: <span className="text-zinc-100">{activeDateLabel}</span></p>
-                <p>Articles loaded: <span className="text-zinc-100">{articles.length}</span></p>
-                <p>Infinite scroll: <span className="text-zinc-100">{hasMore ? "active" : "complete"}</span></p>
-                <p>RAG: <span className="text-zinc-100">enabled</span></p>
-                <p>Embeddings: <span className="text-zinc-100">active</span></p>
-              </div>
+              <dl className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Category</dt>
+                  <dd className="font-medium text-foreground">{activeTopicLabel}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Region</dt>
+                  <dd className="font-medium text-foreground">{activeCountryLabel}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Window</dt>
+                  <dd className="font-medium text-foreground">{activeDateLabel}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Articles</dt>
+                  <dd className="font-medium text-foreground tabular-nums">{articles.length}</dd>
+                </div>
+              </dl>
             </CardContent>
           </Card>
         </motion.div>
 
         <form
           onSubmit={submitSearch}
-          className="mb-4 grid gap-3 rounded-3xl border border-zinc-800 bg-zinc-900/60 p-4 shadow-soft sm:grid-cols-[1fr_auto_auto]"
+          className="mb-4 grid gap-3 rounded-xl border border-border bg-card p-4 shadow-card sm:grid-cols-[1fr_auto_auto]"
+          role="search"
+          aria-label="Search news"
         >
           <label htmlFor="distiller-search" className="sr-only">
             Search news topics
           </label>
 
           <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <input
               id="distiller-search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search topics, regions, or headlines"
-              className="h-11 w-full rounded-full border border-zinc-800 bg-zinc-950/80 pl-11 pr-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+              className="h-11 w-full rounded-xl border border-input bg-background px-4 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/50"
             />
           </div>
 
           <Button type="submit" variant="default" size="sm">
-            Search
+            <span className="hidden sm:inline">Search</span>
+            <Search className="h-4 w-4 sm:hidden" aria-hidden="true" />
           </Button>
 
-          <Button type="button" variant="ghost" size="sm" onClick={clearSearch}>
-            <X className="h-4 w-4" />
-            Clear
+          <Button type="button" variant="secondary" size="sm" onClick={clearSearch}>
+            <X className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only sm:not-sr-only">Clear</span>
           </Button>
         </form>
 
         {searchQuery ? (
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.28em] text-zinc-500">
-            <span>Search:</span>
-            <Badge variant="outline" className="border-zinc-700 text-zinc-300 normal-case tracking-normal">
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground" role="status">
+            <span className="font-medium">Active search:</span>
+            <Badge variant="outline" className="normal-case font-normal">
               {searchQuery}
             </Badge>
           </div>
         ) : null}
 
-        <Card className="mb-4 border-zinc-800 bg-zinc-900/60 shadow-soft">
-          <CardContent className="space-y-5 p-4 sm:p-5">
-            <p className="max-w-4xl text-sm leading-relaxed text-zinc-400">
-              Use the topic chips to widen or narrow the story set, the region chips to focus on Tunisia or another market,
-              and the mode chips to switch between faster and deeper summaries.
+        <Card className="mb-4 border-border bg-card shadow-card">
+          <CardContent className="space-y-6 p-4 sm:p-6">
+            <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
+              Filter by topic, region, and date to curate your personal news briefing.
             </p>
 
-            <div className="grid gap-4 xl:grid-cols-3">
+            <div className="grid gap-6 xl:grid-cols-3">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Topics</p>
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
-                    {TOPIC_OPTIONS.length} topics
+                  <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Topics</p>
+                  <Badge variant="outline" className="text-xs">
+                    {TOPIC_OPTIONS.length}
                   </Badge>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Topic categories">
                   {TOPIC_OPTIONS.map((option) => {
                     const active = option.id === category;
 
@@ -316,10 +366,11 @@ export default function RefinedFeedPage() {
                         key={option.id}
                         type="button"
                         onClick={() => resetFeed(option.id)}
-                        className={`rounded-full border px-4 py-2 text-sm transition ${
+                        aria-pressed={active}
+                        className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
                           active
-                            ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                            : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100"
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
                         }`}
                       >
                         {option.label}
@@ -331,13 +382,13 @@ export default function RefinedFeedPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Region</p>
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Region</p>
+                  <Badge variant="outline" className="text-xs">
                     {activeCountryLabel}
                   </Badge>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Country regions">
                   {COUNTRY_OPTIONS.map((option) => {
                     const active = option.id === country;
 
@@ -346,10 +397,11 @@ export default function RefinedFeedPage() {
                         key={option.id}
                         type="button"
                         onClick={() => updateCountry(option.id)}
-                        className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.18em] transition ${
+                        aria-pressed={active}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors ${
                           active
-                            ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                            : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-100"
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
                         }`}
                       >
                         {option.label}
@@ -361,13 +413,13 @@ export default function RefinedFeedPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Date range</p>
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Date range</p>
+                  <Badge variant="outline" className="text-xs">
                     {activeDateLabel}
                   </Badge>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Date ranges">
                   {DATE_RANGE_OPTIONS.map((option) => {
                     const active = option.id === dateRange;
 
@@ -376,10 +428,11 @@ export default function RefinedFeedPage() {
                         key={option.id}
                         type="button"
                         onClick={() => updateDateRange(option.id)}
-                        className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.2em] transition ${
+                        aria-pressed={active}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors ${
                           active
-                            ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                            : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-100"
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
                         }`}
                       >
                         {option.label}
@@ -390,28 +443,31 @@ export default function RefinedFeedPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {summaryModes.map((mode) => {
-                const active = mode.id === summaryMode;
+            <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Summary modes">
+                {summaryModes.map((mode) => {
+                  const active = mode.id === summaryMode;
 
-                return (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => updateMode(mode.id)}
-                    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${
-                      active
-                        ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                        : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-100"
-                    }`}
-                  >
-                    {mode.label}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => updateMode(mode.id)}
+                      aria-pressed={active}
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                      }`}
+                    >
+                      {mode.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-              <Button variant="secondary" size="sm" className="ml-auto" onClick={refreshFeed}>
-                <RefreshCcw className="h-4 w-4" />
+              <Button variant="secondary" size="sm" onClick={refreshFeed} className="ml-auto">
+                <RefreshCcw className="h-4 w-4" aria-hidden="true" />
                 Refresh
               </Button>
             </div>
@@ -419,10 +475,18 @@ export default function RefinedFeedPage() {
         </Card>
 
         {error ? (
-          <Card className="mb-6 border-zinc-800 bg-zinc-900/70">
-            <CardContent className="space-y-2 px-6 py-5">
-              <p className="text-sm font-medium text-zinc-100">Unable to load the feed</p>
-              <p className="text-sm leading-relaxed text-zinc-400">{error}</p>
+          <Card className="mb-6 border-destructive/50 bg-destructive/5" role="alert" aria-live="polite">
+            <CardContent className="flex items-start gap-4 px-6 py-5">
+              <div className="rounded-full bg-destructive/10 p-2">
+                <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium text-foreground">Unable to load the feed</p>
+                <p className="text-sm text-muted-foreground">{error}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={refreshFeed} className="shrink-0">
+                Try again
+              </Button>
             </CardContent>
           </Card>
         ) : null}
@@ -432,34 +496,42 @@ export default function RefinedFeedPage() {
         {!loading && articles.length === 0 && !error ? <EmptyState /> : null}
 
         {articles.length > 0 ? (
-          <div className="grid gap-5 lg:grid-cols-2">
-            {articles.map((article) => (
-              <DistilledCard key={article.id} article={article} onOpenAction={setSelectedArticle} />
+          <section aria-label="News articles" className="grid gap-5 lg:grid-cols-2" role="feed">
+            {articles.map((article, index) => (
+              <DistilledCard
+                key={article.id}
+                article={article}
+                onOpenAction={setSelectedArticle}
+                priority={index < 4}
+              />
             ))}
-          </div>
+          </section>
         ) : null}
 
-        <div ref={sentinelRef} className="h-12" />
+        <div ref={sentinelRef} className="h-12" aria-hidden="true" />
 
         {loading && articles.length > 0 ? (
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-zinc-500">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading more stories
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground" role="status" aria-live="polite">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            <span>Loading more stories...</span>
           </div>
         ) : null}
 
         {!hasMore && articles.length > 0 ? (
-          <p className="mt-8 text-center text-xs uppercase tracking-[0.3em] text-zinc-500">
-            You reached the end of the current feed
+          <p className="mt-8 text-center text-sm text-muted-foreground" role="status">
+            You&apos;ve reached the end of the current feed
           </p>
         ) : null}
       </section>
 
-      <NewsArticleModal
-        article={selectedArticle}
-        open={Boolean(selectedArticle)}
-        onCloseAction={() => setSelectedArticle(null)}
-      />
+      <AnimatePresence mode="wait">
+          <NewsArticleModal
+            key={selectedArticle?.id ?? "modal"}
+            article={selectedArticle}
+            open={Boolean(selectedArticle)}
+            onCloseAction={() => setSelectedArticle(null)}
+          />
+        </AnimatePresence>
     </main>
   );
 }

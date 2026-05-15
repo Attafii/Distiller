@@ -2,10 +2,14 @@ import "server-only";
 
 import { createHash } from "crypto";
 
+import { LRUCache } from "lru-cache";
 import { fetchWithTimeout } from "@/lib/http";
 import type { NewsArticle } from "@/types/news";
 
-const embeddingCache = new Map<string, number[]>();
+const embeddingCache = new LRUCache<string, number[]>({
+  max: 500,
+  ttl: 1000 * 60 * 60
+});
 
 export interface RagContext {
   snippets: string[];

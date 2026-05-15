@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/utils";
 
@@ -30,7 +31,7 @@ export function buttonStyles({
   className?: string;
 }) {
   return cn(
-    "inline-flex items-center justify-center gap-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:pointer-events-none disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:pointer-events-none disabled:opacity-50",
     variantStyles[variant],
     sizeStyles[size],
     className
@@ -40,13 +41,15 @@ export function buttonStyles({
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  asChild?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, variant = "default", size = "default", type = "button", ...props },
+  { className, variant = "default", size = "default", asChild = false, type = "button", ...props },
   ref
 ) {
-  return <button ref={ref} type={type} className={buttonStyles({ variant, size, className })} {...props} />;
+  const Comp = asChild ? Slot : "button";
+  return <Comp ref={ref} type={type} className={buttonStyles({ variant, size, className })} {...props} />;
 });
 
 Button.displayName = "Button";

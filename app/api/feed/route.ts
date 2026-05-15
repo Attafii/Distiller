@@ -3,9 +3,18 @@ import { z } from "zod";
 
 import { DistillService } from "@/lib/ai";
 import { fetchNewsArticles } from "@/services/newsapi";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { DistilledArticle, DistilledSummary, NewsArticle } from "@/types/news";
 
 export const dynamic = "force-dynamic";
+
+function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
+  return {
+    "X-RateLimit-Limit": "30",
+    "X-RateLimit-Remaining": String(result.remaining),
+    "X-RateLimit-Reset": String(Math.ceil(result.resetIn / 1000))
+  };
+}
 
 const querySchema = z.object({
   category: z.enum(["world", "politics", "tech", "science", "business", "finance", "climate", "health", "education", "sports", "entertainment", "culture"]).default("tech"),
@@ -33,6 +42,16 @@ function fallbackSummary(article: NewsArticle): DistilledSummary {
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+  const headers = rateLimitHeaders(rateLimit);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before making more requests." },
+      { status: 429, headers }
+    );
+  }
+
   const parsed = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams.entries()));
 
   if (!parsed.success) {
@@ -80,9 +99,8 @@ export async function GET(request: NextRequest) {
       page,
       pageSize,
       hasMore: page * pageSize < totalResults
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown feed error";
-    return NextResponse.json({ error: message }, { status: 502 });
+    }, { headers });
+  } catch {
+    return NextResponse.json({ error: "An error occurred while fetching the feed" }, { status: 502 });
   }
 }

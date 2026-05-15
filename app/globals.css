@@ -3,7 +3,12 @@
 @tailwind utilities;
 
 :root {
+  --radius: 1rem;
+  --font-space-grotesk: "Space Grotesk", sans-serif;
+  --font-ibm-plex-mono: "IBM Plex Mono", monospace;
+
   color-scheme: dark;
+
   --background: 240 10% 4%;
   --foreground: 0 0% 98%;
   --card: 240 6% 8%;
@@ -23,7 +28,43 @@
   --border: 240 4% 16%;
   --input: 240 4% 16%;
   --ring: 240 5% 84%;
-  --radius: 1rem;
+
+  --success: 142 71% 45%;
+  --warning: 38 92% 50%;
+  --info: 199 89% 48%;
+
+  --chart-1: 199 89% 48%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 0 72% 51%;
+}
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 10% 3.9%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4% 95%;
+  --secondary-foreground: 240 10% 3.9%;
+  --muted: 240 4% 95%;
+  --muted-foreground: 240 5% 45%;
+  --accent: 240 4% 95%;
+  --accent-foreground: 240 10% 3.9%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 90%;
+
+  /* Chart colors */
+  --chart-1: 199 89% 48%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 0 72% 51%;
 }
 
 @layer base {
@@ -36,13 +77,152 @@
   }
 
   body {
-    @apply min-h-screen bg-zinc-950 text-zinc-100 antialiased font-sans;
-    background-image: radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 36%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 28%);
+    @apply min-h-screen bg-background text-foreground antialiased font-sans;
   }
 
-  ::selection {
-    background: rgba(255, 255, 255, 0.12);
-    color: rgb(255 255 255);
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* Text selection */
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+    color: hsl(var(--foreground));
+  }
+
+  /* Focus visible - ensure 3:1 minimum contrast for WCAG 2.2 */
+  :focus-visible {
+    @apply outline-none ring-2 ring-zinc-600 ring-offset-2 ring-offset-background;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-medium;
+}
+
+/* Article card hover effect */
+.article-card {
+  @apply transition-transform duration-200;
+}
+
+.article-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Loading skeleton pulse */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.skeleton {
+  animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Toast animations */
+@keyframes toast-enter {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-exit {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: toast-enter 0.3s ease-out;
+}
+
+.toast-exit {
+  animation: toast-exit 0.2s ease-in;
+}
+
+/* Badge styles */
+.badge-ai {
+  @apply bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0;
+}
+
+.badge-topic {
+  @apply bg-secondary text-secondary-foreground border-border;
+}
+
+/* Bullet point styles */
+.bullet-item {
+  @apply relative pl-6 before:absolute before:left-0 before:top-2.5 before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary;
+}
+
+/* Hide element visually but keep for screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Not sr-only - for focus */
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
 }

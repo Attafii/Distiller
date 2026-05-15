@@ -4,10 +4,10 @@ import { z } from "zod";
 
 import { buildRagContext, estimateTokens } from "@/lib/rag";
 import { fetchWithTimeout } from "@/lib/http";
-import { normalizeEnvString } from "@/lib/utils";
+import { normalizeEnvString, sanitizeQuery, sanitizeQuestion, checkInjectionRisk } from "@/lib/utils";
 import type { ArticleChatMessage, DistilledSummary, NewsArticle, SummarizationMode } from "@/types/news";
 
-type ModelTier = "fast" | "balanced" | "deep";
+type ModelTier = "fast" | "balanced" | "deep" | "chat";
 
 function uniqueModels(models: Array<string | undefined>): string[] {
   return Array.from(new Set(models.filter((model): model is string => Boolean(model && model.trim()))));
@@ -30,6 +30,12 @@ const MODEL_CANDIDATES: Record<ModelTier, string[]> = {
     "nvidia/llama-3.1-nemotron-ultra-253b-v1",
     "nvidia/llama-3.3-nemotron-super-49b-v1",
     "meta/llama-3.3-70b-instruct"
+  ]),
+  chat: uniqueModels([
+    normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_CHAT),
+    normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_BALANCED),
+    "nvidia/llama-3.3-nemotron-super-49b-v1",
+    "meta/llama-3.3-70b-instruct"
   ])
 };
 
@@ -41,17 +47,17 @@ const completionSchema = z.object({
       })
     })
   )
-});
+}).strict();
 
 const summarySchema = z.object({
   bullets: z.array(z.string().min(1)).length(3),
   insight: z.string().min(1),
   conclusion: z.string().min(1)
-});
+}).strict();
 
 const answerSchema = z.object({
   answer: z.string().min(1)
-});
+}).strict();
 
 const SYSTEM_PROMPT = [
   "You are Distiller, a strict news summarization engine.",
@@ -193,7 +199,9 @@ export class DistillService {
       ? ["meta/llama-3.1-8b-instruct"]
       : tier === "balanced"
         ? ["meta/llama-3.3-70b-instruct", "meta/llama-3.1-70b-instruct"]
-        : ["nvidia/llama-3.1-nemotron-ultra-253b-v1", "meta/llama-3.3-70b-instruct"];
+        : tier === "deep"
+          ? ["nvidia/llama-3.1-nemotron-ultra-253b-v1", "meta/llama-3.3-70b-instruct"]
+          : ["meta/llama-3.3-70b-instruct", "meta/llama-3.1-70b-instruct"];
   }
 
   private pickTier(article: NewsArticle, mode: SummarizationMode, tokenEstimate: number): ModelTier {
@@ -333,7 +341,12 @@ export class DistillService {
     };
   }
 
-  private async callModelOnce(model: string, prompt: string, systemPrompt = SYSTEM_PROMPT): Promise<string> {
+  private async callModelOnce(
+    model: string,
+    prompt: string,
+    systemPrompt = SYSTEM_PROMPT,
+    maxTokens = 220
+  ): Promise<string> {
     if (!this.config.apiKey) {
       throw new DistillServiceError("Missing NVIDIA_BUILD_API_KEY");
     }
@@ -358,7 +371,7 @@ export class DistillService {
             ],
             temperature: 0.2,
             top_p: 0.9,
-            max_tokens: 220,
+            max_tokens: maxTokens,
             response_format: {
               type: "json_object"
             }
@@ -408,13 +421,14 @@ export class DistillService {
   private async callModelForTier(
     tier: ModelTier,
     prompt: string,
-    systemPrompt = SYSTEM_PROMPT
+    systemPrompt = SYSTEM_PROMPT,
+    maxTokens = 220
   ): Promise<{ model: string; content: string }> {
     let lastError: unknown = null;
 
     for (const model of this.modelCandidates(tier)) {
       try {
-        const content = await this.callModelOnce(model, prompt, systemPrompt);
+        const content = await this.callModelOnce(model, prompt, systemPrompt, maxTokens);
         return { model, content };
       } catch (error) {
         lastError = error;
@@ -436,12 +450,13 @@ export class DistillService {
     const { article, mode = "auto", query } = input;
     const articleText = [article.title, article.description, article.content].filter(Boolean).join("\n\n");
     const tokenEstimate = estimateTokens(articleText);
-    const ragContext = await buildRagContext(article, query ?? article.title, 3);
+    const sanitizedQuery = query ? sanitizeQuery(query) : article.title;
+    const ragContext = await buildRagContext(article, sanitizedQuery, 3);
     const primaryTier = this.pickTier(article, mode, tokenEstimate);
-    const prompt = this.buildPrompt(article, ragContext.context, tokenEstimate, mode, query ?? article.title);
+    const prompt = this.buildPrompt(article, ragContext.context, tokenEstimate, mode, sanitizedQuery);
 
     try {
-      const { model, content } = await this.callModelForTier(primaryTier, prompt);
+      const { model, content } = await this.callModelForTier(primaryTier, prompt, SYSTEM_PROMPT, 220);
       const summary = this.normalizeSummary(content, article, ragContext.snippets);
 
       return {
@@ -476,7 +491,8 @@ export class DistillService {
     history?: ArticleChatMessage[];
   }): Promise<{ answer: string; model: string; retrievedContext: string[] }> {
     const { article, summary, question, history = [] } = input;
-    const ragContext = await buildRagContext(article, question, 5);
+    const sanitizedQuestion = sanitizeQuestion(question);
+    const ragContext = await buildRagContext(article, sanitizedQuestion, 5);
     const contextSnippets = ragContext.snippets.length > 0 ? ragContext.snippets : summary.retrievedContext;
 
     const prompt = [
@@ -496,7 +512,7 @@ export class DistillService {
       "Conversation history:",
       formatConversation(history) || "No prior messages.",
       "",
-      `User question: ${question}`,
+      `User question: ${sanitizedQuestion}`,
       "",
       "Respond like a chat partner discussing the article. You can explain what the article suggests, judge its framing, point out missing context, and discuss likely implications.",
       "Stay anchored to the article and context, but do not refuse a question just because it asks for analysis or judgment about the article.",
@@ -506,7 +522,7 @@ export class DistillService {
     ].join("\n");
 
     try {
-      const { model, content } = await this.callModelForTier("balanced", prompt, CHAT_SYSTEM_PROMPT);
+      const { model, content } = await this.callModelForTier("chat", prompt, CHAT_SYSTEM_PROMPT, 512);
       const cleaned = cleanFenceBlocks(content);
 
       try {
@@ -515,7 +531,7 @@ export class DistillService {
 
         if (parsed.success) {
           return {
-            answer: normalizeLine(parsed.data.answer) || this.fallbackChatAnswer(article, summary, question, contextSnippets),
+            answer: normalizeLine(parsed.data.answer) || this.fallbackChatAnswer(article, summary, sanitizedQuestion, contextSnippets),
             model,
             retrievedContext: contextSnippets
           };
@@ -525,7 +541,7 @@ export class DistillService {
       }
 
       return {
-        answer: normalizeLine(cleaned) || this.fallbackChatAnswer(article, summary, question, contextSnippets),
+        answer: normalizeLine(cleaned) || this.fallbackChatAnswer(article, summary, sanitizedQuestion, contextSnippets),
         model,
         retrievedContext: contextSnippets
       };
