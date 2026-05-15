@@ -11,7 +11,6 @@ import { DistilledCard } from "@/components/DistilledCard";
 import { GitHubRepoWidget } from "@/components/GitHubRepoWidget";
 import { NewsArticleModal } from "@/components/NewsArticleModal";
 import { NewsAssistant } from "@/components/NewsAssistant";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -303,7 +302,6 @@ export default function RefinedFeedPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <ThemeSwitcher />
             <Badge variant="outline" className="hidden border-border text-muted-foreground sm:inline-flex">
               RAG + embeddings + our AI and API service
             </Badge>

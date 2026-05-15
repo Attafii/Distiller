@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
+import { IBM_Plex_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { Analytics } from "@vercel/analytics/react";
@@ -7,34 +7,42 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ToastProvider } from "@/components/ToastProvider";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk"
-});
-
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-ibm-plex-mono"
+  variable: "--font-ibm-plex-mono",
+  display: "swap"
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.app";
+
 const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
-    { media: "(prefers-color-scheme: dark)", color: "#09090b" }
-  ],
+  themeColor: "#fafaf9",
   width: "device-width",
   initialScale: 1
 };
 
 const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.news"),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Distiller",
     template: "%s · Distiller"
   },
   description: "AI-powered news intelligence. Get concise 3-bullet summaries of top stories, grounded with RAG and embeddings. Stay informed in seconds.",
-  keywords: ["AI news", "news summary", "RAG", "embeddings", "NVIDIA", "artificial intelligence", "news aggregator", "daily briefing", "executive summary"],
+  keywords: [
+    "AI news",
+    "news summary",
+    "RAG",
+    "embeddings",
+    "NVIDIA",
+    "artificial intelligence",
+    "news aggregator",
+    "daily briefing",
+    "executive summary",
+    "AI research",
+    "islamic finance",
+    "african startups"
+  ],
   authors: [{ name: "Distiller" }],
   creator: "Distiller",
   publisher: "Distiller",
@@ -96,13 +104,66 @@ export { metadata, viewport };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${ibmPlexMono.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
+    <html lang="en" className={`${ibmPlexMono.variable}`}>
+      <head>
         <script
+          type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t=localStorage.getItem('theme');if(t==='light'){document.documentElement.classList.add('light')}})()`
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Distiller",
+              url: siteUrl,
+              description: "AI-powered news intelligence with RAG-grounded summaries.",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate: `${siteUrl}/RefinedFeed?query={search_term_string}`
+                },
+                "query-input": "required name=search_term_string"
+              },
+              publisher: {
+                "@type": "Organization",
+                name: "Distiller",
+                url: siteUrl,
+                logo: {
+                  "@type": "ImageObject",
+                  url: `${siteUrl}/favicon.svg`
+                }
+              },
+              sameAs: [
+                "https://twitter.com/distiller",
+                "https://github.com/Attafii/Distiller"
+              ]
+            })
           }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Distiller",
+              url: siteUrl,
+              description: "AI-powered news intelligence platform delivering concise 3-bullet summaries grounded with RAG and NVIDIA Build embeddings.",
+              foundingDate: "2024",
+              publisher: {
+                "@type": "Organization",
+                name: "Distiller",
+                url: siteUrl
+              },
+              contactPoint: {
+                "@type": "ContactPoint",
+                email: "hello@distiller.attafii.app",
+                contactType: "customer support"
+              }
+            })
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-background text-foreground antialiased">
         <ToastProvider>
           <Analytics />
           <SpeedInsights />
