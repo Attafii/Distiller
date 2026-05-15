@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { alerts } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const userAlerts = await db.query.alerts.findMany({
+    const userAlerts = await getDb().query.alerts.findMany({
       where: eq(alerts.userId, session.user.id),
       orderBy: [desc(alerts.createdAt)]
     });
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
   const { keyword, frequency, active } = parsed.data;
 
   try {
-    const [newAlert] = await db.insert(alerts).values({
+    const [newAlert] = await getDb().insert(alerts).values({
       userId: session.user.id,
       keyword,
       frequency,

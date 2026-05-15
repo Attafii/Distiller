@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { alerts } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
@@ -29,7 +29,7 @@ export async function DELETE(
   }
 
   try {
-    const deleted = await db.delete(alerts)
+    const deleted = await getDb().delete(alerts)
       .where(and(
         eq(alerts.userId, session.user.id),
         eq(alerts.id, alertIdNum)

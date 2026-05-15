@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
@@ -23,7 +23,7 @@ export async function DELETE(
   }
 
   try {
-    const deleted = await db.delete(bookmarks)
+    const deleted = await getDb().delete(bookmarks)
       .where(and(
         eq(bookmarks.userId, session.user.id),
         eq(bookmarks.articleId, articleId)

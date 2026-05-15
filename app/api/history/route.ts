@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { readingHistory } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const history = await db.query.readingHistory.findMany({
+    const history = await getDb().query.readingHistory.findMany({
       where: eq(readingHistory.userId, session.user.id),
       orderBy: [desc(readingHistory.readAt)],
       limit: 100
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   const { articleId, title, url, category } = parsed.data;
 
   try {
-    const [newEntry] = await db.insert(readingHistory).values({
+    const [newEntry] = await getDb().insert(readingHistory).values({
       userId: session.user.id,
       articleId,
       title,

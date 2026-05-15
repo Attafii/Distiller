@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const userBookmarks = await db.query.bookmarks.findMany({
+    const userBookmarks = await getDb().query.bookmarks.findMany({
       where: eq(bookmarks.userId, session.user.id),
       orderBy: (bookmarks, { desc }) => [desc(bookmarks.createdAt)]
     });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const userBookmarks = await db.query.bookmarks.findMany({
+    const userBookmarks = await getDb().query.bookmarks.findMany({
       where: eq(bookmarks.userId, session.user.id),
       orderBy: (bookmarks, { desc }) => [desc(bookmarks.createdAt)]
     });
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   const { articleId, title, url, imageUrl, description, source, category, publishedAt } = parsed.data;
 
   try {
-    const existingBookmark = await db.query.bookmarks.findFirst({
+    const existingBookmark = await getDb().query.bookmarks.findFirst({
       where: and(
         eq(bookmarks.userId, session.user.id),
         eq(bookmarks.articleId, articleId)
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Bookmark already exists" }, { status: 409 });
     }
 
-    const [newBookmark] = await db.insert(bookmarks).values({
+    const [newBookmark] = await getDb().insert(bookmarks).values({
       userId: session.user.id,
       articleId,
       title,
@@ -110,7 +110,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const deleted = await db.delete(bookmarks)
+    const deleted = await getDb().delete(bookmarks)
       .where(and(
         eq(bookmarks.userId, session.user.id),
         eq(bookmarks.articleId, articleId)

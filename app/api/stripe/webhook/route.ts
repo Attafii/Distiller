@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -47,12 +47,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        const existingSubscription = await db.query.subscriptions.findFirst({
+        const existingSubscription = await getDb().query.subscriptions.findFirst({
           where: eq(subscriptions.userId, userId)
         });
 
         if (existingSubscription) {
-          await db.update(subscriptions)
+          await getDb().update(subscriptions)
             .set({
               stripeCustomerId: session.customer as string,
               stripeSubscriptionId: session.subscription as string | null,
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             })
             .where(eq(subscriptions.id, existingSubscription.id));
         } else {
-          await db.insert(subscriptions).values({
+          await getDb().insert(subscriptions).values({
             userId,
             stripeCustomerId: session.customer as string,
             stripeSubscriptionId: session.subscription as string | null,
@@ -83,13 +83,13 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
-        const existingRecord = await db.query.subscriptions.findFirst({
+        const existingRecord = await getDb().query.subscriptions.findFirst({
           where: eq(subscriptions.stripeCustomerId, customerId)
         });
 
         if (existingRecord) {
           const status = subscription.status === "active" ? "active" : subscription.status;
-          await db.update(subscriptions)
+          await getDb().update(subscriptions)
             .set({
               stripeSubscriptionId: subscription.id,
               plan: (subscription.metadata?.plan as "pro" | "team") ?? existingRecord.plan,
@@ -106,12 +106,12 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
-        const existingRecord = await db.query.subscriptions.findFirst({
+        const existingRecord = await getDb().query.subscriptions.findFirst({
           where: eq(subscriptions.stripeCustomerId, customerId)
         });
 
         if (existingRecord) {
-          await db.update(subscriptions)
+          await getDb().update(subscriptions)
             .set({
               stripeSubscriptionId: null,
               plan: "free",

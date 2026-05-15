@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       apiVersion: "2026-04-22.dahlia"
     });
 
-    const existingSubscription = await db.query.subscriptions.findFirst({
+    const existingSubscription = await getDb().query.subscriptions.findFirst({
       where: eq(subscriptions.userId, session.user.id)
     });
 

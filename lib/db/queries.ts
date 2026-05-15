@@ -1,6 +1,6 @@
 import "server-only";
 
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { subscriptions, bookmarks, readingHistory, alerts } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
@@ -15,7 +15,7 @@ export type AlertSelect = InferSelectModel<typeof alerts>;
 export type AlertInsert = InferInsertModel<typeof alerts>;
 
 export async function getUserSubscription(userId: string) {
-  return db.query.subscriptions.findFirst({
+  return getDb().query.subscriptions.findFirst({
     where: eq(subscriptions.userId, userId)
   });
 }
@@ -25,7 +25,7 @@ export async function createSubscription(
   stripeCustomerId: string,
   plan: "pro" | "team" | "free"
 ) {
-  const [subscription] = await db.insert(subscriptions).values({
+  const [subscription] = await getDb().insert(subscriptions).values({
     userId,
     stripeCustomerId,
     plan,
@@ -39,7 +39,7 @@ export async function updateSubscriptionStatus(
   subscriptionId: number,
   status: string
 ) {
-  const [updated] = await db.update(subscriptions)
+  const [updated] = await getDb().update(subscriptions)
     .set({ status, updatedAt: new Date() })
     .where(eq(subscriptions.id, subscriptionId))
     .returning();
@@ -48,7 +48,7 @@ export async function updateSubscriptionStatus(
 }
 
 export async function getBookmarks(userId: string) {
-  return db.query.bookmarks.findMany({
+  return getDb().query.bookmarks.findMany({
     where: eq(bookmarks.userId, userId),
     orderBy: [desc(bookmarks.createdAt)]
   });
@@ -58,7 +58,7 @@ export async function addBookmark(
   userId: string,
   data: Omit<BookmarkInsert, "userId">
 ) {
-  const [bookmark] = await db.insert(bookmarks).values({
+  const [bookmark] = await getDb().insert(bookmarks).values({
     userId,
     ...data
   }).returning();
@@ -67,7 +67,7 @@ export async function addBookmark(
 }
 
 export async function removeBookmark(userId: string, articleId: string) {
-  const [deleted] = await db.delete(bookmarks)
+  const [deleted] = await getDb().delete(bookmarks)
     .where(eq(bookmarks.articleId, articleId))
     .returning();
 
@@ -75,7 +75,7 @@ export async function removeBookmark(userId: string, articleId: string) {
 }
 
 export async function getReadingHistory(userId: string) {
-  return db.query.readingHistory.findMany({
+  return getDb().query.readingHistory.findMany({
     where: eq(readingHistory.userId, userId),
     orderBy: [desc(readingHistory.readAt)],
     limit: 100
@@ -86,7 +86,7 @@ export async function addReadingHistory(
   userId: string,
   data: Omit<ReadingHistoryInsert, "userId">
 ) {
-  const [entry] = await db.insert(readingHistory).values({
+  const [entry] = await getDb().insert(readingHistory).values({
     userId,
     ...data
   }).returning();
@@ -95,7 +95,7 @@ export async function addReadingHistory(
 }
 
 export async function getAlerts(userId: string) {
-  return db.query.alerts.findMany({
+  return getDb().query.alerts.findMany({
     where: eq(alerts.userId, userId),
     orderBy: [desc(alerts.createdAt)]
   });
@@ -105,7 +105,7 @@ export async function createAlert(
   userId: string,
   data: Omit<AlertInsert, "userId">
 ) {
-  const [alert] = await db.insert(alerts).values({
+  const [alert] = await getDb().insert(alerts).values({
     userId,
     ...data
   }).returning();
@@ -114,7 +114,7 @@ export async function createAlert(
 }
 
 export async function deleteAlert(userId: string, alertId: number) {
-  const [deleted] = await db.delete(alerts)
+  const [deleted] = await getDb().delete(alerts)
     .where(eq(alerts.id, alertId))
     .returning();
 
