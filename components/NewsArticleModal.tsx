@@ -1,15 +1,17 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Bot, CalendarDays, ExternalLink, Globe, Loader2, MessageSquareMore, Send, Sparkles, User2, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Bot, CalendarDays, ExternalLink, FileText, Globe, Heart, Loader2, MessageSquareMore, Send, Share2, Sparkles, User2, X } from "lucide-react";
 
-import type { ArticleChatMessage, ArticleChatResponse, DistilledArticle } from "@/types/news";
+import { buildLocalArticleText } from "@/lib/article-text-utils";
+import { getPriorityLabel } from "@/lib/article-signals";
+import type { ArticleChatMessage, ArticleChatResponse, ArticleFullTextResponse, DistilledArticle } from "@/types/news";
 
 import { Badge } from "@/components/ui/badge";
-import { buttonStyles, Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 function formatPublishedAt(publishedAt: string) {
@@ -19,25 +21,30 @@ function formatPublishedAt(publishedAt: string) {
   }).format(new Date(publishedAt));
 }
 
-interface NewsArticleModalProps {
-  article: DistilledArticle | null;
-  open: boolean;
-  onCloseAction: () => void;
-}
-
 export function NewsArticleModal({
   article,
   open,
-  onCloseAction
-}: NewsArticleModalProps) {
+  onCloseAction,
+  onLikeAction,
+  onShareAction,
+  initialShowFullText = false
+}: {
+  article: DistilledArticle | null;
+  open: boolean;
+  onCloseAction: () => void;
+  onLikeAction?: (article: DistilledArticle) => void | Promise<void>;
+  onShareAction?: (article: DistilledArticle) => void | Promise<void>;
+  initialShowFullText?: boolean;
+}) {
   const [messages, setMessages] = useState<ArticleChatMessage[]>([]);
   const [question, setQuestion] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFullText, setShowFullText] = useState(false);
+  const [fullText, setFullText] = useState<string | null>(null);
+  const [fullTextLoading, setFullTextLoading] = useState(false);
+  const [fullTextNotice, setFullTextNotice] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const firstFocusRef = useRef<HTMLHeadingElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!open || !article) {
@@ -47,15 +54,17 @@ export function NewsArticleModal({
     setMessages([
       {
         role: "assistant",
-        content: "Let me know if you have questions about this article — its framing, implications, or what it might be leaving out."
+        content: "Let’s talk through this article. Ask about the framing, the implications, what it leaves out, or whether the story seems convincing."
       }
     ]);
     setQuestion("");
     setError(null);
     setSending(false);
-
-    firstFocusRef.current?.focus();
-  }, [article, open]);
+    setShowFullText(initialShowFullText);
+    setFullText(null);
+    setFullTextLoading(false);
+    setFullTextNotice(null);
+  }, [article, initialShowFullText, open]);
 
   useEffect(() => {
     if (!open) {
@@ -71,58 +80,105 @@ export function NewsArticleModal({
   }, [open]);
 
   useEffect(() => {
-    if (!open && closeButtonRef.current) {
-      closeButtonRef.current.focus();
+    if (!open) {
+      return;
     }
-  }, [open]);
 
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onCloseAction();
-        return;
       }
+    };
 
-      if (event.key === "Tab") {
-        const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-
-        if (!focusableElements || focusableElements.length === 0) {
-          return;
-        }
-
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (event.shiftKey && document.activeElement === firstElement) {
-          event.preventDefault();
-          lastElement.focus();
-        } else if (!event.shiftKey && document.activeElement === lastElement) {
-          event.preventDefault();
-          firstElement.focus();
-        }
-      }
-    },
-    [onCloseAction]
-  );
-
-  useEffect(() => {
-    if (open) {
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [open, handleKeyDown]);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [onCloseAction, open]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, sending]);
 
+  useEffect(() => {
+    if (!open || !article || !showFullText || fullText !== null || fullTextLoading) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const currentArticle = article;
+
+    async function loadFullText() {
+      setFullTextLoading(true);
+      setFullTextNotice(null);
+
+      try {
+        const response = await fetch("/api/news/full-text", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            article: {
+              title: currentArticle.title,
+              description: currentArticle.description,
+              content: currentArticle.content,
+              url: currentArticle.url
+            }
+          }),
+          signal: controller.signal,
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message || "Failed to load full article text");
+        }
+
+        const payload = (await response.json()) as ArticleFullTextResponse;
+        setFullText(payload.fullText);
+        setFullTextNotice(
+          payload.source === "remote"
+            ? "Loaded from the original article page."
+            : payload.source === "proxy"
+              ? "Loaded through a reader proxy because the source page blocked direct fetches."
+              : payload.source === "cache"
+                ? "Loaded from a cached article copy from an earlier successful fetch."
+            : payload.hadTruncation
+              ? "The source page could not be expanded, so this shows the feed excerpt without the truncation marker."
+              : "This shows the article text provided by the feed."
+        );
+      } catch (fetchError) {
+        if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
+          return;
+        }
+
+        setFullText(buildLocalArticleText(currentArticle));
+        setFullTextNotice("The source page could not be expanded, so this shows the feed excerpt.");
+      } finally {
+        if (!controller.signal.aborted) {
+          setFullTextLoading(false);
+        }
+      }
+    }
+
+    void loadFullText();
+
+    return () => controller.abort();
+  }, [article, open, showFullText]);
+
   if (!open || !article) {
     return null;
   }
 
-  const reducedMotion = useReducedMotion();
+  const currentArticle = article;
+  const priorityLabel = getPriorityLabel(currentArticle.priority);
+  const fallbackArticleText = buildLocalArticleText(currentArticle);
+  const visibleFullArticleText = fullText ?? fallbackArticleText;
+  const quickPrompts = [
+    "What is your POV on this story and what evidence supports it?",
+    "What are the likely short-term and long-term impacts?",
+    "What is missing from the article that I should verify?",
+    `How does this affect ${currentArticle.category} right now?`
+  ];
 
   const submitQuestion = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -165,7 +221,7 @@ export function NewsArticleModal({
         ...current,
         {
           role: "assistant",
-          content: "I couldn&apos;t answer that right now. Try a more specific question or revisit the article."
+          content: "I could not answer that just now. Try a narrower question or revisit the article context."
         }
       ]);
     } finally {
@@ -179,113 +235,160 @@ export function NewsArticleModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: reducedMotion ? 0.01 : 0.2 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 px-3 py-4 backdrop-blur-sm sm:px-4"
         onClick={onCloseAction}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
       >
         <motion.div
-          ref={modalRef}
-          initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.95, y: reducedMotion ? 0 : 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.95, y: reducedMotion ? 0 : 10 }}
-          transition={{ duration: reducedMotion ? 0.01 : 0.2, ease: "easeOut" }}
-          className="flex h-[min(92vh,940px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+          initial={{ opacity: 0, y: 18, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 18, scale: 0.98 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="flex h-[min(92vh,940px)] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-border bg-background shadow-2xl"
           onClick={(event) => event.stopPropagation()}
         >
-          <header className="flex items-start justify-between gap-4 border-b border-border bg-muted/30 px-5 py-4">
-            <div className="space-y-3">
+          <header className="flex items-start justify-between gap-4 border-b border-border bg-card/60 px-5 py-4 sm:px-6">
+            <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="default" className="font-medium">
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                <Badge variant="default">
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                   Article chat
                 </Badge>
                 <Badge variant="outline">{article.category}</Badge>
+                {article.priority !== "normal" ? (
+                  <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-100">
+                    <span className="mr-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]" />
+                    {priorityLabel}
+                  </Badge>
+                ) : null}
+                {article.likeCount > 0 ? (
+                  <Badge variant="outline" className="border-border text-muted-foreground">
+                    {article.likeCount} likes
+                  </Badge>
+                ) : null}
               </div>
-              <h2 id="modal-title" tabIndex={-1} className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl line-clamp-2">
-                {article.title}
-              </h2>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="font-medium">{article.source.name}</span>
+              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{article.title}</h2>
+              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                <span>{article.source.name}</span>
                 <span aria-hidden="true">·</span>
-                <time dateTime={article.publishedAt}>{formatPublishedAt(article.publishedAt)}</time>
+                <span>{formatPublishedAt(article.publishedAt)}</span>
               </div>
             </div>
 
-            <Button
-              ref={closeButtonRef}
-              variant="ghost"
-              size="sm"
-              onClick={onCloseAction}
-              className="shrink-0 text-muted-foreground hover:text-foreground"
-              aria-label="Close dialog"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
+            <Button variant="ghost" size="sm" onClick={onCloseAction} className="shrink-0 text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+              Close
             </Button>
           </header>
 
           <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
             <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-              <Card className="overflow-hidden border-border bg-card">
+              <Card className="overflow-hidden border-border bg-card/85">
                 {article.imageUrl ? (
-                  <div className="aspect-video border-b border-border bg-muted">
-                    <img
-                      src={article.imageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
+                  <div className="aspect-[16/9] border-b border-border bg-card">
+                    <img src={article.imageUrl} alt={article.title} className="h-full w-full object-cover" />
                   </div>
                 ) : null}
 
-                <CardContent className="space-y-5 p-5 sm:p-6">
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <CardContent className="space-y-4 p-5 sm:p-6">
+                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
                     <Badge variant="outline">Topic: {article.category}</Badge>
-                    <Badge variant="outline" className="gap-1.5">
-                      <CalendarDays className="h-3 w-3" aria-hidden="true" />
+                    <Badge variant="outline" className="border-border text-muted-foreground">
+                      <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
                       {formatPublishedAt(article.publishedAt)}
                     </Badge>
                   </div>
 
                   <div className="space-y-3">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Article context</p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {article.description ?? "No description available. The full detail comes from the source content and AI summary."}
+                    <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Article context</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {article.description ?? "This article does not include a description, so use the full-text button to inspect the source wording."}
                     </p>
-                    {article.content ? (
-                      <p className="text-sm leading-relaxed text-muted-foreground line-clamp-4">{article.content}</p>
+
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={article.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-secondary"
+                      >
+                        Read original
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="border-border text-foreground hover:bg-secondary"
+                        onClick={() => setShowFullText((current) => !current)}
+                        aria-expanded={showFullText}
+                        aria-controls="full-article-text"
+                      >
+                        <FileText className="h-4 w-4" />
+                        {showFullText ? "Hide article text" : "See more article text"}
+                      </Button>
+
+                      {onShareAction ? (
+                        <Button type="button" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => onShareAction(article)}>
+                          <Share2 className="h-4 w-4" />
+                          Share
+                        </Button>
+                      ) : null}
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={
+                          article.likedByViewer
+                            ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/10"
+                            : "border-border text-foreground hover:bg-secondary"
+                        }
+                        onClick={() => onLikeAction?.(article)}
+                        disabled={article.likedByViewer}
+                      >
+                        <Heart className="h-4 w-4" fill={article.likedByViewer ? "currentColor" : "none"} />
+                        {article.likedByViewer ? "Liked" : "Like"}
+                      </Button>
+                    </div>
+
+                    {showFullText ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Full article text</p>
+                          {fullTextLoading ? <p className="text-xs text-muted-foreground">Loading full text...</p> : null}
+                        </div>
+                        <div
+                          id="full-article-text"
+                          aria-busy={fullTextLoading}
+                          className="max-h-80 overflow-y-auto rounded-2xl border border-border bg-card/80 p-4 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground"
+                        >
+                          {fullTextLoading
+                            ? "Loading full article text..."
+                            : visibleFullArticleText || "No additional article text was provided by the source feed."}
+                        </div>
+                        {fullTextNotice ? <p className="text-xs text-muted-foreground">{fullTextNotice}</p> : null}
+                      </div>
                     ) : null}
                   </div>
-
-                  <a
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={buttonStyles({ variant: "secondary", size: "sm" })}
-                  >
-                    Read original article
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  </a>
                 </CardContent>
               </Card>
 
               <div className="space-y-5">
-                <Card className="border-border bg-card">
+                <Card className="border-border bg-card/85">
                   <CardContent className="space-y-4 p-5 sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">AI summary</p>
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {shortModelName(article.summary.model)}
+                      <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">AI summary</p>
+                      <Badge variant="outline" className="border-border text-muted-foreground">
+                        Model {article.summary.model === "fallback" ? "fallback" : article.summary.model.split("/").pop() ?? article.summary.model}
                       </Badge>
                     </div>
 
-                    <ul className="space-y-3" role="list">
+                    <ul className="space-y-3">
                       {article.summary.bullets.map((bullet, index) => (
                         <li
-                          key={index}
-                          className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm leading-relaxed text-foreground"
+                          key={`${article.id}-bullet-${index}`}
+                          className="rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground"
                         >
                           {bullet}
                         </li>
@@ -293,20 +396,20 @@ export function NewsArticleModal({
                     </ul>
 
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-xl border border-border bg-muted/20 p-4">
-                        <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                          <Bot className="h-3.5 w-3.5" aria-hidden="true" />
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                          <Bot className="h-3.5 w-3.5" />
                           AI insight
                         </div>
-                        <p className="text-sm leading-relaxed text-foreground">{article.summary.insight}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{article.summary.insight}</p>
                       </div>
 
-                      <div className="rounded-xl border border-border bg-muted/20 p-4">
-                        <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                          <Globe className="h-3.5 w-3.5" aria-hidden="true" />
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                          <Globe className="h-3.5 w-3.5" />
                           Conclusion
                         </div>
-                        <p className="text-sm leading-relaxed text-foreground">{article.summary.conclusion}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{article.summary.conclusion}</p>
                       </div>
                     </div>
 
@@ -317,94 +420,86 @@ export function NewsArticleModal({
                   </CardContent>
                 </Card>
 
-                <Card className="border-border bg-card">
+                <Card className="border-border bg-card/85">
                   <CardContent className="space-y-4 p-5 sm:p-6">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <MessageSquareMore className="h-4 w-4" aria-hidden="true" />
-                      Chat about this article
+                    <div className="flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground">
+                      <MessageSquareMore className="h-4 w-4" />
+                      Chat with Distiller
                     </div>
 
-                    <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
-                      <div
-                        className="max-h-64 space-y-3 overflow-y-auto pr-1"
-                        role="log"
-                        aria-label="Chat messages"
-                        aria-live="polite"
-                      >
+                    <div className="space-y-3 rounded-2xl border border-border bg-card/70 p-4">
+                      <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
                         {messages.map((message, index) => (
                           <div
                             key={`${message.role}-${index}`}
-                            className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+                            className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                           >
                             {message.role === "assistant" ? (
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-primary text-primary-foreground">
-                                <Bot className="h-4 w-4" aria-hidden="true" />
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-foreground">
+                                <Bot className="h-4 w-4" />
                               </div>
                             ) : null}
 
                             <div
                               className={`max-w-[85%] rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
                                 message.role === "user"
-                                  ? "border-primary/20 bg-primary/10 text-foreground"
-                                  : "border-border bg-card text-foreground"
+                                  ? "border-primary/25 bg-primary/12 text-foreground"
+                                  : "border-border bg-white text-foreground"
                               }`}
                             >
                               {message.content}
                             </div>
 
                             {message.role === "user" ? (
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground">
-                                <User2 className="h-4 w-4" aria-hidden="true" />
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/12 text-foreground">
+                                <User2 className="h-4 w-4" />
                               </div>
                             ) : null}
                           </div>
                         ))}
 
                         {sending ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground" aria-live="polite">
-                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                            <span>Analyzing article...</span>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Thinking through the article...
                           </div>
                         ) : null}
 
                         <div ref={bottomRef} />
                       </div>
 
-                      {error ? (
-                        <p className="text-xs text-destructive" role="alert">
-                          {error}
-                        </p>
-                      ) : null}
+                      {error ? <p className="text-xs text-muted-foreground">{error}</p> : null}
+
+                      <div className="flex flex-wrap gap-2">
+                        {quickPrompts.map((prompt) => (
+                          <button
+                            key={prompt}
+                            type="button"
+                            onClick={() => setQuestion(prompt)}
+                            className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/45 hover:bg-secondary hover:text-foreground"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
 
                       <form onSubmit={submitQuestion} className="space-y-3">
                         <label htmlFor="news-question" className="sr-only">
-                          Ask a question about this news article
+                          Ask a question about this news
                         </label>
                         <textarea
                           id="news-question"
                           value={question}
                           onChange={(event) => setQuestion(event.target.value)}
-                          placeholder="Ask about the framing, implications, or what it leaves out..."
-                          rows={2}
-                          className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/50"
-                          disabled={sending}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              submitQuestion(e as unknown as FormEvent<HTMLFormElement>);
-                            }
-                          }}
+                          placeholder="Ask for a take, critique the framing, or discuss what it means..."
+                          rows={3}
+                          className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
                         />
 
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs text-muted-foreground">Press Enter to send, Shift+Enter for new line</p>
-                          <Button
-                            type="submit"
-                            size="sm"
-                            variant="default"
-                            disabled={sending || !question.trim()}
-                          >
-                            <Send className="h-4 w-4" aria-hidden="true" />
+                          <p className="text-xs text-muted-foreground">Chat stays centered on the selected article.</p>
+                          <Button type="submit" size="sm" variant="default" disabled={sending || !question.trim()}>
+                            <Send className="h-4 w-4" />
                             Send
                           </Button>
                         </div>
@@ -419,8 +514,4 @@ export function NewsArticleModal({
       </motion.div>
     </AnimatePresence>
   );
-}
-
-function shortModelName(model: string) {
-  return model === "fallback" ? "fallback" : model.split("/").pop() ?? model;
 }

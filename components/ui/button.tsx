@@ -9,10 +9,10 @@ export type ButtonVariant = "default" | "secondary" | "outline" | "ghost";
 export type ButtonSize = "sm" | "default" | "lg";
 
 const variantStyles: Record<ButtonVariant, string> = {
-  default: "bg-zinc-100 text-zinc-950 hover:bg-zinc-300 shadow-sm",
-  secondary: "border border-zinc-800 bg-zinc-900 text-zinc-100 hover:bg-zinc-800",
-  outline: "border border-zinc-800 bg-transparent text-zinc-100 hover:bg-zinc-900",
-  ghost: "bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+  default: "bg-primary text-primary-foreground hover:brightness-95 shadow-sm",
+  secondary: "border border-border bg-secondary text-secondary-foreground hover:brightness-95",
+  outline: "border border-border bg-transparent text-foreground hover:bg-muted",
+  ghost: "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

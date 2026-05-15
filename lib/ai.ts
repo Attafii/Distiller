@@ -4,10 +4,11 @@ import { z } from "zod";
 
 import { buildRagContext, estimateTokens } from "@/lib/rag";
 import { fetchWithTimeout } from "@/lib/http";
-import { normalizeEnvString, sanitizeQuery, sanitizeQuestion, checkInjectionRisk } from "@/lib/utils";
-import type { ArticleChatMessage, DistilledSummary, NewsArticle, SummarizationMode } from "@/types/news";
+import { normalizeEnvString } from "@/lib/utils";
+import type { ArticleChatMessage, DistilledSummary, NewsAssistantArticleContext, NewsArticle, SummarizationMode } from "@/types/news";
+import type { NewsQueryAnalysis } from "@/lib/news-assistant";
 
-type ModelTier = "fast" | "balanced" | "deep" | "chat";
+type ModelTier = "fast" | "balanced" | "deep";
 
 function uniqueModels(models: Array<string | undefined>): string[] {
   return Array.from(new Set(models.filter((model): model is string => Boolean(model && model.trim()))));
@@ -30,12 +31,6 @@ const MODEL_CANDIDATES: Record<ModelTier, string[]> = {
     "nvidia/llama-3.1-nemotron-ultra-253b-v1",
     "nvidia/llama-3.3-nemotron-super-49b-v1",
     "meta/llama-3.3-70b-instruct"
-  ]),
-  chat: uniqueModels([
-    normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_CHAT),
-    normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_BALANCED),
-    "nvidia/llama-3.3-nemotron-super-49b-v1",
-    "meta/llama-3.3-70b-instruct"
   ])
 };
 
@@ -47,17 +42,17 @@ const completionSchema = z.object({
       })
     })
   )
-}).strict();
+});
 
 const summarySchema = z.object({
   bullets: z.array(z.string().min(1)).length(3),
   insight: z.string().min(1),
   conclusion: z.string().min(1)
-}).strict();
+});
 
 const answerSchema = z.object({
   answer: z.string().min(1)
-}).strict();
+});
 
 const SYSTEM_PROMPT = [
   "You are Distiller, a strict news summarization engine.",
@@ -70,11 +65,27 @@ const SYSTEM_PROMPT = [
 
 const CHAT_SYSTEM_PROMPT = [
   "You are Distiller's article chat assistant.",
-  "You are a conversational analyst for one article at a time.",
+  "Speak like a sharp, approachable human analyst instead of a template or summary engine.",
   "Keep the conversation centered on the article, its claims, framing, implications, strengths, weaknesses, and what to watch next.",
   "You may offer judgment, critique, and interpretation when it helps discuss the article, but clearly separate opinion from direct evidence.",
+  "Speak naturally like a collaborative chat partner: explain your point of view, then show what evidence supports it.",
+  "Always address likely impact when relevant (markets, policy, product, social, or regional impact).",
   "Ground your replies in the article, the summary, the retrieved snippets, and the conversation history.",
-  "If the user asks something outside the article's scope, redirect back to the article instead of answering the unrelated topic."
+  "If the user asks something outside the article's scope, redirect back to the article instead of answering the unrelated topic.",
+  "When the user is vague, ask one short clarifying question rather than over-explaining."
+].join(" ");
+
+const NEWS_ASSISTANT_SYSTEM_PROMPT = [
+  "You are Distiller's news assistant.",
+  "Respond like a real news analyst in a live conversation.",
+  "Synthesize the supplied news articles into a detailed, grounded answer.",
+  "Use only the provided articles, retrieved snippets, and conversation history.",
+  "Clearly separate what is supported by the articles from any interpretation or caveat.",
+  "You can share an informed point of view when useful, but label it clearly as interpretation.",
+  "Explain likely impact and second-order effects where the evidence supports it.",
+  "If the coverage is thin or conflicting, say that directly instead of guessing.",
+  "If the user asks a follow-up, keep the thread flowing naturally and refer back to prior context when useful.",
+  'Return JSON only in the exact shape: {"answer":"..."}'
 ].join(" ");
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -199,9 +210,7 @@ export class DistillService {
       ? ["meta/llama-3.1-8b-instruct"]
       : tier === "balanced"
         ? ["meta/llama-3.3-70b-instruct", "meta/llama-3.1-70b-instruct"]
-        : tier === "deep"
-          ? ["nvidia/llama-3.1-nemotron-ultra-253b-v1", "meta/llama-3.3-70b-instruct"]
-          : ["meta/llama-3.3-70b-instruct", "meta/llama-3.1-70b-instruct"];
+        : ["nvidia/llama-3.1-nemotron-ultra-253b-v1", "meta/llama-3.3-70b-instruct"];
   }
 
   private pickTier(article: NewsArticle, mode: SummarizationMode, tokenEstimate: number): ModelTier {
@@ -345,7 +354,7 @@ export class DistillService {
     model: string,
     prompt: string,
     systemPrompt = SYSTEM_PROMPT,
-    maxTokens = 220
+    options: { maxTokens?: number; temperature?: number; topP?: number } = {}
   ): Promise<string> {
     if (!this.config.apiKey) {
       throw new DistillServiceError("Missing NVIDIA_BUILD_API_KEY");
@@ -369,9 +378,9 @@ export class DistillService {
               { role: "system", content: systemPrompt },
               { role: "user", content: prompt }
             ],
-            temperature: 0.2,
-            top_p: 0.9,
-            max_tokens: maxTokens,
+            temperature: options.temperature ?? 0.2,
+            top_p: options.topP ?? 0.9,
+            max_tokens: options.maxTokens ?? 220,
             response_format: {
               type: "json_object"
             }
@@ -422,13 +431,13 @@ export class DistillService {
     tier: ModelTier,
     prompt: string,
     systemPrompt = SYSTEM_PROMPT,
-    maxTokens = 220
+    options: { maxTokens?: number; temperature?: number; topP?: number } = {}
   ): Promise<{ model: string; content: string }> {
     let lastError: unknown = null;
 
     for (const model of this.modelCandidates(tier)) {
       try {
-        const content = await this.callModelOnce(model, prompt, systemPrompt, maxTokens);
+        const content = await this.callModelOnce(model, prompt, systemPrompt, options);
         return { model, content };
       } catch (error) {
         lastError = error;
@@ -446,17 +455,46 @@ export class DistillService {
     throw new DistillServiceError(`Unable to summarize with any ${tier} tier model`);
   }
 
+  private pickArticleChatTier(article: NewsArticle, question: string, history: ArticleChatMessage[]) {
+    const questionLength = question.trim().length;
+    const articleTokens = estimateTokens([article.title, article.description, article.content].filter(Boolean).join("\n\n"));
+    const complexityHints = /(compare|contrast|why|how|impact|implication|framing|missing|context|analyze|analysis|think|explain|detail)/i;
+
+    if (history.length > 4 || questionLength > 180 || complexityHints.test(question) || articleTokens > 1200) {
+      return "deep" as const;
+    }
+
+    if (questionLength > 80 || articleTokens > 600) {
+      return "balanced" as const;
+    }
+
+    return "fast" as const;
+  }
+
+  private pickNewsAssistantTier(question: string, analysis: NewsQueryAnalysis, articles: NewsAssistantArticleContext[], history: ArticleChatMessage[]) {
+    const complexityHints = /(compare|contrast|why|how|impact|implication|debate|difference|evaluate|analyze|analysis|tradeoff|follow-up)/i;
+
+    if (articles.length > 3 || history.length > 4 || question.trim().length > 220 || complexityHints.test(question) || analysis.intent === "explain") {
+      return "deep" as const;
+    }
+
+    if (articles.length > 1 || question.trim().length > 120 || analysis.intent === "specific") {
+      return "balanced" as const;
+    }
+
+    return "fast" as const;
+  }
+
   async summarizeArticle(input: SummarizeArticleInput): Promise<DistilledSummary> {
     const { article, mode = "auto", query } = input;
     const articleText = [article.title, article.description, article.content].filter(Boolean).join("\n\n");
     const tokenEstimate = estimateTokens(articleText);
-    const sanitizedQuery = query ? sanitizeQuery(query) : article.title;
-    const ragContext = await buildRagContext(article, sanitizedQuery, 3);
+    const ragContext = await buildRagContext(article, query ?? article.title, 3);
     const primaryTier = this.pickTier(article, mode, tokenEstimate);
-    const prompt = this.buildPrompt(article, ragContext.context, tokenEstimate, mode, sanitizedQuery);
+    const prompt = this.buildPrompt(article, ragContext.context, tokenEstimate, mode, query ?? article.title);
 
     try {
-      const { model, content } = await this.callModelForTier(primaryTier, prompt, SYSTEM_PROMPT, 220);
+      const { model, content } = await this.callModelForTier(primaryTier, prompt);
       const summary = this.normalizeSummary(content, article, ragContext.snippets);
 
       return {
@@ -466,11 +504,13 @@ export class DistillService {
         retrievedContext: ragContext.snippets
       };
     } catch (error) {
-      console.error("Distill summary failed", {
-        articleId: article.id,
-        mode,
-        error: error instanceof Error ? error.message : String(error)
-      });
+      if (!(error instanceof DistillServiceError && error.statusCode === 504)) {
+        console.error("Distill summary failed", {
+          articleId: article.id,
+          mode,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
 
       return this.fallbackSummary(article, ragContext.snippets);
     }
@@ -491,9 +531,9 @@ export class DistillService {
     history?: ArticleChatMessage[];
   }): Promise<{ answer: string; model: string; retrievedContext: string[] }> {
     const { article, summary, question, history = [] } = input;
-    const sanitizedQuestion = sanitizeQuestion(question);
-    const ragContext = await buildRagContext(article, sanitizedQuestion, 5);
+    const ragContext = await buildRagContext(article, question, 5);
     const contextSnippets = ragContext.snippets.length > 0 ? ragContext.snippets : summary.retrievedContext;
+    const tier = this.pickArticleChatTier(article, question, history);
 
     const prompt = [
       `Article title: ${article.title}`,
@@ -512,17 +552,23 @@ export class DistillService {
       "Conversation history:",
       formatConversation(history) || "No prior messages.",
       "",
-      `User question: ${sanitizedQuestion}`,
+      `User question: ${question}`,
       "",
       "Respond like a chat partner discussing the article. You can explain what the article suggests, judge its framing, point out missing context, and discuss likely implications.",
       "Stay anchored to the article and context, but do not refuse a question just because it asks for analysis or judgment about the article.",
       "If the question goes beyond the article, gently redirect the user back to the story.",
-      "Keep it conversational in two to five sentences.",
+      "Be open, direct, and useful: include your POV as interpretation, then tie it to evidence from the article.",
+      "Mention practical impact when relevant and flag uncertainty when evidence is weak.",
+      "Keep it conversational in three to six sentences.",
       'Return JSON only in the exact shape: {"answer":"..."}'
     ].join("\n");
 
     try {
-      const { model, content } = await this.callModelForTier("chat", prompt, CHAT_SYSTEM_PROMPT, 512);
+      const { model, content } = await this.callModelForTier(tier, prompt, CHAT_SYSTEM_PROMPT, {
+        maxTokens: 260,
+        temperature: 0.35,
+        topP: 0.95
+      });
       const cleaned = cleanFenceBlocks(content);
 
       try {
@@ -531,7 +577,7 @@ export class DistillService {
 
         if (parsed.success) {
           return {
-            answer: normalizeLine(parsed.data.answer) || this.fallbackChatAnswer(article, summary, sanitizedQuestion, contextSnippets),
+            answer: normalizeLine(parsed.data.answer) || this.fallbackChatAnswer(article, summary, question, contextSnippets),
             model,
             retrievedContext: contextSnippets
           };
@@ -541,20 +587,119 @@ export class DistillService {
       }
 
       return {
-        answer: normalizeLine(cleaned) || this.fallbackChatAnswer(article, summary, sanitizedQuestion, contextSnippets),
+        answer: normalizeLine(cleaned) || this.fallbackChatAnswer(article, summary, question, contextSnippets),
         model,
         retrievedContext: contextSnippets
       };
     } catch {
-      console.error("Distill chat failed", {
-        articleId: article.id,
-        question: question.slice(0, 120)
-      });
+      // Chat falls back cleanly when the model times out or fails.
 
       return {
         answer: this.fallbackChatAnswer(article, summary, question, contextSnippets),
         model: "fallback",
         retrievedContext: contextSnippets
+      };
+    }
+  }
+
+  async answerNewsQuestion(input: {
+    question: string;
+    analysis: NewsQueryAnalysis;
+    articles: NewsAssistantArticleContext[];
+    history?: ArticleChatMessage[];
+  }): Promise<{ answer: string; model: string; retrievedContext: string[] }> {
+    const { question, analysis, articles, history = [] } = input;
+    const retrievedContext = articles.flatMap((article) => article.snippets);
+
+    if (articles.length === 0) {
+      return {
+        answer: this.fallbackNewsAnswer(question, analysis, articles),
+        model: "fallback",
+        retrievedContext
+      };
+    }
+
+    const articleBlocks = articles
+      .map((item, index) => {
+        const snippets =
+          item.snippets.length > 0
+            ? item.snippets.map((snippet, snippetIndex) => `Snippet ${snippetIndex + 1}: ${snippet}`).join("\n\n")
+            : item.context || "No retrieved snippets were available.";
+
+        return [
+          `Article ${index + 1}:`,
+          `Title: ${item.article.title}`,
+          `Source: ${item.article.source.name}`,
+          `Published: ${item.article.publishedAt}`,
+          `Category: ${item.article.category}`,
+          `Relevance: ${item.relevance}%`,
+          "Retrieved context:",
+          snippets,
+          ""
+        ].join("\n");
+      })
+      .join("\n");
+
+    const prompt = [
+      `Search query: ${analysis.searchQuery}`,
+      `Detected category: ${analysis.category ?? "uncategorized"}`,
+      `Detected country: ${analysis.country ?? "uncertain"}`,
+      `Detected intent: ${analysis.intent}`,
+      `Keywords: ${analysis.keywords.join(", ") || "none"}`,
+      `Phrases: ${analysis.phrases.join(", ") || "none"}`,
+      "",
+      "Conversation history:",
+      formatConversation(history) || "No prior messages.",
+      "",
+      `User question: ${question}`,
+      "",
+      "Relevant articles:",
+      articleBlocks,
+      "",
+      "Instructions:",
+      "Answer the question by synthesizing the supplied articles and retrieved context.",
+      "Be detailed and specific, but do not invent facts or add outside context.",
+      "If multiple articles agree, say so. If coverage is thin, say what is missing.",
+      "You may include a clear POV as interpretation, but explicitly separate it from reported evidence.",
+      "Discuss likely impact and why this matters to users, markets, policy, or society when relevant.",
+      "Prefer plain, readable prose in five to nine sentences.",
+      'Return JSON only in the exact shape: {"answer":"..."}'
+    ].join("\n");
+
+    try {
+      const tier = this.pickNewsAssistantTier(question, analysis, articles, history);
+      const { model, content } = await this.callModelForTier(tier, prompt, NEWS_ASSISTANT_SYSTEM_PROMPT, {
+        maxTokens: tier === "deep" ? 420 : 360,
+        temperature: 0.35,
+        topP: 0.95
+      });
+      const cleaned = cleanFenceBlocks(content);
+
+      try {
+        const parsedJson = JSON.parse(cleaned) as unknown;
+        const parsed = answerSchema.safeParse(parsedJson);
+
+        if (parsed.success) {
+          return {
+            answer: normalizeLine(parsed.data.answer) || this.fallbackNewsAnswer(question, analysis, articles),
+            model,
+            retrievedContext
+          };
+        }
+      } catch {
+        // Fall through to text response.
+      }
+
+      return {
+        answer: normalizeLine(cleaned) || this.fallbackNewsAnswer(question, analysis, articles),
+        model,
+        retrievedContext
+      };
+    } catch {
+      return {
+        answer: this.fallbackNewsAnswer(question, analysis, articles),
+        model: "fallback",
+        retrievedContext
       };
     }
   }
@@ -567,5 +712,20 @@ export class DistillService {
   ): string {
     const basis = compactText(summary.insight || contextSnippets[0] || article.description || article.title, 160);
     return `My read is that ${basis}. I can’t verify every detail from the available text, but the article points toward that interpretation. If you want, I can also unpack the framing, likely impact, or what feels missing.`;
+  }
+
+  private fallbackNewsAnswer(question: string, analysis: NewsQueryAnalysis, articles: NewsAssistantArticleContext[]): string {
+    const leadArticle = articles[0];
+
+    if (!leadArticle) {
+      return `I could not find a strong match for "${question}". Try adding a person, company, region, or topic so I can search more precisely.`;
+    }
+
+    const basis = compactText(
+      leadArticle.snippets[0] ?? leadArticle.article.description ?? leadArticle.article.content ?? leadArticle.article.title,
+      160
+    );
+
+    return `I found ${articles.length} relevant story${articles.length === 1 ? "" : "ies"} for "${analysis.searchQuery}". The strongest match is "${leadArticle.article.title}" from ${leadArticle.article.source.name}, and the article suggests ${basis}. If you want, I can narrow it by region, date, or a named source.`;
   }
 }

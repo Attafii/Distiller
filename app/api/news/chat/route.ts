@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DistillService } from "@/lib/ai";
+import { CATEGORY_VALUES } from "@/lib/news-options";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { ArticleChatMessage, DistilledArticle } from "@/types/news";
 
@@ -14,21 +15,6 @@ function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
     "X-RateLimit-Reset": String(Math.ceil(result.resetIn / 1000))
   };
 }
-
-const categoryValues = [
-  "world",
-  "politics",
-  "tech",
-  "science",
-  "business",
-  "finance",
-  "climate",
-  "health",
-  "education",
-  "sports",
-  "entertainment",
-  "culture"
-] as const;
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -47,7 +33,7 @@ const articleSchema = z.object({
     id: z.string().nullable(),
     name: z.string().min(1).max(200)
   }),
-  category: z.enum(categoryValues),
+  category: z.enum(CATEGORY_VALUES),
   summary: z.object({
     bullets: z.tuple([z.string().min(1), z.string().min(1), z.string().min(1)]),
     insight: z.string().min(1),

@@ -1,17 +1,22 @@
+export type ArticlePriority = "normal" | "important" | "breaking";
+
 export type Category =
   | "world"
   | "politics"
   | "tech"
+  | "ai"
+  | "llm"
   | "science"
   | "business"
   | "finance"
+  | "stocks"
   | "climate"
   | "health"
   | "education"
   | "sports"
   | "entertainment"
   | "culture";
-export type CountryCode = "global" | "tn" | "us" | "gb" | "ca" | "au" | "in" | "de" | "fr" | "jp" | "br" | "ae" | "sg";
+export type CountryCode = "global" | "tn" | "us" | "gb" | "ca" | "au" | "in" | "de" | "fr" | "jp" | "cn" | "ru" | "br" | "ae" | "sg";
 export type DateRange = "any" | "24h" | "7d" | "30d";
 export type SummarizationMode = "auto" | "fast" | "balanced" | "deep";
 
@@ -30,6 +35,7 @@ export interface NewsArticle {
   publishedAt: string;
   source: NewsSource;
   category: Category;
+  priority: ArticlePriority;
 }
 
 export interface DistilledSummary {
@@ -43,6 +49,22 @@ export interface DistilledSummary {
 
 export interface DistilledArticle extends NewsArticle {
   summary: DistilledSummary;
+  likeCount: number;
+  likedByViewer: boolean;
+}
+
+export interface ArticleLikeResponse {
+  articleId: string;
+  likeCount: number;
+  likedByViewer: boolean;
+}
+
+export type ArticleTextSource = "remote" | "proxy" | "cache" | "feed";
+
+export interface ArticleFullTextResponse {
+  fullText: string;
+  source: ArticleTextSource;
+  hadTruncation: boolean;
 }
 
 export interface FeedResponse {
@@ -78,4 +100,39 @@ export interface ArticleChatResponse {
   answer: string;
   model: string;
   retrievedContext: string[];
+}
+
+export interface NewsAssistantArticleReference {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  relevance: number;
+  snippet: string;
+}
+
+export interface NewsAssistantArticleContext {
+  article: NewsArticle;
+  relevance: number;
+  snippets: string[];
+  context: string;
+}
+
+export interface NewsAssistantResponse {
+  answer: string;
+  model: string;
+  retrievedContext: string[];
+  searchQuery: string;
+  articles: NewsAssistantArticleReference[];
+}
+
+export interface GitHubRepoStats {
+  repoSlug: string;
+  repoUrl: string;
+  starUrl: string;
+  stars: number;
+  forks: number;
+  openIssues: number;
+  fetchedAt: string;
 }

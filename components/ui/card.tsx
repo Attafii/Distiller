@@ -11,7 +11,7 @@ export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
   return (
     <div
       ref={ref}
-      className={cn("rounded-3xl border border-zinc-800 bg-zinc-950/80 text-zinc-100 shadow-soft", className)}
+      className={cn("rounded-3xl border border-border bg-card/90 text-card-foreground shadow-soft", className)}
       {...props}
     />
   );

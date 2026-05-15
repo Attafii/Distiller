@@ -16,9 +16,10 @@ Summary flow:
 4. Route the request to the right NVIDIA Build model based on user intent and article complexity.
 5. Ask the model for exactly 3 grounded bullet points.
 6. Validate the shape with Zod before rendering anything in the feed.
+7. Let the assistant parse a free-form question, search the latest articles, and answer with the strongest sources.
+8. Cache GitHub star counts so the top-right badge stays responsive without hitting the API on every render.
 
 Why this helps:
-
 - RAG keeps the prompt small, which saves tokens.
 - Embeddings let you pass only the most relevant context to the LLM.
 - Low temperature and strict JSON output reduce hallucination.
@@ -30,17 +31,35 @@ Why this helps:
 
 ```text
 app/
-	RefinedFeed/
-		page.tsx
 	api/
 		feed/route.ts
+		github/
+			stars/route.ts
+		news/
+			assistant/route.ts
+			chat/route.ts
+			full-text/route.ts
+			like/route.ts
+	RefinedFeed/
+		page.tsx
+	page.tsx
+	loading.tsx
 	error.tsx
 	globals.css
 	layout.tsx
 components/
+	GitHubRepoWidget.tsx
+	NewsAssistant.tsx
 	DistilledCard.tsx
+	NewsArticleModal.tsx
+	ui/
+		badge.tsx
+		button.tsx
+		card.tsx
 lib/
 	ai.ts
+	github.ts
+	news-assistant.ts
 	rag.ts
 	utils.ts
 services/
@@ -75,8 +94,9 @@ npx shadcn@latest add button card badge separator skeleton
 		"clsx": "^2.1.1",
 		"class-variance-authority": "^0.7.1",
 		"framer-motion": "^12.0.0",
+		"compromise": "^14.15.0",
 		"lucide-react": "^0.475.0",
-		"next": "15.3.0",
+		"next": "15.5.15",
 		"react": "19.0.0",
 		"react-dom": "19.0.0",
 		"tailwind-merge": "^3.0.1",
@@ -88,10 +108,10 @@ npx shadcn@latest add button card badge separator skeleton
 		"@types/react-dom": "^19.0.4",
 		"autoprefixer": "^10.4.20",
 		"eslint": "^9.19.0",
-		"eslint-config-next": "15.3.0",
+		"eslint-config-next": "15.5.15",
 		"postcss": "^8.5.1",
 		"tailwindcss": "^3.4.17",
-		"typescript": "^5.8.0"
+		"typescript": "^6.0.2"
 	}
 }
 ```
@@ -231,6 +251,18 @@ export default config;
 	}
 }
 ```
+
+### New endpoints
+
+- `POST /api/news/assistant` searches the current article corpus, ranks the best matches, and returns a detailed answer with source links.
+- `GET /api/github/stars` returns the cached GitHub star count and the star-flow link used by the top-right badge.
+
+### Suggested env vars
+
+- `NEWSAPI_KEY` keeps the article feed connected to NewsAPI.
+- `NVIDIA_BUILD_API_KEY` enables grounded summaries and assistant answers.
+- `GITHUB_REPOSITORY` overrides the GitHub repo slug used by the star widget.
+- `GITHUB_TOKEN` or `GITHUB_API_TOKEN` can be set to raise GitHub API limits.
 
 ### `app/globals.css`
 
