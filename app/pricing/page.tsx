@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
-import { Check, Minus, Zap } from "lucide-react";
-
+import Link from "next/link";
+import { Check, Minus, Zap, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -15,19 +14,19 @@ const tiers = [
     tagline: "For curious readers",
     price: "$0",
     period: "forever",
-    cta: "Start reading",
-    ctaHref: "/RefinedFeed",
+    cta: "Get started",
+    ctaHref: "/auth/signup",
     highlight: false,
+    monthly: false,
     features: [
-      { text: "15 topics", included: true },
-      { text: "13 regions", included: true },
       { text: "50 articles/month", included: true },
-      { text: "Fast summaries", included: true },
-      { text: "RAG-grounded briefs", included: true },
-      { text: "Infinite scroll", included: false },
+      { text: "15 topics", included: true },
+      { text: "15 regions", included: true },
+      { text: "Basic filters", included: true },
+      { text: "Bookmarks", included: false },
+      { text: "Reading history", included: false },
       { text: "Advanced filters", included: false },
-      { text: "API access", included: false },
-      { text: "Priority support", included: false }
+      { text: "Unlimited articles", included: false }
     ]
   },
   {
@@ -36,19 +35,19 @@ const tiers = [
     tagline: "For power readers",
     price: "$9",
     period: "per month",
-    cta: "Go Pro",
-    ctaHref: "#pricing",
+    cta: "Start Pro trial",
+    ctaHref: "#checkout",
     highlight: true,
+    monthly: true,
     features: [
-      { text: "15 topics", included: true },
-      { text: "13 regions", included: true },
       { text: "Unlimited articles", included: true },
-      { text: "All summary modes", included: true },
-      { text: "RAG-grounded briefs", included: true },
-      { text: "Infinite scroll", included: true },
+      { text: "All 15 topics", included: true },
+      { text: "All 15 regions", included: true },
+      { text: "Deep summary mode", included: true },
+      { text: "Bookmarks", included: true },
+      { text: "Reading history", included: true },
       { text: "Advanced filters", included: true },
-      { text: "API access", included: false },
-      { text: "Priority support", included: false }
+      { text: "Priority support", included: true }
     ]
   },
   {
@@ -57,39 +56,39 @@ const tiers = [
     tagline: "For research teams",
     price: "$29",
     period: "per month",
-    cta: "Start team",
-    ctaHref: "#pricing",
+    cta: "Start team trial",
+    ctaHref: "#checkout",
     highlight: false,
+    monthly: true,
     features: [
-      { text: "15 topics", included: true },
-      { text: "13 regions", included: true },
-      { text: "Unlimited articles", included: true },
-      { text: "All summary modes", included: true },
-      { text: "RAG-grounded briefs", included: true },
-      { text: "Infinite scroll", included: true },
-      { text: "Advanced filters", included: true },
-      { text: "5 seats, shared feeds", included: true },
-      { text: "Priority support", included: true }
+      { text: "Everything in Pro", included: true },
+      { text: "5 team seats", included: true },
+      { text: "Shared team feed", included: true },
+      { text: "Custom alerts", included: true },
+      { text: "Team analytics", included: true },
+      { text: "Dedicated support", included: true },
+      { text: "Export to CSV/PDF", included: true },
+      { text: "Priority onboarding", included: true }
     ]
   },
   {
     id: "api",
     name: "API",
-    tagline: "For builders",
+    tagline: "For developers",
     price: "$0.003",
     period: "per article",
     cta: "Get API key",
-    ctaHref: "#pricing",
+    ctaHref: "/auth/signup?plan=api",
     highlight: false,
+    monthly: false,
     features: [
-      { text: "Full REST API", included: true },
-      { text: "Webhooks + RSS", included: true },
-      { text: "Custom embeddings", included: true },
-      { text: "Dedicated endpoints", included: true },
-      { text: "Rate limit: 10k/month", included: true },
-      { text: "99.9% uptime SLA", included: true },
+      { text: "REST API access", included: true },
+      { text: "Webhooks", included: true },
+      { text: "RSS integration", included: true },
       { text: "Custom topic tuning", included: true },
+      { text: "1k articles/month included", included: true },
       { text: "Volume discounts", included: true },
+      { text: "99.9% uptime SLA", included: true },
       { text: "Dedicated support", included: true }
     ]
   }
@@ -97,73 +96,76 @@ const tiers = [
 
 const faqs = [
   {
-    q: "Can I switch plans anytime?",
-    a: "Yes, upgrade or downgrade instantly. Downgrades take effect at the next billing cycle."
+    q: "Can I cancel anytime?",
+    a: "Yes — cancel from your dashboard at any time. Downgrades take effect immediately, no refund needed for the current period."
+  },
+  {
+    q: "What happens after the trial?",
+    a: "Pro and Team start with a 7-day free trial. After that, you'll be charged monthly. Cancel before the trial ends to pay nothing."
   },
   {
     q: "What's the difference between Pro and Team?",
-    a: "Team gives you 5 seats with shared feeds and priority support. Pro is a single-seat plan with the same feature set as Team except shared access."
+    a: "Pro is a single-seat plan with unlimited access. Team adds 5 shared seats, a team feed, and analytics — ideal for research groups."
   },
   {
     q: "How does API pricing work?",
-    a: "You pay per article distilled. Each call to the distillation endpoint counts as one article. Volume discounts kick in automatically at 1k, 5k, and 10k articles/month."
+    a: "You pay per article distilled. First 1,000 articles per month are free. Volume discounts apply at 1k, 5k, and 10k articles/month."
   },
   {
     q: "Do you offer annual billing?",
-    a: "Yes — annual plans save 20%. Contact us at billing@distiller.attafii.app to switch."
-  },
-  {
-    q: "Is there a free trial for Pro?",
-    a: "Every new account starts with a 7-day Pro trial, no credit card required."
+    a: "Yes — annual plans save 20%. Contact billing@distiller.attafii.app to switch."
   }
 ];
 
 function CheckRow({ text, included }: { text: string; included: boolean }) {
   return (
-    <div className="flex items-center gap-3 py-2">
+    <div className="flex items-center gap-3 py-1.5">
       {included ? (
         <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} />
       ) : (
-        <Minus className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+        <Minus className="h-4 w-4 shrink-0 text-muted-foreground/30" />
       )}
-      <span className={`text-sm ${included ? "text-foreground" : "text-muted-foreground"}`}>{text}</span>
+      <span className={`text-sm ${included ? "text-foreground" : "text-muted-foreground/60"}`}>{text}</span>
     </div>
   );
 }
 
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const handleCheckout = async (planId: string) => {
+    if (planId === "free" || planId === "api") return;
+
+    setLoadingPlan(planId);
+
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planId })
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        window.location.href = "/auth/signup";
+      }
+    } catch {
+      window.location.href = "/auth/signup";
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-background">
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <a href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-primary text-primary-foreground shadow-sm">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M4 6h16M4 12h12M4 18h8" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-display text-lg font-semibold tracking-tight">Distiller</p>
-              <p className="text-xs text-muted-foreground">AI News Intelligence</p>
-            </div>
-          </a>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <a href="/RefinedFeed">Browse feed</a>
-            </Button>
-            <Button size="sm" asChild>
-              <a href="#pricing">Get started</a>
-            </Button>
-          </div>
-        </nav>
-      </header>
-
       <div id="main-content">
-        <section className="mx-auto max-w-5xl px-6 py-20 text-center">
+        <section className="mx-auto max-w-4xl px-6 py-20 text-center">
           <Badge variant="outline" className="mb-6 border-border text-muted-foreground">
             Simple pricing
           </Badge>
@@ -180,7 +182,8 @@ export default function PricingPage() {
             {tiers.map((tier) => (
               <Card
                 key={tier.id}
-                className={`relative border-border bg-card ${tier.highlight ? "shadow-elevated ring-2 ring-primary/20" : "shadow-soft"}`}
+                id={tier.id === "pro" ? "checkout" : undefined}
+                className={`relative border-border bg-card ${tier.highlight ? "shadow-elevated ring-2 ring-primary/15" : "shadow-soft"}`}
               >
                 {tier.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -199,13 +202,31 @@ export default function PricingPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button
-                    variant={tier.highlight ? "default" : "outline"}
-                    className="w-full"
-                    asChild
-                  >
-                    <a href={tier.ctaHref}>{tier.cta}</a>
-                  </Button>
+                  {tier.id === "free" || tier.id === "api" ? (
+                    <Button
+                      variant={tier.highlight ? "default" : "outline"}
+                      className="w-full"
+                      asChild
+                    >
+                      <Link href={tier.ctaHref}>{tier.cta}</Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant={tier.highlight ? "default" : "outline"}
+                      className="w-full"
+                      onClick={() => handleCheckout(tier.id)}
+                      disabled={loadingPlan !== null}
+                    >
+                      {loadingPlan === tier.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Redirecting...
+                        </>
+                      ) : (
+                        tier.cta
+                      )}
+                    </Button>
+                  )}
                   <div className="border-t border-border pt-4">
                     {tier.features.map((f) => (
                       <CheckRow key={f.text} text={f.text} included={f.included} />
@@ -253,34 +274,22 @@ export default function PricingPage() {
               <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground">
                 Ready to cut through the noise?
               </h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Join thousands of researchers, developers, and curious readers who use Distiller to stay informed in seconds, not hours.
+              <p className="text-sm leading-relaxed text-muted-foreground max-w-lg mx-auto">
+                Join thousands of researchers, developers, and curious readers who use Distiller
+                to stay informed in seconds, not hours.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Button size="lg" asChild>
-                  <a href="/RefinedFeed">Start reading free</a>
+                  <Link href="/auth/signup">Start for free</Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
-                  <a href="#pricing">View pricing</a>
+                  <Link href="/RefinedFeed">Browse feed</Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
         </section>
       </div>
-
-      <footer className="border-t border-border/60 bg-background">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Distiller. Built with Next.js + NVIDIA Build.
-          </p>
-          <div className="flex items-center gap-4">
-            <a href="/RefinedFeed" className="text-xs text-muted-foreground hover:text-foreground">Feed</a>
-            <a href="#pricing" className="text-xs text-muted-foreground hover:text-foreground">Pricing</a>
-            <a href="/feed.xml" className="text-xs text-muted-foreground hover:text-foreground">RSS</a>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

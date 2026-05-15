@@ -6,7 +6,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
 export type ButtonVariant = "default" | "secondary" | "outline" | "ghost";
-export type ButtonSize = "sm" | "default" | "lg";
+export type ButtonSize = "sm" | "default" | "lg" | "icon";
 
 const variantStyles: Record<ButtonVariant, string> = {
   default: "bg-primary text-primary-foreground hover:brightness-95 shadow-sm",
@@ -18,7 +18,8 @@ const variantStyles: Record<ButtonVariant, string> = {
 const sizeStyles: Record<ButtonSize, string> = {
   sm: "h-8 rounded-full px-3 text-xs",
   default: "h-10 rounded-full px-4 text-sm",
-  lg: "h-11 rounded-full px-5 text-sm"
+  lg: "h-11 rounded-full px-5 text-sm",
+  icon: "h-9 w-9 rounded-full p-0"
 };
 
 export function buttonStyles({

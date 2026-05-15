@@ -45,3 +45,33 @@ export const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<
 });
 
 CardFooter.displayName = "CardFooter";
+
+export const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(function CardTitle(
+  { className, ...props },
+  ref
+) {
+  return (
+    <h3
+      ref={ref}
+      className={cn("font-display text-xl font-semibold leading-none tracking-tight", className)}
+      {...props}
+    />
+  );
+});
+
+CardTitle.displayName = "CardTitle";
+
+export const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(function CardDescription(
+  { className, ...props },
+  ref
+) {
+  return (
+    <p
+      ref={ref}
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  );
+});
+
+CardDescription.displayName = "CardDescription";

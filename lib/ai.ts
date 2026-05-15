@@ -344,8 +344,8 @@ export class DistillService {
       bullets: fallbackBullets(article, contextSnippets),
       insight: deriveInsight(article, contextSnippets),
       conclusion: deriveConclusion(article, contextSnippets),
-      model: "fallback",
-      confidence: 0.18,
+      model: "system",
+      confidence: 0.25,
       retrievedContext: contextSnippets
     };
   }
@@ -497,10 +497,15 @@ export class DistillService {
       const { model, content } = await this.callModelForTier(primaryTier, prompt);
       const summary = this.normalizeSummary(content, article, ragContext.snippets);
 
+      const snippetScore = Math.min(0.15, ragContext.snippets.length * 0.03);
+      const contextScore = ragContext.usedEmbeddings ? 0.12 : 0.04;
+      const baseScore = 0.65;
+      const confidence = Math.min(0.97, baseScore + snippetScore + contextScore);
+
       return {
         ...summary,
         model,
-        confidence: Math.min(0.98, 0.58 + ragContext.snippets.length * 0.1 + (ragContext.usedEmbeddings ? 0.08 : 0.04)),
+        confidence,
         retrievedContext: ragContext.snippets
       };
     } catch (error) {

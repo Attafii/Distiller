@@ -11,6 +11,7 @@ import { DistilledCard } from "@/components/DistilledCard";
 import { GitHubRepoWidget } from "@/components/GitHubRepoWidget";
 import { NewsArticleModal } from "@/components/NewsArticleModal";
 import { NewsAssistant } from "@/components/NewsAssistant";
+import { ModeToggle } from "@/components/ModeToggle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -279,7 +280,7 @@ export default function RefinedFeedPage() {
   const activePriorityLabel = priorityFilters.find((option) => option.id === priorityFilter)?.label ?? priorityFilter;
   const visibleArticles = articles.filter((article) => (priorityFilter === "all" ? true : article.priority === priorityFilter));
   const selectedArticle = selectedArticleId ? articles.find((article) => article.id === selectedArticleId) ?? null : null;
-  const emptyTitle = articles.length > 0 ? "No stories match this priority" : "No articles yet";
+  const emptyTitle = articles.length > 0 ? "No stories match this filter" : "No articles yet";
   const emptyDescription =
     articles.length > 0
       ? priorityFilter === "all"
@@ -290,10 +291,12 @@ export default function RefinedFeedPage() {
   return (
     <main className="min-h-screen bg-transparent text-foreground">
       <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-8 flex items-center justify-between rounded-full border border-border bg-white/85 px-4 py-3 backdrop-blur">
+        <header className="mb-8 flex items-center justify-between rounded-2xl border border-border bg-white/85 px-4 py-3 backdrop-blur">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary text-foreground">
-              <Newspaper className="h-4 w-4" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-primary text-primary-foreground">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M4 6h16M4 12h12M4 18h8" />
+              </svg>
             </div>
             <div>
               <p className="text-sm font-semibold tracking-tight">Distiller</p>
@@ -302,10 +305,15 @@ export default function RefinedFeedPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="hidden border-border text-muted-foreground sm:inline-flex">
-              RAG + embeddings + our AI and API service
-            </Badge>
-            <GitHubRepoWidget />
+            <a href="/RefinedFeed" className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline">Browse</a>
+            <a href="/pricing" className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline">Pricing</a>
+            <ModeToggle />
+            <a href="/auth/login" className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium shadow-sm transition-colors hover:bg-muted/50">
+              Sign in
+            </a>
+            <a href="/auth/signup" className="inline-flex items-center justify-center rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+              Get started
+            </a>
           </div>
         </header>
 
@@ -320,7 +328,7 @@ export default function RefinedFeedPage() {
           <div className="space-y-4">
             <Badge variant="outline" className="border-border text-muted-foreground">
               <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
-              Topic + region routing
+              Verified + distilled
             </Badge>
             <div className="space-y-3">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
@@ -347,8 +355,8 @@ export default function RefinedFeedPage() {
                 <p>Visible after filters: <span className="text-foreground">{visibleArticles.length}</span></p>
                 <p>Priority filter: <span className="text-foreground">{activePriorityLabel}</span></p>
                 <p>Infinite scroll: <span className="text-foreground">{hasMore ? "active" : "complete"}</span></p>
-                <p>RAG: <span className="text-foreground">enabled</span></p>
-                <p>Embeddings: <span className="text-foreground">active</span></p>
+                <p>Source verification: <span className="text-foreground">enabled</span></p>
+                <p>Smart matching: <span className="text-foreground">active</span></p>
                 <p className="text-xs text-muted-foreground">Red dot means important or breaking news.</p>
               </div>
             </CardContent>
