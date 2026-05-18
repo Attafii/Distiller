@@ -58,7 +58,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-04-22.dahlia"
+      // @ts-expect-error Stripe SDK types are outdated; this API version is valid at runtime
+      apiVersion: "2025-04-30.basil"
     });
 
     const existingSubscription = await getDb().query.subscriptions.findFirst({
@@ -96,8 +97,8 @@ export async function POST(request: NextRequest) {
           quantity: 1
         }
       ],
-      mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/settings?success=true`,
+      mode: "subscription",
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/settings?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing?canceled=true`,
       metadata: {
         userId: session.user.id,

@@ -3,9 +3,18 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { readingHistory } from "@/lib/db/schema";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { eq, desc } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
+
+function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
+  return {
+    "X-RateLimit-Limit": "30",
+    "X-RateLimit-Remaining": String(result.remaining),
+    "X-RateLimit-Reset": String(Math.ceil(result.resetIn / 1000))
+  };
+}
 
 const createHistorySchema = z.object({
   articleId: z.string().min(1),
@@ -15,6 +24,16 @@ const createHistorySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+  const headers = rateLimitHeaders(rateLimit);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before making more requests." },
+      { status: 429, headers }
+    );
+  }
+
   const session = await auth.api.getSession({ request, headers: request.headers });
 
   if (!session?.user) {
@@ -28,14 +47,24 @@ export async function GET(request: NextRequest) {
       limit: 100
     });
 
-    return NextResponse.json({ history });
+    return NextResponse.json({ history }, { headers });
   } catch (error) {
     console.error("Error fetching reading history:", error);
-    return NextResponse.json({ error: "Failed to fetch reading history" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch reading history" }, { status: 500, headers });
   }
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+  const headers = rateLimitHeaders(rateLimit);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before making more requests." },
+      { status: 429, headers }
+    );
+  }
+
   const session = await auth.api.getSession({ request, headers: request.headers });
 
   if (!session?.user) {
@@ -70,9 +99,9 @@ export async function POST(request: NextRequest) {
       category
     }).returning();
 
-    return NextResponse.json({ entry: newEntry }, { status: 201 });
+    return NextResponse.json({ entry: newEntry }, { status: 201, headers });
   } catch (error) {
     console.error("Error creating history entry:", error);
-    return NextResponse.json({ error: "Failed to create history entry" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create history entry" }, { status: 500, headers });
   }
 }

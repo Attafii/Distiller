@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { IBM_Plex_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ModeToggle } from "@/components/ModeToggle";
 import { ToastProvider } from "@/components/ToastProvider";
+import { UserNav } from "@/components/UserNav";
 import "./globals.css";
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -151,7 +152,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div className="relative flex min-h-screen flex-col">
               <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
                 <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
-                  <a href="/" className="flex items-center gap-3">
+                  <Link href="/" className="flex items-center gap-3">
                     <div className="flex size-10 items-center justify-center rounded-xl border border-border bg-primary text-primary-foreground shadow-sm">
                       <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                         <path d="M4 6h16M4 12h12M4 18h8" />
@@ -161,34 +162,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                       <p className="font-display text-lg font-semibold tracking-tight">Distiller</p>
                       <p className="text-xs text-muted-foreground">News Intelligence</p>
                     </div>
-                  </a>
+                  </Link>
 
                   <div className="flex items-center gap-4">
-                    <a
-                      href="/RefinedFeed"
-                      className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      Browse
-                    </a>
-                    <a
-                      href="/pricing"
-                      className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      Pricing
-                    </a>
-                    <ModeToggle />
-                    <a
-                      href="/auth/login"
-                      className="inline-flex items-center justify-center rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted/50"
-                    >
-                      Sign in
-                    </a>
-                    <a
-                      href="/auth/signup"
-                      className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                    >
-                      Get started
-                    </a>
+                    <UserNav />
                   </div>
                 </nav>
               </header>

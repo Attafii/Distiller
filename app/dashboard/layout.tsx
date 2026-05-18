@@ -2,8 +2,9 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Loader2, BookMarked, History, Bell, Settings, CreditCard, LayoutDashboard } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, Loader2, BookMarked, History, Bell, Settings, CreditCard, LayoutDashboard, LogOut, ChevronDown } from "lucide-react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,8 +20,11 @@ const navItems = [
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<{ name: string; email: string; image?: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -30,17 +34,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           const data = await res.json();
           setUser(data);
         } else {
-          window.location.href = "/auth/login?callbackUrl=" + encodeURIComponent(pathname);
+          router.push("/auth/login?callbackUrl=" + encodeURIComponent(pathname));
         }
       } catch {
-        window.location.href = "/auth/login?callbackUrl=" + encodeURIComponent(pathname);
+        router.push("/auth/login?callbackUrl=" + encodeURIComponent(pathname));
       } finally {
         setLoading(false);
       }
     }
 
     fetchUser();
-  }, [pathname]);
+  }, [pathname, router]);
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   if (loading) {
     return (
@@ -55,7 +70,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
+      {/* Sidebar - desktop only */}
       <aside className="hidden w-64 flex-col border-r border-border bg-card lg:flex">
         <div className="flex items-center gap-3 border-b border-border px-6 py-5">
           <Link href="/" className="flex items-center gap-3">
@@ -112,7 +127,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Mobile header */}
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-card px-6 py-4 lg:hidden">
+        <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 lg:hidden">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex size-8 items-center justify-center rounded-lg border border-border bg-primary text-primary-foreground">
               <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -121,11 +136,99 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
             <span className="font-display text-base font-semibold">Distiller</span>
           </Link>
-          <ModeToggle />
+
+          <div className="flex items-center gap-2">
+            <ModeToggle />
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background transition-colors hover:bg-muted"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-4 w-4 text-foreground" />
+              ) : (
+                <Menu className="h-4 w-4 text-foreground" />
+              )}
+            </button>
+          </div>
         </header>
 
+        {/* Slide-down mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute left-0 right-0 top-[57px] z-50 lg:hidden"
+              >
+                <div className="border-b border-border bg-card shadow-soft">
+                  <nav className="px-4 py-4">
+                    <div className="space-y-1">
+                      {navItems.map((item, index) => {
+                        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                        return (
+                          <motion.div
+                            key={item.href}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                          >
+                            <Link
+                              href={item.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+                                active
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                              }`}
+                            >
+                              <item.icon className="h-4 w-4" />
+                              {item.label}
+                            </Link>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-4 border-t border-border pt-4">
+                      <div className="flex items-center gap-3 px-4 py-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                          {user?.name?.[0]?.toUpperCase() ?? "U"}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{user?.name ?? "User"}</p>
+                          <p className="truncate text-xs text-muted-foreground">{user?.email ?? ""}</p>
+                        </div>
+                      </div>
+                      <form action="/api/auth/sign-out" method="POST" className="mt-2">
+                        <Button variant="outline" size="sm" type="submit" className="w-full">
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Sign out
+                        </Button>
+                      </form>
+                    </div>
+                  </nav>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         {/* Page content */}
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

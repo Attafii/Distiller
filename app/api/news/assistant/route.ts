@@ -5,8 +5,9 @@ import { DistillService } from "@/lib/ai";
 import { analyzeNewsQuestion, rankNewsArticles } from "@/lib/news-assistant";
 import { CATEGORY_VALUES, COUNTRY_VALUES, DATE_RANGE_VALUES } from "@/lib/news-options";
 import { buildRagContext } from "@/lib/rag";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { fetchNewsArticles } from "@/services/newsapi";
-import type { ArticleChatMessage, Category, CountryCode, DateRange, NewsAssistantArticleContext, NewsAssistantResponse } from "@/types/news";
+import type { Category, CountryCode, DateRange, NewsAssistantArticleContext, NewsAssistantResponse } from "@/types/news";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,25 @@ async function enrichArticle(article: ReturnType<typeof rankNewsArticles>[number
   };
 }
 
+function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
+  return {
+    "X-RateLimit-Limit": "30",
+    "X-RateLimit-Remaining": String(result.remaining),
+    "X-RateLimit-Reset": String(Math.ceil(result.resetIn / 1000))
+  };
+}
+
 export async function POST(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+  const headers = rateLimitHeaders(rateLimit);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before making more requests." },
+      { status: 429, headers }
+    );
+  }
+
   let payload: unknown;
 
   try {
@@ -94,7 +113,7 @@ export async function POST(request: NextRequest) {
     const result = await distillService.answerNewsQuestion({
       question,
       analysis,
-      history: history as ArticleChatMessage[] | undefined,
+      history,
       articles: enrichedArticles
     });
 
@@ -114,7 +133,7 @@ export async function POST(request: NextRequest) {
       }))
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, { headers });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown assistant error";
     console.error("News assistant request failed", {
@@ -125,6 +144,6 @@ export async function POST(request: NextRequest) {
       error: message
     });
 
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: message }, { status: 502, headers });
   }
 }

@@ -2,7 +2,7 @@ import "server-only";
 
 import { getDb } from "@/lib/db";
 import { subscriptions, bookmarks, readingHistory, alerts } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 export type SubscriptionSelect = InferSelectModel<typeof subscriptions>;
@@ -68,7 +68,7 @@ export async function addBookmark(
 
 export async function removeBookmark(userId: string, articleId: string) {
   const [deleted] = await getDb().delete(bookmarks)
-    .where(eq(bookmarks.articleId, articleId))
+    .where(and(eq(bookmarks.userId, userId), eq(bookmarks.articleId, articleId)))
     .returning();
 
   return deleted;
@@ -115,7 +115,7 @@ export async function createAlert(
 
 export async function deleteAlert(userId: string, alertId: number) {
   const [deleted] = await getDb().delete(alerts)
-    .where(eq(alerts.id, alertId))
+    .where(and(eq(alerts.userId, userId), eq(alerts.id, alertId)))
     .returning();
 
   return deleted;

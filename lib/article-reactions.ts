@@ -1,24 +1,20 @@
 import "server-only";
 
-import { promises as fs } from "fs";
-import path from "path";
+import { getDb } from "@/lib/db";
+import { articleReactions } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 
 import type { ArticleLikeResponse } from "@/types/news";
 
-type ReactionStore = Record<string, { ips: string[] }>;
-
-const DATA_DIRECTORY = path.join(process.cwd(), ".distiller-data");
-const STORE_PATH = path.join(DATA_DIRECTORY, "article-reactions.json");
-
-let reactionQueue = Promise.resolve();
-
-function withReactionLock<T>(task: () => Promise<T>): Promise<T> {
-  const run = reactionQueue.then(task, task);
-  reactionQueue = run.then(
-    () => undefined,
-    () => undefined
-  );
-  return run;
+function hashIp(ip: string): string {
+  // Simple hash for privacy — not cryptographic, just for deduplication
+  let hash = 0;
+  for (let i = 0; i < ip.length; i++) {
+    const char = ip.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(16);
 }
 
 function normalizeIpAddress(value: string | null | undefined) {
@@ -34,78 +30,89 @@ export function getClientIp(headers: Headers) {
   );
 }
 
-async function readReactionStore(): Promise<ReactionStore> {
-  try {
-    const content = await fs.readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(content) as unknown;
+async function getReactionCounts(articleIds: string[]): Promise<Map<string, number>> {
+  if (articleIds.length === 0) return new Map();
 
-    if (!parsed || typeof parsed !== "object") {
-      return {};
-    }
+  const db = getDb();
+  const results = await db
+    .select({
+      articleId: articleReactions.articleId,
+      count: sql<number>`count(distinct ${articleReactions.ipHash})`
+    })
+    .from(articleReactions)
+    .where(sql`${articleReactions.articleId} = ANY(${articleIds})`)
+    .groupBy(articleReactions.articleId);
 
-    return Object.entries(parsed as Record<string, unknown>).reduce<ReactionStore>((store, [articleId, value]) => {
-      const ips = Array.isArray((value as { ips?: unknown } | undefined)?.ips)
-        ? ((value as { ips?: unknown }).ips as unknown[])
-            .filter((ip): ip is string => typeof ip === "string" && ip.trim().length > 0)
-            .map((ip) => ip.trim())
-        : [];
-
-      store[articleId] = { ips };
-      return store;
-    }, {});
-  } catch (error) {
-    if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT") {
-      return {};
-    }
-
-    console.warn("Unable to read article reaction store", error);
-    return {};
-  }
+  return new Map(results.map((r) => [r.articleId, r.count]));
 }
 
-async function writeReactionStore(store: ReactionStore) {
-  await fs.mkdir(DATA_DIRECTORY, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
-}
+async function getViewerLikedArticles(articleIds: string[], viewerIp: string): Promise<Set<string>> {
+  if (articleIds.length === 0 || viewerIp === "unknown") return new Set();
 
-function getReactionSnapshot(store: ReactionStore, articleId: string, viewerIp?: string): ArticleLikeResponse {
-  const ips = store[articleId]?.ips ?? [];
+  const db = getDb();
+  const ipHash = hashIp(viewerIp);
+  const results = await db
+    .select({ articleId: articleReactions.articleId })
+    .from(articleReactions)
+    .where(
+      sql`${articleReactions.articleId} = ANY(${articleIds}) AND ${articleReactions.ipHash} = ${ipHash}`
+    );
 
-  return {
-    articleId,
-    likeCount: ips.length,
-    likedByViewer: Boolean(viewerIp && ips.includes(viewerIp))
-  };
+  return new Set(results.map((r) => r.articleId));
 }
 
 export async function annotateArticleReactions<T extends { id: string }>(
   articles: T[],
   viewerIp?: string
 ): Promise<Array<T & Pick<ArticleLikeResponse, "likeCount" | "likedByViewer">>> {
-  const store = await readReactionStore();
+  if (articles.length === 0) return [];
 
-  return articles.map((article) => {
-    const { articleId: _articleId, ...reactionFields } = getReactionSnapshot(store, article.id, viewerIp);
+  const articleIds = articles.map((a) => a.id);
+  const [counts, likedByViewer] = await Promise.all([
+    getReactionCounts(articleIds),
+    getViewerLikedArticles(articleIds, viewerIp ?? "unknown")
+  ]);
 
-    return {
-      ...article,
-      ...reactionFields
-    };
-  });
+  return articles.map((article) => ({
+    ...article,
+    likeCount: counts.get(article.id) ?? 0,
+    likedByViewer: likedByViewer.has(article.id)
+  }));
 }
 
 export async function registerArticleLike(articleId: string, viewerIp?: string): Promise<ArticleLikeResponse> {
   const normalizedIp = normalizeIpAddress(viewerIp);
+  const ipHash = hashIp(normalizedIp);
 
-  return withReactionLock(async () => {
-    const store = await readReactionStore();
-    const existing = store[articleId]?.ips ?? [];
+  const db = getDb();
 
-    if (!existing.includes(normalizedIp)) {
-      store[articleId] = { ips: [...existing, normalizedIp] };
-      await writeReactionStore(store);
-    }
+  // Check if already liked
+  const existing = await db
+    .select({ id: articleReactions.id })
+    .from(articleReactions)
+    .where(
+      sql`${articleReactions.articleId} = ${articleId} AND ${articleReactions.ipHash} = ${ipHash}`
+    )
+    .limit(1);
 
-    return getReactionSnapshot(store, articleId, normalizedIp);
-  });
+  if (existing.length === 0) {
+    await db.insert(articleReactions).values({
+      articleId,
+      ipHash
+    });
+  }
+
+  // Get updated count
+  const [result] = await db
+    .select({
+      count: sql<number>`count(distinct ${articleReactions.ipHash})`
+    })
+    .from(articleReactions)
+    .where(eq(articleReactions.articleId, articleId));
+
+  return {
+    articleId,
+    likeCount: result?.count ?? 0,
+    likedByViewer: true
+  };
 }

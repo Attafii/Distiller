@@ -2,11 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
+function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
+  return {
+    "X-RateLimit-Limit": "30",
+    "X-RateLimit-Remaining": String(result.remaining),
+    "X-RateLimit-Reset": String(Math.ceil(result.resetIn / 1000))
+  };
+}
+
 export async function GET(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+  const headers = rateLimitHeaders(rateLimit);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before making more requests." },
+      { status: 429, headers }
+    );
+  }
+
   const session = await auth.api.getSession({ request, headers: request.headers });
 
   if (!session?.user) {
@@ -57,9 +76,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ bookmarks: userBookmarks });
+    return NextResponse.json({ bookmarks: userBookmarks }, { headers });
   } catch (error) {
     console.error("Error exporting bookmarks:", error);
-    return NextResponse.json({ error: "Failed to export bookmarks" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to export bookmarks" }, { status: 500, headers });
   }
 }

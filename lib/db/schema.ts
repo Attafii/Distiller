@@ -102,6 +102,13 @@ export const readingHistory = pgTable("reading_history", {
   readAt: timestamp("read_at").notNull().defaultNow()
 });
 
+export const articleReactions = pgTable("article_reactions", {
+  id: serial("id").primaryKey(),
+  articleId: text("article_id").notNull(),
+  ipHash: text("ip_hash").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow()
+});
+
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Account = typeof accounts.$inferSelect;

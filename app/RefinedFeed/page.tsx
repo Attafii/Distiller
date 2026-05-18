@@ -4,14 +4,14 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
-import { motion } from "framer-motion";
-import { Loader2, Newspaper, RefreshCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2, Newspaper, RefreshCcw, Search, SlidersHorizontal, X, Menu } from "lucide-react";
 
 import { DistilledCard } from "@/components/DistilledCard";
 import { GitHubRepoWidget } from "@/components/GitHubRepoWidget";
 import { NewsArticleModal } from "@/components/NewsArticleModal";
 import { NewsAssistant } from "@/components/NewsAssistant";
-import { ModeToggle } from "@/components/ModeToggle";
+import { UserNav } from "@/components/UserNav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,12 @@ const priorityFilters: Array<{ id: ArticlePriority | "all"; label: string }> = [
   { id: "all", label: "All signals" },
   { id: "important", label: "Important" },
   { id: "breaking", label: "Breaking" }
+];
+
+const GUEST_FREE_ARTICLES = 4;
+const GUEST_ALLOWED_TOPICS: Array<{ id: Category; label: string }> = [
+  { id: "world", label: "World" },
+  { id: "tech", label: "Technology" }
 ];
 
 function FeedSkeleton() {
@@ -65,7 +71,9 @@ function EmptyState({ title, description }: { title: string; description: string
 }
 
 export default function RefinedFeedPage() {
-  const [category, setCategory] = useState<Category>("tech");
+  const [isGuest, setIsGuest] = useState(true);
+  const [guestLimitReached, setGuestLimitReached] = useState(false);
+  const [category, setCategory] = useState<Category>("world");
   const [country, setCountry] = useState<CountryCode>("global");
   const [dateRange, setDateRange] = useState<DateRange>("any");
   const [summaryMode, setSummaryMode] = useState<SummarizationMode>("auto");
@@ -79,12 +87,47 @@ export default function RefinedFeedPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [selectedArticleStartExpanded, setSelectedArticleStartExpanded] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/auth/get-user");
+        setIsGuest(!res.ok);
+        if (!res.ok) {
+          setCategory("world");
+          setCountry("global");
+        }
+      } catch {
+        setIsGuest(true);
+        setCategory("world");
+        setCountry("global");
+      }
+    }
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const controller = new AbortController();
 
     async function loadFeed() {
+      if (isGuest && guestLimitReached) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -116,6 +159,10 @@ export default function RefinedFeedPage() {
 
         setArticles((current) => (page === 1 ? data.articles : [...current, ...data.articles]));
         setHasMore(data.hasMore);
+        if (data.guestLimitReached) {
+          setGuestLimitReached(true);
+          setHasMore(false);
+        }
       } catch (fetchError) {
         if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
           return;
@@ -158,9 +205,13 @@ export default function RefinedFeedPage() {
     setError(null);
     setSelectedArticleId(null);
     setSelectedArticleStartExpanded(false);
+    setGuestLimitReached(false);
   };
 
   const resetFeed = (nextCategory: Category, nextMode = summaryMode) => {
+    if (isGuest && !GUEST_ALLOWED_TOPICS.some((t) => t.id === nextCategory)) {
+      return;
+    }
     setCategory(nextCategory);
     setSummaryMode(nextMode);
     resetResults();
@@ -168,6 +219,9 @@ export default function RefinedFeedPage() {
   };
 
   const updateCountry = (nextCountry: CountryCode) => {
+    if (isGuest && nextCountry !== "global") {
+      return;
+    }
     setCountry(nextCountry);
     resetResults();
   };
@@ -274,6 +328,60 @@ export default function RefinedFeedPage() {
     }
   };
 
+  const handleBookmarkArticle = async (article: DistilledArticle) => {
+    try {
+      if (article.bookmarked) {
+        const response = await fetch(`/api/bookmarks?articleId=${encodeURIComponent(article.id)}`, {
+          method: "DELETE"
+        });
+        if (!response.ok && response.status !== 404) {
+          throw new Error(await response.text());
+        }
+        setArticles((current) =>
+          current.map((item) =>
+            item.id === article.id
+              ? { ...item, bookmarked: false }
+              : item
+          )
+        );
+      } else {
+        const response = await fetch("/api/bookmarks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            articleId: article.id,
+            title: article.title,
+            url: article.url,
+            imageUrl: article.imageUrl,
+            description: article.description,
+            source: article.source.name,
+            category: article.category,
+            publishedAt: article.publishedAt
+          })
+        });
+
+        if (!response.ok) {
+          if (response.status === 409) {
+            return;
+          }
+          throw new Error(await response.text());
+        }
+
+        setArticles((current) =>
+          current.map((item) =>
+            item.id === article.id
+              ? { ...item, bookmarked: true }
+              : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Unable to bookmark article", error);
+    }
+  };
+
   const activeTopicLabel = TOPIC_OPTIONS.find((option) => option.id === category)?.label ?? category;
   const activeCountryLabel = COUNTRY_OPTIONS.find((option) => option.id === country)?.label ?? country;
   const activeDateLabel = DATE_RANGE_OPTIONS.find((option) => option.id === dateRange)?.label ?? dateRange;
@@ -304,18 +412,83 @@ export default function RefinedFeedPage() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-3">
-            <a href="/RefinedFeed" className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline">Browse</a>
-            <a href="/pricing" className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline">Pricing</a>
-            <ModeToggle />
-            <a href="/auth/login" className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium shadow-sm transition-colors hover:bg-muted/50">
-              Sign in
-            </a>
-            <a href="/auth/signup" className="inline-flex items-center justify-center rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
-              Get started
-            </a>
+          <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-3 sm:flex">
+              <UserNav />
+            </div>
+
+            {/* Mobile menu button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background transition-colors hover:bg-muted sm:hidden"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-4 w-4 text-foreground" />
+              ) : (
+                <Menu className="h-4 w-4 text-foreground" />
+              )}
+            </button>
           </div>
         </header>
+
+        {/* Mobile slide-down menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="fixed inset-0 z-40 bg-black/50 sm:hidden"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute left-0 right-0 z-50 sm:hidden"
+                style={{ top: "90px" }}
+              >
+                <div className="mx-4 rounded-2xl border border-border bg-card shadow-soft">
+                  <nav className="p-4">
+                    <div className="space-y-1">
+                      {[
+                        { href: "/RefinedFeed", label: "Browse", icon: Newspaper },
+                        { href: "/pricing", label: "Pricing", icon: SlidersHorizontal },
+                        { href: "/auth/login", label: "Sign in", icon: null },
+                        { href: "/auth/signup", label: "Get started", icon: null }
+                      ].map((item, index) => (
+                        <motion.div
+                          key={item.href}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                        >
+                          <Link
+                            href={item.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+                              item.href === "/RefinedFeed"
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                          >
+                            {item.icon && <item.icon className="h-4 w-4" />}
+                            {item.label}
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </nav>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         <NewsAssistant category={category} country={country} dateRange={dateRange} />
 
@@ -412,30 +585,54 @@ export default function RefinedFeedPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Topics</p>
-                  <Badge variant="outline" className="border-border text-muted-foreground">
-                    {TOPIC_OPTIONS.length} topics
-                  </Badge>
+                  {isGuest && (
+                    <Badge variant="outline" className="border-border text-muted-foreground">
+                      Free: {GUEST_FREE_ARTICLES} articles/day
+                    </Badge>
+                  )}
+                  {!isGuest && (
+                    <Badge variant="outline" className="border-border text-muted-foreground">
+                      {TOPIC_OPTIONS.length} topics
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {TOPIC_OPTIONS.map((option) => {
-                    const active = option.id === category;
-
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => resetFeed(option.id)}
-                        className={`rounded-full border px-4 py-2 text-sm transition ${
-                          active
-                            ? "border-primary bg-primary-foreground text-primary"
-                            : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
+                  {isGuest
+                    ? GUEST_ALLOWED_TOPICS.map((option) => {
+                        const active = option.id === category;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => resetFeed(option.id)}
+                            className={`rounded-full border px-4 py-2 text-sm transition ${
+                              active
+                                ? "border-primary bg-primary-foreground text-primary"
+                                : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })
+                    : TOPIC_OPTIONS.map((option) => {
+                        const active = option.id === category;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => resetFeed(option.id)}
+                            className={`rounded-full border px-4 py-2 text-sm transition ${
+                              active
+                                ? "border-primary bg-primary-foreground text-primary"
+                                : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
                 </div>
               </div>
 
@@ -448,24 +645,30 @@ export default function RefinedFeedPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {COUNTRY_OPTIONS.map((option) => {
-                    const active = option.id === country;
+                  {isGuest ? (
+                    <span className="rounded-full border border-border bg-card px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Global only
+                    </span>
+                  ) : (
+                    COUNTRY_OPTIONS.map((option) => {
+                      const active = option.id === country;
 
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => updateCountry(option.id)}
-                        className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.18em] transition ${
-                          active
-                            ? "border-primary bg-primary-foreground text-primary"
-                            : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => updateCountry(option.id)}
+                          className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.18em] transition ${
+                            active
+                              ? "border-primary bg-primary-foreground text-primary"
+                              : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -575,17 +778,43 @@ export default function RefinedFeedPage() {
         ) : null}
 
         {visibleArticles.length > 0 ? (
-          <div className="grid gap-5 lg:grid-cols-2">
-            {visibleArticles.map((article) => (
-              <DistilledCard
-                key={article.id}
-                article={article}
-                onOpenAction={handleOpenArticle}
-                onLikeAction={handleLikeArticle}
-                onShareAction={handleShareArticle}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-5 lg:grid-cols-2">
+              {visibleArticles.map((article) => (
+                <DistilledCard
+                  key={article.id}
+                  article={article}
+                  onOpenAction={handleOpenArticle}
+                  onLikeAction={handleLikeArticle}
+                  onShareAction={handleShareArticle}
+                  onBookmarkAction={handleBookmarkArticle}
+                />
+              ))}
+            </div>
+
+            {isGuest && guestLimitReached && (
+              <div className="relative mt-6 rounded-3xl border border-border bg-card/40 p-8 text-center backdrop-blur-sm">
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-transparent to-background/80" />
+                <div className="relative space-y-4">
+                  <div>
+                    <p className="text-lg font-semibold">You have reached your free daily limit</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Create a free account to get {GUEST_FREE_ARTICLES} free articles every day, unlimited bookmarks,
+                      personalized alerts, and more.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <Button asChild>
+                      <Link href="/auth/signup">Create free account</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href="/pricing">View pricing</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         ) : null}
 
         <div ref={sentinelRef} className="h-12" />

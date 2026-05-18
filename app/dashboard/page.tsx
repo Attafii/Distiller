@@ -1,15 +1,47 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BookMarked, TrendingUp, Clock, Zap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/auth";
+import { getDb } from "@/lib/db";
+import { bookmarks, readingHistory, alerts, subscriptions } from "@/lib/db/schema";
+import { headers } from "next/headers";
+import { eq, count } from "drizzle-orm";
 
 export const metadata: Metadata = {
   title: "Dashboard",
   description: "Your Distiller dashboard overview"
 };
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session?.user) {
+    redirect("/auth/login");
+  }
+
+  const userId = session.user.id;
+  const db = getDb();
+
+  const [bookmarkCount, historyCount, alertCount, subscription] = await Promise.all([
+    db.select({ count: count() }).from(bookmarks).where(eq(bookmarks.userId, userId)).then(r => r[0]?.count ?? 0),
+    db.select({ count: count() }).from(readingHistory).where(eq(readingHistory.userId, userId)).then(r => r[0]?.count ?? 0),
+    db.select({ count: count() }).from(alerts).where(eq(alerts.userId, userId)).then(r => r[0]?.count ?? 0),
+    db.query.subscriptions.findFirst({ where: eq(subscriptions.userId, userId) })
+  ]);
+
+  const planName = subscription?.plan ?? "free";
+  const planLabel = planName.charAt(0).toUpperCase() + planName.slice(1);
+
+  const stats = [
+    { label: "Bookmarks saved", value: String(bookmarkCount), icon: BookMarked, href: "/dashboard/bookmarks" },
+    { label: "Articles read", value: String(historyCount), icon: Clock, href: "/dashboard/history" },
+    { label: "Alerts active", value: String(alertCount), icon: Zap, href: "/dashboard/alerts" },
+    { label: "Current plan", value: planLabel, icon: TrendingUp, href: "/dashboard/billing" }
+  ];
+
   return (
     <div className="space-y-8">
       <div>
@@ -20,12 +52,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Bookmarks saved", value: "0", icon: BookMarked, href: "/dashboard/bookmarks" },
-          { label: "Articles read", value: "0", icon: Clock, href: "/dashboard/history" },
-          { label: "Alerts active", value: "0", icon: Zap, href: "/dashboard/alerts" },
-          { label: "Current plan", value: "Free", icon: TrendingUp, href: "/dashboard/billing" }
-        ].map((stat) => (
+        {stats.map((stat) => (
           <Link key={stat.label} href={stat.href}>
             <Card className="border-border bg-card transition-colors hover:border-primary/30 hover:bg-muted/30">
               <CardContent className="flex items-center gap-4 p-5">
@@ -43,43 +70,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle className="font-display text-lg">Recent bookmarks</CardTitle>
-            <CardDescription className="text-sm">Your saved stories appear here</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <BookMarked className="h-10 w-10 text-muted-foreground/50" />
-              <p className="mt-3 text-sm text-muted-foreground">No bookmarks yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Save articles while browsing to read them later
-              </p>
-              <Button variant="outline" size="sm" className="mt-4" asChild>
-                <Link href="/RefinedFeed">Browse feed</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle className="font-display text-lg">Your reading history</CardTitle>
-            <CardDescription className="text-sm">Articles you have read</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <Clock className="h-10 w-10 text-muted-foreground/50" />
-              <p className="mt-3 text-sm text-muted-foreground">No history yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Start reading articles to build your history
-              </p>
-              <Button variant="outline" size="sm" className="mt-4" asChild>
-                <Link href="/RefinedFeed">Browse feed</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <RecentBookmarks userId={userId} />
+        <RecentHistory userId={userId} />
       </div>
 
       <Card className="border-border bg-card">
@@ -128,5 +120,101 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+async function RecentBookmarks({ userId }: { userId: string }) {
+  const db = getDb();
+  const recentBookmarks = await db.query.bookmarks.findMany({
+    where: eq(bookmarks.userId, userId),
+    orderBy: (bookmarks, { desc }) => [desc(bookmarks.createdAt)],
+    limit: 5
+  });
+
+  return (
+    <Card className="border-border bg-card">
+      <CardHeader>
+        <CardTitle className="font-display text-lg">Recent bookmarks</CardTitle>
+        <CardDescription className="text-sm">Your saved stories appear here</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {recentBookmarks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <BookMarked className="h-10 w-10 text-muted-foreground/50" />
+            <p className="mt-3 text-sm text-muted-foreground">No bookmarks yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Save articles while browsing to read them later
+            </p>
+            <Button variant="outline" size="sm" className="mt-4" asChild>
+              <Link href="/RefinedFeed">Browse feed</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentBookmarks.map((bm) => (
+              <a
+                key={bm.id}
+                href={bm.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-border p-3 hover:bg-muted/30 transition-colors"
+              >
+                <p className="text-sm font-medium truncate">{bm.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">{bm.source ?? "Unknown source"}</p>
+              </a>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+async function RecentHistory({ userId }: { userId: string }) {
+  const db = getDb();
+  const recentHistory = await db.query.readingHistory.findMany({
+    where: eq(readingHistory.userId, userId),
+    orderBy: (readingHistory, { desc }) => [desc(readingHistory.readAt)],
+    limit: 5
+  });
+
+  return (
+    <Card className="border-border bg-card">
+      <CardHeader>
+        <CardTitle className="font-display text-lg">Your reading history</CardTitle>
+        <CardDescription className="text-sm">Articles you have read</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {recentHistory.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <Clock className="h-10 w-10 text-muted-foreground/50" />
+            <p className="mt-3 text-sm text-muted-foreground">No history yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Start reading articles to build your history
+            </p>
+            <Button variant="outline" size="sm" className="mt-4" asChild>
+              <Link href="/RefinedFeed">Browse feed</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentHistory.map((entry) => (
+              <a
+                key={entry.id}
+                href={entry.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-border p-3 hover:bg-muted/30 transition-colors"
+              >
+                <p className="text-sm font-medium truncate">{entry.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {entry.readAt ? new Date(entry.readAt).toLocaleDateString() : ""}
+                </p>
+              </a>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

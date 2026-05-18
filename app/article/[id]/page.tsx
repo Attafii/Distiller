@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { Newspaper } from "lucide-react";
 
@@ -8,8 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TOPIC_OPTIONS } from "@/lib/news-options";
 
 interface ArticlePageProps {
+  params: Promise<{ id: string }>;
   searchParams: Promise<{
-    id?: string;
     title?: string;
     description?: string;
     url?: string;
@@ -49,11 +50,11 @@ function truncate(str: string, maxLength: number): string {
   return str.slice(0, maxLength - 3) + "...";
 }
 
-export async function generateMetadata({ searchParams }: ArticlePageProps): Promise<Metadata> {
-  const params = await searchParams;
-  const title = params.title ? decodeURIComponent(params.title) : null;
-  const description = buildDescription(params.description, "AI-powered news summary from Distiller — 3 concise bullets, grounded in source text.");
-  const imageUrl = params.imageUrl ? decodeURIComponent(params.imageUrl) : undefined;
+export async function generateMetadata({ params, searchParams }: ArticlePageProps): Promise<Metadata> {
+  const [pathParams, queryParams] = await Promise.all([params, searchParams]);
+  const title = queryParams.title ? decodeURIComponent(queryParams.title) : null;
+  const description = buildDescription(queryParams.description, "AI-powered news summary from Distiller — 3 concise bullets, grounded in source text.");
+  const imageUrl = queryParams.imageUrl ? decodeURIComponent(queryParams.imageUrl) : undefined;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.app";
 
   const ogTitle = title ? `${title} · Distiller` : "Article · Distiller";
@@ -63,14 +64,14 @@ export async function generateMetadata({ searchParams }: ArticlePageProps): Prom
     title: title ?? "Article",
     description: ogDescription,
     alternates: {
-      canonical: params.id ? `/article/${params.id}` : "/article"
+      canonical: pathParams.id ? `/article/${pathParams.id}` : "/article"
     },
     openGraph: {
       title: ogTitle,
       description: ogDescription,
       type: "article",
-      publishedTime: params.publishedAt,
-      authors: params.sourceName ? [params.sourceName] : undefined,
+      publishedTime: queryParams.publishedAt,
+      authors: queryParams.sourceName ? [queryParams.sourceName] : undefined,
       images: imageUrl
         ? [{ url: imageUrl, width: 1200, height: 630, alt: title ?? "Article image" }]
         : [{ url: `/api/og?title=${encodeURIComponent(title ?? "Distiller Article")}&description=${encodeURIComponent(ogDescription)}`, width: 1200, height: 630, alt: "Article preview" }]
@@ -84,26 +85,27 @@ export async function generateMetadata({ searchParams }: ArticlePageProps): Prom
   };
 }
 
-export default async function ArticlePage({ searchParams }: ArticlePageProps) {
-  const params = await searchParams;
+export default async function ArticlePage({ params, searchParams }: ArticlePageProps) {
+  const [pathParams, queryParams] = await Promise.all([params, searchParams]);
 
-  if (!params.title || !params.id) {
-    notFound();
+  if (!queryParams.title) {
+    // No article data in query params — redirect to feed
+    redirect("/RefinedFeed");
   }
 
-  const title = decodeURIComponent(params.title);
-  const description = buildDescription(params.description, "No description available for this article.");
-  const url = params.url ? decodeURIComponent(params.url) : null;
-  const imageUrl = params.imageUrl ? decodeURIComponent(params.imageUrl) : null;
-  const publishedAt = params.publishedAt ?? new Date().toISOString();
-  const sourceName = params.sourceName ?? "Unknown source";
-  const sourceId = params.sourceId ?? null;
-  const category = (params.category ?? "world") as string;
-  const bullets = parseBullets(params.bullets);
-  const insight = params.insight ? decodeURIComponent(params.insight) : null;
-  const conclusion = params.conclusion ? decodeURIComponent(params.conclusion) : null;
-  const model = params.model ?? "unknown";
-  const confidence = params.confidence ? parseFloat(params.confidence) : 0;
+  const title = decodeURIComponent(queryParams.title);
+  const description = buildDescription(queryParams.description, "No description available for this article.");
+  const url = queryParams.url ? decodeURIComponent(queryParams.url) : null;
+  const imageUrl = queryParams.imageUrl ? decodeURIComponent(queryParams.imageUrl) : null;
+  const publishedAt = queryParams.publishedAt ?? new Date().toISOString();
+  const sourceName = queryParams.sourceName ?? "Unknown source";
+  const sourceId = queryParams.sourceId ?? null;
+  const category = (queryParams.category ?? "world") as string;
+  const bullets = parseBullets(queryParams.bullets);
+  const insight = queryParams.insight ? decodeURIComponent(queryParams.insight) : null;
+  const conclusion = queryParams.conclusion ? decodeURIComponent(queryParams.conclusion) : null;
+  const model = queryParams.model ?? "unknown";
+  const confidence = queryParams.confidence ? parseFloat(queryParams.confidence) : 0;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.app";
   const topicLabel = TOPIC_OPTIONS.find((o) => o.id === category)?.label ?? category;
 
@@ -130,7 +132,7 @@ export default async function ArticlePage({ searchParams }: ArticlePageProps) {
     keywords: [category, "news", "AI summary", "Distiller"].join(", "),
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": url ?? `${siteUrl}/article/${params.id}`
+      "@id": url ?? `${siteUrl}/article/${pathParams.id}`
     }
   };
 
@@ -154,7 +156,7 @@ export default async function ArticlePage({ searchParams }: ArticlePageProps) {
         "@type": "ListItem",
         position: 3,
         name: truncate(title, 40),
-        item: `${siteUrl}/article/${params.id}`
+        item: `${siteUrl}/article/${pathParams.id}`
       }
     ]
   };
@@ -189,9 +191,9 @@ export default async function ArticlePage({ searchParams }: ArticlePageProps) {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8" id="main-content">
         <nav className="mb-8 text-sm text-muted-foreground" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2">
-            <li><a href="/" className="hover:text-foreground transition-colors">Home</a></li>
+            <li><Link href="/" className="hover:text-foreground transition-colors">Home</Link></li>
             <li aria-hidden="true">/</li>
-            <li><a href="/RefinedFeed" className="hover:text-foreground transition-colors">Refined Feed</a></li>
+            <li><Link href="/RefinedFeed" className="hover:text-foreground transition-colors">Refined Feed</Link></li>
             <li aria-hidden="true">/</li>
             <li className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{truncate(title, 40)}</li>
           </ol>

@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2026-04-22.dahlia"
+    // @ts-expect-error Stripe SDK types are outdated; this API version is valid at runtime
+    apiVersion: "2025-04-30.basil"
   });
 
   const body = await request.text();

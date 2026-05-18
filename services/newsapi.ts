@@ -428,6 +428,10 @@ function buildDemoArticles(category: Category): NewsArticle[] {
   }));
 }
 
+function sortByDateDesc(articles: NewsArticle[]): NewsArticle[] {
+  return [...articles].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+}
+
 function applyDateFilter(articles: NewsArticle[], dateRange?: DateRange): NewsArticle[] {
   const cutoff = dateRange ? getDateRangeCutoff(dateRange) : null;
 
@@ -483,14 +487,12 @@ async function fetchNewsApi(
       .map((article, index) => normalizeArticle(article, category, index))
       .filter((article): article is NewsArticle => Boolean(article));
 
-    const articles = applyDateFilter(normalizedArticles, dateRange);
+    const articles = sortByDateDesc(applyDateFilter(normalizedArticles, dateRange));
 
     if (!articles.length) {
-      const demoArticles = buildDemoArticles(category);
-
       return {
-        articles: demoArticles,
-        totalResults: demoArticles.length
+        articles: [],
+        totalResults: 0
       };
     }
 
@@ -531,7 +533,7 @@ async function fetchNewsApi(
     );
 
     return {
-      articles: enrichedArticles,
+      articles: sortByDateDesc(enrichedArticles),
       totalResults: payload.totalResults ?? articles.length
     };
   } catch (error) {
@@ -591,6 +593,7 @@ export async function fetchNewsArticles({
 
     endpoint.searchParams.set("sortBy", "publishedAt");
     endpoint.searchParams.set("language", getRegionLanguage(currentCountry));
+    endpoint.searchParams.set("to", new Date().toISOString());
 
     const cutoff = getDateRangeCutoff(currentDateRange);
     if (cutoff) {

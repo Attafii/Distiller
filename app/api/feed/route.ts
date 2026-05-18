@@ -7,8 +7,35 @@ import { CATEGORY_VALUES, COUNTRY_VALUES, DATE_RANGE_VALUES } from "@/lib/news-o
 import { fetchNewsArticles } from "@/services/newsapi";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { DistilledArticle, DistilledSummary, NewsArticle } from "@/types/news";
+import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+const GUEST_DAILY_LIMIT = 4;
+const GUEST_ALLOWED_CATEGORIES: Array<"world" | "tech"> = ["world", "tech"];
+
+const guestViewCounts = new Map<string, { count: number; dateStr: string }>();
+
+function getGuestCount(ip: string): number {
+  const today = new Date().toISOString().split("T")[0];
+  const entry = guestViewCounts.get(ip);
+  if (!entry || entry.dateStr !== today) {
+    guestViewCounts.set(ip, { count: 0, dateStr: today });
+    return 0;
+  }
+  return entry.count;
+}
+
+function incrementGuestCount(ip: string): number {
+  const today = new Date().toISOString().split("T")[0];
+  const entry = guestViewCounts.get(ip);
+  if (!entry || entry.dateStr !== today) {
+    guestViewCounts.set(ip, { count: 1, dateStr: today });
+    return 1;
+  }
+  entry.count += 1;
+  return entry.count;
+}
 
 function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
   return {
@@ -67,7 +94,39 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { category, country, dateRange, page, pageSize, mode, query } = parsed.data;
+  const { dateRange, page, mode, query } = parsed.data;
+  let { category, country, pageSize } = parsed.data;
+
+  const session = await auth.api.getSession({ request, headers: request.headers });
+  const isGuest = !session?.user;
+
+  if (isGuest) {
+    const currentCount = getGuestCount(viewerIp);
+    if (currentCount >= GUEST_DAILY_LIMIT) {
+      return NextResponse.json({
+        articles: [],
+        totalResults: 0,
+        page,
+        pageSize,
+        hasMore: false,
+        guestLimitReached: true
+      }, { headers });
+    }
+
+    country = "global";
+    category = GUEST_ALLOWED_CATEGORIES.includes(category as "world" | "tech") ? category : "world";
+    pageSize = Math.min(pageSize, GUEST_DAILY_LIMIT - currentCount);
+    if (pageSize <= 0) {
+      return NextResponse.json({
+        articles: [],
+        totalResults: 0,
+        page,
+        pageSize,
+        hasMore: false,
+        guestLimitReached: true
+      }, { headers });
+    }
+  }
 
   try {
     const { articles, totalResults } = await fetchNewsArticles({ category, country, dateRange, page, pageSize, query });
@@ -96,14 +155,27 @@ export async function GET(request: NextRequest) {
       distilled.push(...batchResults);
     }
 
-    const articlesWithReactions = await annotateArticleReactions(distilled, viewerIp);
+    let articlesWithReactions = distilled;
+
+    try {
+      articlesWithReactions = await annotateArticleReactions(distilled, viewerIp);
+    } catch (reactionError) {
+      console.warn("Failed to load article reactions, proceeding without:", reactionError instanceof Error ? reactionError.message : String(reactionError));
+    }
+
+    if (isGuest) {
+      incrementGuestCount(viewerIp);
+    }
+
+    const guestLimitReached = isGuest && getGuestCount(viewerIp) >= GUEST_DAILY_LIMIT;
 
     return NextResponse.json({
       articles: articlesWithReactions,
       totalResults,
       page,
       pageSize,
-      hasMore: page * pageSize < totalResults
+      hasMore: articlesWithReactions.length === pageSize && page * pageSize < totalResults,
+      ...(guestLimitReached ? { guestLimitReached: true } : {})
     }, { headers });
   } catch {
     return NextResponse.json({ error: "An error occurred while fetching the feed" }, { status: 502 });

@@ -1,8 +1,6 @@
-"use client";
-
-import { useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, Minus, Zap, Loader2 } from "lucide-react";
+import { Check, Minus, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -117,6 +115,11 @@ const faqs = [
   }
 ];
 
+export const metadata: Metadata = {
+  title: "Pricing",
+  description: "Simple, transparent pricing for Distiller — AI-powered news intelligence."
+};
+
 function CheckRow({ text, included }: { text: string; included: boolean }) {
   return (
     <div className="flex items-center gap-3 py-1.5">
@@ -131,35 +134,6 @@ function CheckRow({ text, included }: { text: string; included: boolean }) {
 }
 
 export default function PricingPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-
-  const handleCheckout = async (planId: string) => {
-    if (planId === "free" || planId === "api") return;
-
-    setLoadingPlan(planId);
-
-    try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId })
-      });
-
-      const data = await res.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        window.location.href = "/auth/signup";
-      }
-    } catch {
-      window.location.href = "/auth/signup";
-    } finally {
-      setLoadingPlan(null);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-background">
       <a href="#main-content" className="skip-link">Skip to main content</a>
@@ -211,20 +185,12 @@ export default function PricingPage() {
                       <Link href={tier.ctaHref}>{tier.cta}</Link>
                     </Button>
                   ) : (
-                    <Button
+                  <Button
                       variant={tier.highlight ? "default" : "outline"}
                       className="w-full"
-                      onClick={() => handleCheckout(tier.id)}
-                      disabled={loadingPlan !== null}
+                      asChild
                     >
-                      {loadingPlan === tier.id ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Redirecting...
-                        </>
-                      ) : (
-                        tier.cta
-                      )}
+                      <Link href="/auth/signup">{tier.cta}</Link>
                     </Button>
                   )}
                   <div className="border-t border-border pt-4">
@@ -245,24 +211,19 @@ export default function PricingPage() {
           <div className="space-y-3">
             {faqs.map((faq, i) => (
               <Card key={i} className="border-border bg-card/80">
-                <button
-                  type="button"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="flex w-full items-center justify-between px-6 py-5 text-left"
-                  aria-expanded={openFaq === i}
-                >
-                  <span className="text-sm font-medium text-foreground">{faq.q}</span>
-                  <span className={`ml-4 shrink-0 text-muted-foreground transition ${openFaq === i ? "rotate-180" : ""}`}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </button>
-                {openFaq === i && (
+                <details className="group">
+                  <summary className="flex w-full cursor-pointer items-center justify-between px-6 py-5 text-left list-none">
+                    <span className="text-sm font-medium text-foreground">{faq.q}</span>
+                    <span className="ml-4 shrink-0 text-muted-foreground transition group-open:rotate-180">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  </summary>
                   <div className="px-6 pb-5">
                     <p className="text-sm leading-relaxed text-muted-foreground">{faq.a}</p>
                   </div>
-                )}
+                </details>
               </Card>
             ))}
           </div>

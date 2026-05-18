@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,12 @@ function truncate(value: string, maxLength: number): string {
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+
+  if (!rateLimit.allowed) {
+    return new NextResponse("Rate limit exceeded", { status: 429 });
+  }
+
   const { searchParams } = request.nextUrl;
   const rawTitle = searchParams.get("title") ?? "Distiller — AI News Intelligence";
   const rawDescription = searchParams.get("description") ?? "Get concise 3-bullet AI summaries of top stories, grounded with RAG and embeddings.";

@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { motion } from "framer-motion";
-import { Copy, ExternalLink, Heart, Layers3, Share2, Sparkles } from "lucide-react";
+import { Bookmark, Copy, ExternalLink, Heart, Layers3, Share2, Sparkles } from "lucide-react";
 
 import { getPriorityLabel } from "@/lib/article-signals";
 import { buttonStyles, Button } from "@/components/ui/button";
@@ -27,12 +27,14 @@ export function DistilledCard({
   article,
   onOpenAction,
   onLikeAction,
-  onShareAction
+  onShareAction,
+  onBookmarkAction
 }: {
-  article: DistilledArticle;
+  article: DistilledArticle & { bookmarked?: boolean };
   onOpenAction?: (article: DistilledArticle) => void;
   onLikeAction?: (article: DistilledArticle) => void | Promise<void>;
   onShareAction?: (article: DistilledArticle) => void | Promise<void>;
+  onBookmarkAction?: (article: DistilledArticle) => void | Promise<void>;
 }) {
   const [copied, setCopied] = useState(false);
   const topicLabel = TOPIC_OPTIONS.find((option) => option.id === article.category)?.label ?? article.category;
@@ -141,6 +143,16 @@ export function DistilledCard({
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => onShareAction?.(article)}>
             <Share2 className="h-4 w-4" />
             Share
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`hover:text-foreground ${article.bookmarked ? "text-primary" : "text-muted-foreground"}`}
+            onClick={() => onBookmarkAction?.(article)}
+          >
+            <Bookmark className="h-4 w-4" fill={article.bookmarked ? "currentColor" : "none"} />
+            {article.bookmarked ? "Saved" : "Save"}
           </Button>
 
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={copySummary}>

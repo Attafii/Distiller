@@ -51,6 +51,7 @@ export interface DistilledArticle extends NewsArticle {
   summary: DistilledSummary;
   likeCount: number;
   likedByViewer: boolean;
+  bookmarked?: boolean;
 }
 
 export interface ArticleLikeResponse {
@@ -73,6 +74,7 @@ export interface FeedResponse {
   page: number;
   pageSize: number;
   hasMore: boolean;
+  guestLimitReached?: boolean;
 }
 
 export interface FeedRequest {

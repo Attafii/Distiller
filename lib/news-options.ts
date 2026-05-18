@@ -143,7 +143,7 @@ export function buildGlobalQuery(category: Category, query?: string): string | u
   }
 
   if (category === "world") {
-    return undefined;
+    return "world news";
   }
 
   return GLOBAL_TOPIC_QUERY_MAP[category];

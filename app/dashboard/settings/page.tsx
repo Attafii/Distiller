@@ -1,14 +1,25 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { User, Bell, Shield } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Settings",
   description: "Account settings"
 };
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session?.user) {
+    redirect("/auth/login");
+  }
+
+  const user = session.user;
+
   return (
     <div className="space-y-8">
       <div>
@@ -22,28 +33,22 @@ export default function SettingsPage() {
             <User className="h-4 w-4" />
             Profile
           </CardTitle>
-          <CardDescription className="text-sm">Update your name and email</CardDescription>
+          <CardDescription className="text-sm">Your account information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Full name</label>
-              <input
-                type="text"
-                className="mt-1 flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Your name"
-              />
+              <p className="mt-1 text-sm text-muted-foreground">{user.name ?? "Not set"}</p>
             </div>
             <div>
               <label className="text-sm font-medium">Email</label>
-              <input
-                type="email"
-                className="mt-1 flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="you@example.com"
-              />
+              <p className="mt-1 text-sm text-muted-foreground">{user.email ?? "Not set"}</p>
             </div>
           </div>
-          <Button size="sm">Save changes</Button>
+          <p className="text-xs text-muted-foreground">
+            Profile changes can be made through your authentication provider.
+          </p>
         </CardContent>
       </Card>
 
@@ -67,13 +72,16 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">{pref.description}</p>
               </div>
               <label className="relative inline-flex cursor-pointer items-center">
-                <input type="checkbox" className="peer sr-only" />
+                <input type="checkbox" className="peer sr-only" disabled />
                 <div className="peer h-6 w-11 rounded-full bg-muted transition-colors peer-checked:bg-primary">
                   <div className="h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
                 </div>
               </label>
             </div>
           ))}
+          <p className="text-xs text-muted-foreground">
+            Notification preferences will be configurable once email integration is active.
+          </p>
         </CardContent>
       </Card>
 
@@ -86,9 +94,11 @@ export default function SettingsPage() {
           <CardDescription className="text-sm">Manage your account security</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button variant="outline" size="sm">Change password</Button>
+          <Button variant="outline" size="sm" disabled>
+            Change password
+          </Button>
           <p className="text-xs text-muted-foreground">
-            For security, you will be asked to verify your email after any change.
+            Password changes can be made through your authentication provider.
           </p>
         </CardContent>
       </Card>

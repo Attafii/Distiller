@@ -3,9 +3,18 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { eq, and } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
+
+function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
+  return {
+    "X-RateLimit-Limit": "30",
+    "X-RateLimit-Remaining": String(result.remaining),
+    "X-RateLimit-Reset": String(Math.ceil(result.resetIn / 1000))
+  };
+}
 
 const createBookmarkSchema = z.object({
   articleId: z.string().min(1),
@@ -19,6 +28,16 @@ const createBookmarkSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+  const headers = rateLimitHeaders(rateLimit);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before making more requests." },
+      { status: 429, headers }
+    );
+  }
+
   const session = await auth.api.getSession({ request, headers: request.headers });
 
   if (!session?.user) {
@@ -31,14 +50,24 @@ export async function GET(request: NextRequest) {
       orderBy: (bookmarks, { desc }) => [desc(bookmarks.createdAt)]
     });
 
-    return NextResponse.json({ bookmarks: userBookmarks });
+    return NextResponse.json({ bookmarks: userBookmarks }, { headers });
   } catch (error) {
     console.error("Error fetching bookmarks:", error);
-    return NextResponse.json({ error: "Failed to fetch bookmarks" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch bookmarks" }, { status: 500, headers });
   }
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+  const headers = rateLimitHeaders(rateLimit);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before making more requests." },
+      { status: 429, headers }
+    );
+  }
+
   const session = await auth.api.getSession({ request, headers: request.headers });
 
   if (!session?.user) {
@@ -88,14 +117,24 @@ export async function POST(request: NextRequest) {
       publishedAt: publishedAt ? new Date(publishedAt) : null
     }).returning();
 
-    return NextResponse.json({ bookmark: newBookmark }, { status: 201 });
+    return NextResponse.json({ bookmark: newBookmark }, { status: 201, headers });
   } catch (error) {
     console.error("Error creating bookmark:", error);
-    return NextResponse.json({ error: "Failed to create bookmark" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create bookmark" }, { status: 500, headers });
   }
 }
 
 export async function DELETE(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
+  const headers = rateLimitHeaders(rateLimit);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before making more requests." },
+      { status: 429, headers }
+    );
+  }
+
   const session = await auth.api.getSession({ request, headers: request.headers });
 
   if (!session?.user) {
@@ -121,9 +160,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Bookmark not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers });
   } catch (error) {
     console.error("Error deleting bookmark:", error);
-    return NextResponse.json({ error: "Failed to delete bookmark" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete bookmark" }, { status: 500, headers });
   }
 }

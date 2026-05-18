@@ -34,6 +34,7 @@ const articleSchema = z.object({
     name: z.string().min(1).max(200)
   }),
   category: z.enum(CATEGORY_VALUES),
+  priority: z.enum(["normal", "important", "breaking"]).default("normal"),
   summary: z.object({
     bullets: z.tuple([z.string().min(1), z.string().min(1), z.string().min(1)]),
     insight: z.string().min(1),
@@ -96,10 +97,10 @@ export async function POST(request: NextRequest) {
   try {
     const distillService = DistillService.fromEnv();
     const result = await distillService.answerQuestion({
-      article: article as DistilledArticle,
+      article,
       summary: article.summary,
       question,
-      history: history as ArticleChatMessage[] | undefined
+      history
     });
 
     return NextResponse.json(result, { headers });

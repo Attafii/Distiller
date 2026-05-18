@@ -4,8 +4,8 @@ import { auth } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
-      request: req as unknown as Request,
-      headers: { cookie: req.headers.get("cookie") ?? "" }
+      request: req,
+      headers: req.headers
     });
 
     if (!session?.user) {

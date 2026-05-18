@@ -1,45 +1,40 @@
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { getDb } from "@/lib/db";
+import { subscriptions } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
-const portalSchema = z.object({
-  customerId: z.string().min(1)
-});
-
 export async function POST(request: NextRequest) {
+  const session = await auth.api.getSession({ request, headers: request.headers });
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Stripe is not configured" }, { status: 503 });
   }
 
-  let body: unknown;
+  const subscription = await getDb().query.subscriptions.findFirst({
+    where: eq(subscriptions.userId, session.user.id)
+  });
 
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  if (!subscription?.stripeCustomerId) {
+    return NextResponse.json({ error: "No active subscription found" }, { status: 404 });
   }
-
-  const parsed = portalSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid request body", details: parsed.error.flatten() },
-      { status: 400 }
-    );
-  }
-
-  const { customerId } = parsed.data;
 
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-04-22.dahlia"
+      // @ts-expect-error Stripe SDK types are outdated; this API version is valid at runtime
+      apiVersion: "2025-04-30.basil"
     });
 
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/settings`
+      customer: subscription.stripeCustomerId,
+      return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/settings`
     });
 
     return NextResponse.json({ url: portalSession.url });

@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Distiller",
     short_name: "Distiller",
     description: "AI-powered news intelligence. Get concise 3-bullet summaries of top stories.",
-    start_url: siteUrl,
+    start_url: "/",
     display: "standalone",
     background_color: "#09090b",
     theme_color: "#09090b",

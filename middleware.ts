@@ -10,7 +10,6 @@ const SECURITY_HEADERS = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
 };
 
-const API_PATHS = ["/api/feed", "/api/news/chat", "/api/debug/runtime", "/api/og"];
 const BLOCKED_PATTERNS = [
   /\.(git|env|log|config|secret|key|crt|pem)$/i,
   /(^|\/)\.\./,

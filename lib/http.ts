@@ -17,7 +17,6 @@ export async function fetchWithTimeout(
   }
 
   const requestInit = { ...init, headers, signal: controller.signal };
-  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 
   const abortFromExternalSignal = () => {
     controller.abort(externalSignal?.reason);
@@ -31,7 +30,7 @@ export async function fetchWithTimeout(
     }
   }
 
-  timeoutHandle = setTimeout(() => controller.abort(new Error("Request timed out")), timeoutMs);
+  const timeoutHandle = setTimeout(() => controller.abort(new Error("Request timed out")), timeoutMs);
 
   try {
     return await fetch(input, requestInit);
