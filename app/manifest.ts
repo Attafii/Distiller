@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.news";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
 
   return {
     name: "Distiller",

@@ -30,7 +30,7 @@ function buildFeedXml(params: {
     bullets: string[];
   }>;
 }): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
   const lastBuildDate = new Date().toUTCString();
 
   const itemsXml = params.articles
@@ -68,12 +68,12 @@ ${itemsXml}
 }
 
 export async function GET() {
-  const rateLimit = await checkRateLimit(new Request("https://distiller.attafii.app/feed.xml"));
+  const rateLimit = await checkRateLimit(new Request("https://distiller.attafii.dev/feed.xml"));
   if (!rateLimit.allowed) {
     return new NextResponse("Rate limit exceeded", { status: 429 });
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
   const siteTitle = "Distiller — AI News Intelligence";
   const siteDescription = "AI-powered news summaries with 3 concise bullets per article, grounded by RAG and embeddings. Powered by NVIDIA Build.";
 

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, serial, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -109,6 +109,26 @@ export const articleReactions = pgTable("article_reactions", {
   createdAt: timestamp("created_at").notNull().defaultNow()
 });
 
+export const userArticleUsage = pgTable(
+  "user_article_usage",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    yearMonth: text("year_month").notNull(),
+    count: integer("count").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow()
+  },
+  (table) => ({
+    userMonthIndex: uniqueIndex("idx_user_article_usage_user_month").on(
+      table.userId,
+      table.yearMonth
+    )
+  })
+);
+
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
@@ -116,3 +136,4 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type Bookmark = typeof bookmarks.$inferSelect;
 export type Alert = typeof alerts.$inferSelect;
 export type ReadingHistory = typeof readingHistory.$inferSelect;
+export type UserArticleUsage = typeof userArticleUsage.$inferSelect;

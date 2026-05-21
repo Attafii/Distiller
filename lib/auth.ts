@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 
 function createAuth() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
 
   const authOptions: Parameters<typeof betterAuth>[0] = {
     baseURL: siteUrl,

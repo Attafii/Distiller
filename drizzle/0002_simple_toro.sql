@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "idx_user_article_usage_user_month" ON "user_article_usage" USING btree ("user_id","year_month");

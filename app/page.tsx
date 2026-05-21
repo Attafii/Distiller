@@ -174,6 +174,22 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-6 pb-24">
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-display text-base font-semibold text-foreground mb-1">Deep Summary Mode</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Pro readers get extended briefs — more context, more nuance, same zero fluff. Switch modes per article or set it as your default.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 pb-24">
         <Card className="border-border bg-card p-8 text-center">
           <Badge variant="outline" className="mb-4 border-border text-muted-foreground">
             100% free to start
@@ -226,8 +242,7 @@ export default function HomePage() {
                 Ready to cut through the noise?
               </h2>
               <p className="text-sm leading-relaxed text-muted-foreground max-w-md">
-                Join thousands of researchers, developers, and curious readers who use Distiller
-                to stay informed in seconds, not hours.
+                Join researchers, developers, and curious readers who stay informed in seconds, not hours.
               </p>
             </div>
             <div className="flex gap-3 shrink-0">

@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1779400304347,
+      "tag": "0000_military_loa",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779400430121,
+      "tag": "0001_lowly_toro",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779400927593,
+      "tag": "0002_simple_toro",
+      "breakpoints": true
+    }
+  ]
+}

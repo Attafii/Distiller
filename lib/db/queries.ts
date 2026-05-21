@@ -1,8 +1,8 @@
 import "server-only";
 
 import { getDb } from "@/lib/db";
-import { subscriptions, bookmarks, readingHistory, alerts } from "@/lib/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { subscriptions, bookmarks, readingHistory, alerts, userArticleUsage } from "@/lib/db/schema";
+import { eq, desc, and, lt, sql } from "drizzle-orm";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 export type SubscriptionSelect = InferSelectModel<typeof subscriptions>;
@@ -13,6 +13,8 @@ export type ReadingHistorySelect = InferSelectModel<typeof readingHistory>;
 export type ReadingHistoryInsert = InferInsertModel<typeof readingHistory>;
 export type AlertSelect = InferSelectModel<typeof alerts>;
 export type AlertInsert = InferInsertModel<typeof alerts>;
+
+export const FREE_MONTHLY_ARTICLE_LIMIT = 50;
 
 export async function getUserSubscription(userId: string) {
   return getDb().query.subscriptions.findFirst({
@@ -119,4 +121,25 @@ export async function deleteAlert(userId: string, alertId: number) {
     .returning();
 
   return deleted;
+}
+
+export async function reserveMonthlyArticleUsage(
+  userId: string,
+  yearMonth: string,
+  limit = FREE_MONTHLY_ARTICLE_LIMIT
+) {
+  const [usage] = await getDb().insert(userArticleUsage).values({
+    userId,
+    yearMonth,
+    count: 1
+  }).onConflictDoUpdate({
+    target: [userArticleUsage.userId, userArticleUsage.yearMonth],
+    set: {
+      count: sql`${userArticleUsage.count} + 1`,
+      updatedAt: new Date()
+    },
+    where: lt(userArticleUsage.count, limit)
+  }).returning();
+
+  return usage ?? null;
 }

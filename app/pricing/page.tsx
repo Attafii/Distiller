@@ -111,7 +111,7 @@ const faqs = [
   },
   {
     q: "Do you offer annual billing?",
-    a: "Yes — annual plans save 20%. Contact billing@distiller.attafii.app to switch."
+    a: "Yes — annual plans save 20%. Contact billing@distiller.attafii.dev to switch."
   }
 ];
 
@@ -236,8 +236,7 @@ export default function PricingPage() {
                 Ready to cut through the noise?
               </h2>
               <p className="text-sm leading-relaxed text-muted-foreground max-w-lg mx-auto">
-                Join thousands of researchers, developers, and curious readers who use Distiller
-                to stay informed in seconds, not hours.
+                Join researchers, developers, and curious readers who stay informed in seconds, not hours.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Button size="lg" asChild>

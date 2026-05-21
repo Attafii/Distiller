@@ -11,7 +11,7 @@ import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-const GUEST_DAILY_LIMIT = 4;
+const GUEST_DAILY_LIMIT = 50;
 const GUEST_ALLOWED_CATEGORIES: Array<"world" | "tech"> = ["world", "tech"];
 
 const guestViewCounts = new Map<string, { count: number; dateStr: string }>();

@@ -27,7 +27,7 @@ Copy `.env.example` to `.env.local` and fill in:
 - `NVIDIA_BUILD_MODEL_CHAT` — defaults to `nvidia/llama-3.3-nemotron-super-49b-v1` (falls back to BALANCED)
 - `NVIDIA_BUILD_EMBED_MODEL` — defaults to `nvidia/nv-embedqa-e5-v5`
 - `DISTILL_BATCH_SIZE` — defaults to `3`
-- `NEXT_PUBLIC_SITE_URL` — your deployment URL (e.g., `https://distiller.attafii.app`)
+- `NEXT_PUBLIC_SITE_URL` — your deployment URL (e.g., `https://distiller.attafii.dev`)
 
 ## Architecture
 

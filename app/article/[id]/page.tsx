@@ -55,7 +55,7 @@ export async function generateMetadata({ params, searchParams }: ArticlePageProp
   const title = queryParams.title ? decodeURIComponent(queryParams.title) : null;
   const description = buildDescription(queryParams.description, "AI-powered news summary from Distiller — 3 concise bullets, grounded in source text.");
   const imageUrl = queryParams.imageUrl ? decodeURIComponent(queryParams.imageUrl) : undefined;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
 
   const ogTitle = title ? `${title} · Distiller` : "Article · Distiller";
   const ogDescription = truncate(description, 200);
@@ -106,7 +106,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
   const conclusion = queryParams.conclusion ? decodeURIComponent(queryParams.conclusion) : null;
   const model = queryParams.model ?? "unknown";
   const confidence = queryParams.confidence ? parseFloat(queryParams.confidence) : 0;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
   const topicLabel = TOPIC_OPTIONS.find((o) => o.id === category)?.label ?? category;
 
   const newsArticleSchema = {

@@ -32,10 +32,91 @@ const priorityFilters: Array<{ id: ArticlePriority | "all"; label: string }> = [
   { id: "breaking", label: "Breaking" }
 ];
 
-const GUEST_FREE_ARTICLES = 4;
+const GUEST_FREE_ARTICLES = 50;
 const GUEST_ALLOWED_TOPICS: Array<{ id: Category; label: string }> = [
   { id: "world", label: "World" },
   { id: "tech", label: "Technology" }
+];
+
+const DEMO_ARTICLES: DistilledArticle[] = [
+  {
+    id: "demo-1",
+    title: "Fed Holds Rates Steady Amid Mixed Signals",
+    description: "The Federal Reserve kept its benchmark rate unchanged for the third consecutive meeting, signaling caution over inflation trajectory.",
+    url: "#",
+    imageUrl: null,
+    publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    source: { id: null, name: "Reuters" },
+    category: "finance",
+    priority: "normal",
+    summary: {
+      bullets: [
+        "Federal Reserve kept benchmark rate at 5.25%–5.5% for the third consecutive meeting",
+        "Chair Powell cited persistent services inflation as the key concern",
+        "Markets pricing in one cut before year-end despite hawkish tone"
+      ],
+      insight: "The Fed's decision reflects growing confidence in the economy but lingering caution about services inflation, which remains above the 2% target.",
+      conclusion: "Bond markets are pricing in a single cut before year-end, though the timing will depend on upcoming CPI data releases.",
+      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
+      confidence: 0.87,
+      retrievedContext: []
+    },
+    likeCount: 0,
+    likedByViewer: false,
+    bookmarked: false
+  },
+  {
+    id: "demo-2",
+    title: "OpenAI Releases GPT-5 with Multimodal Reasoning",
+    description: "The latest GPT model achieves state-of-the-art performance across text, image, and audio benchmarks.",
+    url: "#",
+    imageUrl: null,
+    publishedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    source: { id: null, name: "The Verge" },
+    category: "ai",
+    priority: "important",
+    summary: {
+      bullets: [
+        "GPT-5 scores 87% on MMLU benchmark, up from 80% for GPT-4",
+        "Native image, audio, and document understanding in a single model",
+        "API pricing set at $15/1M input tokens, $60/1M output tokens"
+      ],
+      insight: "GPT-5's multimodal capabilities represent a significant leap, consolidating what previously required separate models into one unified system.",
+      conclusion: "The pricing positions GPT-5 as a premium option, likely targeting enterprise customers requiring high-accuracy reasoning tasks.",
+      model: "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+      confidence: 0.91,
+      retrievedContext: []
+    },
+    likeCount: 0,
+    likedByViewer: false,
+    bookmarked: false
+  },
+  {
+    id: "demo-3",
+    title: "Tunisia Signs €400M Green Energy Deal with EU",
+    description: "A landmark agreement to accelerate Tunisia's renewable energy transition.",
+    url: "#",
+    imageUrl: null,
+    publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+    source: { id: null, name: "Reuters Africa" },
+    category: "world",
+    priority: "normal",
+    summary: {
+      bullets: [
+        "Agreement covers solar infrastructure across three southern governorates",
+        "Expected to create 12,000 jobs and reduce dependence on Algerian gas imports",
+        "Deal includes knowledge transfer provisions for local engineering talent"
+      ],
+      insight: "The deal marks a strategic shift in Tunisia's energy posture, leveraging EU financing to reduce reliance on neighboring gas suppliers.",
+      conclusion: "If executed well, this could serve as a template for similar North African renewable partnerships.",
+      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
+      confidence: 0.84,
+      retrievedContext: []
+    },
+    likeCount: 0,
+    likedByViewer: false,
+    bookmarked: false
+  }
 ];
 
 function FeedSkeleton() {
@@ -587,7 +668,7 @@ export default function RefinedFeedPage() {
                   <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Topics</p>
                   {isGuest && (
                     <Badge variant="outline" className="border-border text-muted-foreground">
-                      Free: {GUEST_FREE_ARTICLES} articles/day
+                      Free: {GUEST_FREE_ARTICLES} articles / month
                     </Badge>
                   )}
                   {!isGuest && (
@@ -773,8 +854,34 @@ export default function RefinedFeedPage() {
 
         {loading && articles.length === 0 ? <FeedSkeleton /> : null}
 
-        {!loading && visibleArticles.length === 0 && !error ? (
+        {!loading && visibleArticles.length === 0 && !error && !isGuest ? (
           <EmptyState title={emptyTitle} description={emptyDescription} />
+        ) : null}
+
+        {isGuest && !loading && articles.length === 0 && !error ? (
+          <>
+            <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4 text-sm text-foreground flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
+                <Newspaper className="h-4 w-4 text-primary" />
+              </div>
+              <p>
+                <span className="font-medium">Sign in to unlock your full personalized feed.</span>{" "}
+                <span className="text-muted-foreground">These are sample previews to show you how Distiller works.</span>
+              </p>
+            </div>
+            <div className="grid gap-5 lg:grid-cols-2">
+              {DEMO_ARTICLES.map((article) => (
+                <DistilledCard
+                  key={article.id}
+                  article={article}
+                  onOpenAction={handleOpenArticle}
+                  onLikeAction={handleLikeArticle}
+                  onShareAction={handleShareArticle}
+                  onBookmarkAction={handleBookmarkArticle}
+                />
+              ))}
+            </div>
+          </>
         ) : null}
 
         {visibleArticles.length > 0 ? (

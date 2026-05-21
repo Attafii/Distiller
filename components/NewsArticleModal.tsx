@@ -129,7 +129,15 @@ export function NewsArticleModal({
         });
 
         if (!response.ok) {
-          const message = await response.text();
+          const errorPayload = await response.json().catch(() => null) as { error?: string; limit?: number } | null;
+
+          if (response.status === 403 && errorPayload?.error) {
+            setFullText(buildLocalArticleText(currentArticle));
+            setFullTextNotice(errorPayload.error);
+            return;
+          }
+
+          const message = errorPayload?.error ?? (await response.text());
           throw new Error(message || "Failed to load full article text");
         }
 
