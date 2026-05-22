@@ -29,7 +29,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch("/api/auth/get-user");
+        const res = await fetch("/api/auth/get-user", {
+          credentials: "include"
+        });
         if (res.ok) {
           const data = await res.json();
           setUser(data);

@@ -23,7 +23,9 @@ export function UserNav() {
   useEffect(() => {
     async function checkUser() {
       try {
-        const res = await fetch("/api/auth/get-user");
+        const res = await fetch("/api/auth/get-user", {
+          credentials: "include"
+        });
         if (res.ok) {
           setUser(await res.json());
         } else {
@@ -40,7 +42,7 @@ export function UserNav() {
 
   async function handleSignOut() {
     try {
-      await fetch("/api/auth/sign-out", { method: "POST" });
+      await fetch("/api/auth/sign-out", { method: "POST", credentials: "include" });
       setUser(null);
       router.push("/");
       router.refresh();

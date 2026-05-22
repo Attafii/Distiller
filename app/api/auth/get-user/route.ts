@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
-      request: req,
       headers: req.headers
     });
 
