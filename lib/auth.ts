@@ -7,9 +7,29 @@ import * as schema from "@/lib/db/schema";
 
 function createAuth() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+  const normalizedSiteOrigin = (() => {
+    try {
+      return new URL(siteUrl).origin;
+    } catch {
+      return siteUrl;
+    }
+  })();
 
   const authOptions: Parameters<typeof betterAuth>[0] = {
     baseURL: siteUrl,
+    trustedOrigins: (request) => {
+      const trusted = new Set<string>([normalizedSiteOrigin]);
+
+      if (request) {
+        try {
+          trusted.add(new URL(request.url).origin);
+        } catch {
+          // Ignore malformed request URLs and fall back to the configured origin.
+        }
+      }
+
+      return [...trusted];
+    },
     database: db
       ? drizzleAdapter(db, { provider: "pg", schema })
       : (() => {
