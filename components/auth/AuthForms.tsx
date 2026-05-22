@@ -10,6 +10,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+async function readErrorMessage(response: Response, fallback: string) {
+  const rawBody = await response.text();
+
+  if (!rawBody) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(rawBody) as { error?: string; message?: string };
+    return parsed.error ?? parsed.message ?? fallback;
+  } catch {
+    return rawBody;
+  }
+}
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 bg-background">
@@ -42,10 +57,8 @@ export function LoginForm() {
         body: JSON.stringify({ email, password })
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error ?? "Sign in failed");
+        throw new Error(await readErrorMessage(res, "Sign in failed"));
       }
 
       window.location.href = callbackUrl;
@@ -206,10 +219,8 @@ export function SignupForm() {
         body: JSON.stringify({ name, email, password })
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error ?? "Sign up failed");
+        throw new Error(await readErrorMessage(res, "Sign up failed"));
       }
 
       window.location.href = callbackUrl;

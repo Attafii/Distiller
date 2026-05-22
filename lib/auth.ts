@@ -5,6 +5,13 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 
+const authSchema = {
+  user: schema.users,
+  session: schema.sessions,
+  account: schema.accounts,
+  verification: schema.verifications
+};
+
 function createAuth() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
   const normalizedSiteOrigin = (() => {
@@ -31,7 +38,7 @@ function createAuth() {
       return [...trusted];
     },
     database: db
-      ? drizzleAdapter(db, { provider: "pg", schema })
+      ? drizzleAdapter(db, { provider: "pg", schema: authSchema })
       : (() => {
           throw new Error("DATABASE_URL is not set — auth requires a database connection");
         })(),
