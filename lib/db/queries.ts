@@ -4,6 +4,9 @@ import { getDb } from "@/lib/db";
 import { subscriptions, bookmarks, readingHistory, alerts, userArticleUsage } from "@/lib/db/schema";
 import { eq, desc, and, lt, sql } from "drizzle-orm";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { FREE_MONTHLY_ARTICLE_LIMIT } from "@/lib/plans";
+
+export { FREE_MONTHLY_ARTICLE_LIMIT };
 
 export type SubscriptionSelect = InferSelectModel<typeof subscriptions>;
 export type SubscriptionInsert = InferInsertModel<typeof subscriptions>;
@@ -13,8 +16,6 @@ export type ReadingHistorySelect = InferSelectModel<typeof readingHistory>;
 export type ReadingHistoryInsert = InferInsertModel<typeof readingHistory>;
 export type AlertSelect = InferSelectModel<typeof alerts>;
 export type AlertInsert = InferInsertModel<typeof alerts>;
-
-export const FREE_MONTHLY_ARTICLE_LIMIT = 50;
 
 export async function getUserSubscription(userId: string) {
   return getDb().query.subscriptions.findFirst({

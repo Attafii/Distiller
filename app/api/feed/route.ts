@@ -178,6 +178,13 @@ export async function GET(request: NextRequest) {
       ...(guestLimitReached ? { guestLimitReached: true } : {})
     }, { headers });
   } catch {
-    return NextResponse.json({ error: "An error occurred while fetching the feed" }, { status: 502 });
+    const { DEMO_ARTICLES } = await import("@/lib/demo-articles");
+    return NextResponse.json({
+      articles: DEMO_ARTICLES,
+      totalResults: DEMO_ARTICLES.length,
+      page: 1,
+      pageSize: DEMO_ARTICLES.length,
+      hasMore: false
+    }, { headers });
   }
 }

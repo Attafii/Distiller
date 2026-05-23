@@ -129,6 +129,30 @@ export const userArticleUsage = pgTable(
   })
 );
 
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  topics: text("topics").array().default([]),
+  regions: text("regions").array().default([]),
+  deliveryPreference: text("delivery_preference").default("web"),
+  dailyEmailEnabled: boolean("daily_email_enabled").default(false),
+  dailyEmailTime: text("daily_email_time").default("07:00"),
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+export const userStreaks = pgTable("user_streaks", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastReadDate: timestamp("last_read_date"),
+  weeklyReadCount: integer("weekly_read_count").default(0),
+  topTopic: text("top_topic"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Account = typeof accounts.$inferSelect;

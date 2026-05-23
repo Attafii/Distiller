@@ -5,9 +5,20 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "About",
+  title: "About · Distiller",
   description: "About Distiller — built because staying informed shouldn't cost you 2 hours a day.",
-  alternates: { canonical: "/about" }
+  alternates: { canonical: "https://distiller.attafii.dev/about" },
+  openGraph: {
+    url: "https://distiller.attafii.dev/about",
+    title: "About · Distiller",
+    description: "About Distiller — built because staying informed shouldn't cost you 2 hours a day.",
+    images: [{ url: "https://distiller.attafii.dev/api/og?title=About", width: 1200, height: 630, alt: "About" }]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About · Distiller",
+    images: ["https://distiller.attafii.dev/api/og?title=About"]
+  }
 };
 
 export default function AboutPage() {
@@ -31,7 +42,7 @@ export default function AboutPage() {
             and most of it is noise.
           </p>
           <p>
-            The idea is simple: what if an AI could read everything, distillation it down to exactly
+            The idea is simple: what if an AI could read everything, distill it down to exactly
             what matters, and present it in a format you can scan in 60 seconds? Three bullets. One
             insight. A clear conclusion. No padding, no speculation, no filler.
           </p>
@@ -51,7 +62,8 @@ export default function AboutPage() {
           <Card className="border-border bg-card">
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground mb-4">
-                Questions, feedback, or partnership inquiries?
+                Questions, feedback, or partnership inquiries? Reach us at{" "}
+                <a href="mailto:hello@distiller.attafii.dev" className="text-primary hover:underline">hello@distiller.attafii.dev</a>
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild>

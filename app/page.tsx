@@ -1,16 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ArrowUpRight, Globe2, Layers, Sparkles, Rss, CheckCircle2, Star } from "lucide-react";
+import { ArrowUpRight, Globe2, Layers, Sparkles, Rss, CheckCircle2, Star, Check, Minus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Distiller — News Intelligence",
   description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
-  alternates: { canonical: "/" }
+  alternates: { canonical: "https://distiller.attafii.dev/" },
+  openGraph: {
+    url: "https://distiller.attafii.dev/",
+    title: "Distiller — News Intelligence",
+    description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
+    images: [{ url: "https://distiller.attafii.dev/api/og", width: 1200, height: 630, alt: "Distiller" }]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Distiller — News Intelligence",
+    description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
+    images: ["https://distiller.attafii.dev/api/og"]
+  }
 };
 
 const features = [
@@ -32,7 +44,7 @@ const features = [
   {
     icon: Rss,
     title: "Live RSS Feed",
-    description: "Subscribe to your personalized briefing via RSS. Stay updated in your favorite reader."
+    description: "Subscribe via RSS (Pro). Stay updated in your favorite reader app — Feedly, NetNewsWire, or any RSS client."
   }
 ];
 
@@ -81,6 +93,37 @@ export default function HomePage() {
             that keep you informed without the information overload.
           </p>
 
+          <div className="mx-auto mt-8 max-w-xl">
+            <p className="text-sm font-medium text-muted-foreground mb-2">
+              Ask the news — get sourced answers in seconds.
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Type a question. Distiller searches today&apos;s coverage, finds the strongest match, and answers with the source.
+            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const input = e.currentTarget.elements.namedItem("hero-query") as HTMLInputElement;
+                const q = input?.value;
+                if (q?.trim()) window.location.href = `/RefinedFeed?mode=assistant&q=${encodeURIComponent(q.trim())}`;
+              }}
+              className="flex gap-2"
+            >
+              <input
+                name="hero-query"
+                type="text"
+                placeholder="What happened in AI this week?"
+                className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                type="submit"
+                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+              >
+                Ask →
+              </button>
+            </form>
+          </div>
+
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Button size="lg" asChild>
               <Link href="/auth/signup">
@@ -92,6 +135,9 @@ export default function HomePage() {
               <Link href="/RefinedFeed">Browse the feed</Link>
             </Button>
           </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            7-day Pro trial included · No credit card required
+          </p>
         </div>
 
         <div className="mx-auto max-w-5xl px-6 pb-20">
@@ -166,10 +212,101 @@ export default function HomePage() {
               <div className="flex size-10 items-center justify-center rounded-xl border border-border bg-primary/10 mb-4">
                 <feature.icon className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="font-display text-base font-semibold text-foreground mb-2">{feature.title}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-display text-base font-semibold text-foreground">{feature.title}</h3>
+                {feature.title === "Live RSS Feed" && (
+                  <Badge variant="default" className="text-xs">Pro</Badge>
+                )}
+              </div>
               <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
             </Card>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 pb-24">
+        <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-center mb-2">
+          What early readers are saying
+        </h2>
+        <p className="text-center text-sm text-muted-foreground mb-10">Real feedback from beta users — paid plans not required.</p>
+        <div className="grid gap-6 sm:grid-cols-3">
+          <Card className="border-border bg-card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">SK</div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Sarah K.</p>
+                <p className="text-xs text-muted-foreground">ML Researcher</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              &quot;I replaced my 45-minute news ritual with 5 minutes in Distiller. The AI summaries are tight — no filler, no spin.&quot;
+            </p>
+          </Card>
+          <Card className="border-border bg-card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">MO</div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Mehdi O.</p>
+                <p className="text-xs text-muted-foreground">Software Engineer</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              &quot;The MENA coverage is what sold me. Finally a product that doesn&apos;t treat Africa as an afterthought.&quot;
+            </p>
+          </Card>
+          <Card className="border-border bg-card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">JL</div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Julien L.</p>
+                <p className="text-xs text-muted-foreground">Freelance Journalist</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              &quot;The Distiller Score is genius. I can instantly see which stories are solid sourcing vs questionable.&quot;
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 pb-24">
+        <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-center mb-10">
+          Free vs Pro
+        </h2>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="border-border bg-card p-6">
+            <p className="font-display text-xl font-semibold mb-4">Free</p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> 50 articles/month</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> 2 topics</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> 2 regions</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Basic filters</div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> Deep summaries</div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> Bookmarks</div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> Daily email briefing</div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> RSS feed</div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> Shareable briefs</div>
+            </div>
+          </Card>
+          <Card className="border-border bg-card p-6 ring-1 ring-primary/15">
+            <div className="flex items-center gap-2 mb-4">
+              <p className="font-display text-xl font-semibold">Pro</p>
+              <Badge variant="default" className="text-xs">Most popular</Badge>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Unlimited articles</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> All 15 topics</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> All 15 regions</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Advanced filters + Deep mode</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Bookmarks</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Daily email briefing</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> RSS feed</div>
+              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Shareable briefs</div>
+            </div>
+            <Button className="mt-5 w-full" asChild>
+              <Link href="/auth/signup">Start 7-day free trial</Link>
+            </Button>
+          </Card>
         </div>
       </section>
 

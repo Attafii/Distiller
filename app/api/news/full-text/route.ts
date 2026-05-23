@@ -4,7 +4,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { fetchFullArticleText } from "@/lib/article-text";
-import { FREE_MONTHLY_ARTICLE_LIMIT, reserveMonthlyArticleUsage, getUserSubscription } from "@/lib/db/queries";
+import { FREE_MONTHLY_ARTICLE_LIMIT } from "@/lib/plans";
+import { reserveMonthlyArticleUsage, getUserSubscription } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 

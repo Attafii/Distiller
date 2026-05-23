@@ -10,6 +10,7 @@ import { buttonStyles, Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { TOPIC_OPTIONS } from "@/lib/news-options";
+import { ShareButton } from "@/components/ShareButton";
 import type { DistilledArticle } from "@/types/news";
 
 function formatPublishedAt(publishedAt: string) {
@@ -80,6 +81,20 @@ export function DistilledCard({
                 {article.likeCount} likes
               </Badge>
             ) : null}
+            {article.distillerScore != null ? (
+              <Badge variant="outline" className="border-border text-muted-foreground">
+                Score {article.distillerScore}
+              </Badge>
+            ) : null}
+            <ShareButton
+              title={article.title}
+              briefSlug={article.id}
+              bullets={article.summary.bullets}
+              insight={article.summary.insight}
+              sourceName={article.source.name}
+              publishedAt={article.publishedAt}
+              url={article.url}
+            />
           </div>
 
           <div className="space-y-2">

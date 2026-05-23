@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import { BookMarked, TrendingUp, Clock, Zap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,24 @@ export default async function DashboardPage() {
           </Link>
         ))}
       </div>
+
+      {planName === "free" && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-foreground">This month&apos;s usage</p>
+            <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-500/30">Free</Badge>
+          </div>
+          <div className="h-2 w-full rounded-full bg-muted mb-2">
+            <div className="h-2 rounded-full bg-amber-500 transition-all" style={{ width: "46%" }} />
+          </div>
+          <p className="text-xs text-muted-foreground">23 of 50 articles read · 27 remaining</p>
+          <div className="mt-3">
+            <Button size="sm" asChild>
+              <Link href="/pricing">Upgrade to Pro →</Link>
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <RecentBookmarks userId={userId} />

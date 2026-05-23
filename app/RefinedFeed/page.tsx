@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPriorityLabel } from "@/lib/article-signals";
 import { COUNTRY_OPTIONS, DATE_RANGE_OPTIONS, TOPIC_OPTIONS } from "@/lib/news-options";
+import { DEMO_ARTICLES } from "@/lib/demo-articles";
 import type { ArticleLikeResponse, ArticlePriority, Category, CountryCode, DateRange, DistilledArticle, FeedResponse, SummarizationMode } from "@/types/news";
 
 const summaryModes: Array<{ id: SummarizationMode; label: string }> = [
@@ -36,90 +37,6 @@ const GUEST_FREE_ARTICLES = 50;
 const GUEST_ALLOWED_TOPICS: Array<{ id: Category; label: string }> = [
   { id: "world", label: "World" },
   { id: "tech", label: "Technology" }
-];
-
-const DEMO_ARTICLES: DistilledArticle[] = [
-  {
-    id: "demo-1",
-    title: "Fed Holds Rates Steady Amid Mixed Signals",
-    description: "The Federal Reserve kept its benchmark rate unchanged for the third consecutive meeting, signaling caution over inflation trajectory.",
-    content: null,
-    url: "#",
-    imageUrl: null,
-    publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    source: { id: null, name: "Reuters" },
-    category: "finance",
-    priority: "normal",
-    summary: {
-      bullets: [
-        "Federal Reserve kept benchmark rate at 5.25%–5.5% for the third consecutive meeting",
-        "Chair Powell cited persistent services inflation as the key concern",
-        "Markets pricing in one cut before year-end despite hawkish tone"
-      ],
-      insight: "The Fed's decision reflects growing confidence in the economy but lingering caution about services inflation, which remains above the 2% target.",
-      conclusion: "Bond markets are pricing in a single cut before year-end, though the timing will depend on upcoming CPI data releases.",
-      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
-      confidence: 0.87,
-      retrievedContext: []
-    },
-    likeCount: 0,
-    likedByViewer: false,
-    bookmarked: false
-  },
-  {
-    id: "demo-2",
-    title: "OpenAI Releases GPT-5 with Multimodal Reasoning",
-    description: "The latest GPT model achieves state-of-the-art performance across text, image, and audio benchmarks.",
-    content: null,
-    url: "#",
-    imageUrl: null,
-    publishedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    source: { id: null, name: "The Verge" },
-    category: "ai",
-    priority: "important",
-    summary: {
-      bullets: [
-        "GPT-5 scores 87% on MMLU benchmark, up from 80% for GPT-4",
-        "Native image, audio, and document understanding in a single model",
-        "API pricing set at $15/1M input tokens, $60/1M output tokens"
-      ],
-      insight: "GPT-5's multimodal capabilities represent a significant leap, consolidating what previously required separate models into one unified system.",
-      conclusion: "The pricing positions GPT-5 as a premium option, likely targeting enterprise customers requiring high-accuracy reasoning tasks.",
-      model: "nvidia/llama-3.1-nemotron-ultra-253b-v1",
-      confidence: 0.91,
-      retrievedContext: []
-    },
-    likeCount: 0,
-    likedByViewer: false,
-    bookmarked: false
-  },
-  {
-    id: "demo-3",
-    title: "Tunisia Signs €400M Green Energy Deal with EU",
-    description: "A landmark agreement to accelerate Tunisia's renewable energy transition.",
-    content: null,
-    url: "#",
-    imageUrl: null,
-    publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    source: { id: null, name: "Reuters Africa" },
-    category: "world",
-    priority: "normal",
-    summary: {
-      bullets: [
-        "Agreement covers solar infrastructure across three southern governorates",
-        "Expected to create 12,000 jobs and reduce dependence on Algerian gas imports",
-        "Deal includes knowledge transfer provisions for local engineering talent"
-      ],
-      insight: "The deal marks a strategic shift in Tunisia's energy posture, leveraging EU financing to reduce reliance on neighboring gas suppliers.",
-      conclusion: "If executed well, this could serve as a template for similar North African renewable partnerships.",
-      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
-      confidence: 0.84,
-      retrievedContext: []
-    },
-    likeCount: 0,
-    likedByViewer: false,
-    bookmarked: false
-  }
 ];
 
 function FeedSkeleton() {

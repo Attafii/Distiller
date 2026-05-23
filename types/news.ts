@@ -52,6 +52,7 @@ export interface DistilledArticle extends NewsArticle {
   likeCount: number;
   likedByViewer: boolean;
   bookmarked?: boolean;
+  distillerScore?: number;
 }
 
 export interface ArticleLikeResponse {

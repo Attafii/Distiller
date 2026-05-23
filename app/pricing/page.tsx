@@ -1,96 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, Minus, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-
-const tiers = [
-  {
-    id: "free",
-    name: "Free",
-    tagline: "For curious readers",
-    price: "$0",
-    period: "forever",
-    cta: "Get started",
-    ctaHref: "/auth/signup",
-    highlight: false,
-    monthly: false,
-    features: [
-      { text: "50 articles/month", included: true },
-      { text: "15 topics", included: true },
-      { text: "15 regions", included: true },
-      { text: "Basic filters", included: true },
-      { text: "Bookmarks", included: false },
-      { text: "Reading history", included: false },
-      { text: "Advanced filters", included: false },
-      { text: "Unlimited articles", included: false }
-    ]
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    tagline: "For power readers",
-    price: "$9",
-    period: "per month",
-    cta: "Start Pro trial",
-    ctaHref: "#checkout",
-    highlight: true,
-    monthly: true,
-    features: [
-      { text: "Unlimited articles", included: true },
-      { text: "All 15 topics", included: true },
-      { text: "All 15 regions", included: true },
-      { text: "Deep summary mode", included: true },
-      { text: "Bookmarks", included: true },
-      { text: "Reading history", included: true },
-      { text: "Advanced filters", included: true },
-      { text: "Priority support", included: true }
-    ]
-  },
-  {
-    id: "team",
-    name: "Team",
-    tagline: "For research teams",
-    price: "$29",
-    period: "per month",
-    cta: "Start team trial",
-    ctaHref: "#checkout",
-    highlight: false,
-    monthly: true,
-    features: [
-      { text: "Everything in Pro", included: true },
-      { text: "5 team seats", included: true },
-      { text: "Shared team feed", included: true },
-      { text: "Custom alerts", included: true },
-      { text: "Team analytics", included: true },
-      { text: "Dedicated support", included: true },
-      { text: "Export to CSV/PDF", included: true },
-      { text: "Priority onboarding", included: true }
-    ]
-  },
-  {
-    id: "api",
-    name: "API",
-    tagline: "For developers",
-    price: "$0.003",
-    period: "per article",
-    cta: "Get API key",
-    ctaHref: "/auth/signup?plan=api",
-    highlight: false,
-    monthly: false,
-    features: [
-      { text: "REST API access", included: true },
-      { text: "Webhooks", included: true },
-      { text: "RSS integration", included: true },
-      { text: "Custom topic tuning", included: true },
-      { text: "1k articles/month included", included: true },
-      { text: "Volume discounts", included: true },
-      { text: "99.9% uptime SLA", included: true },
-      { text: "Dedicated support", included: true }
-    ]
-  }
-];
+import { Card, CardContent } from "@/components/ui/card";
+import { PricingSection } from "@/components/pricing/PricingSection";
 
 const faqs = [
   {
@@ -111,27 +24,27 @@ const faqs = [
   },
   {
     q: "Do you offer annual billing?",
-    a: "Yes — annual plans save 20%. Contact billing@distiller.attafii.dev to switch."
+    a: "Yes — annual plans save 20%. Contact support@distiller.attafii.dev to switch."
   }
 ];
 
 export const metadata: Metadata = {
-  title: "Pricing",
-  description: "Simple, transparent pricing for Distiller — AI-powered news intelligence."
+  title: "Pricing · Distiller",
+  description: "Simple, transparent pricing for Distiller — AI-powered news intelligence.",
+  alternates: { canonical: "https://distiller.attafii.dev/pricing" },
+  openGraph: {
+    url: "https://distiller.attafii.dev/pricing",
+    title: "Pricing · Distiller",
+    description: "Simple, transparent pricing for Distiller — AI-powered news intelligence.",
+    images: [{ url: "https://distiller.attafii.dev/api/og?title=Pricing&description=Simple+pricing", width: 1200, height: 630, alt: "Pricing" }]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pricing · Distiller",
+    description: "Simple, transparent pricing for Distiller.",
+    images: ["https://distiller.attafii.dev/api/og?title=Pricing"]
+  }
 };
-
-function CheckRow({ text, included }: { text: string; included: boolean }) {
-  return (
-    <div className="flex items-center gap-3 py-1.5">
-      {included ? (
-        <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} />
-      ) : (
-        <Minus className="h-4 w-4 shrink-0 text-muted-foreground/30" />
-      )}
-      <span className={`text-sm ${included ? "text-foreground" : "text-muted-foreground/60"}`}>{text}</span>
-    </div>
-  );
-}
 
 export default function PricingPage() {
   return (
@@ -152,56 +65,7 @@ export default function PricingPage() {
         </section>
 
         <section id="pricing" className="mx-auto max-w-6xl px-6 pb-24">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {tiers.map((tier) => (
-              <Card
-                key={tier.id}
-                id={tier.id === "pro" ? "checkout" : undefined}
-                className={`relative border-border bg-card ${tier.highlight ? "shadow-elevated ring-2 ring-primary/15" : "shadow-soft"}`}
-              >
-                {tier.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge variant="default" className="px-3 py-1 text-xs font-medium">
-                      <Zap className="mr-1 h-3 w-3" />
-                      Most popular
-                    </Badge>
-                  </div>
-                )}
-                <CardHeader className="pb-4">
-                  <p className="font-display text-2xl font-semibold">{tier.name}</p>
-                  <p className="text-sm text-muted-foreground">{tier.tagline}</p>
-                  <div className="mt-4 flex items-baseline gap-1">
-                    <span className="font-display text-4xl font-semibold text-foreground">{tier.price}</span>
-                    <span className="text-sm text-muted-foreground">{tier.period}</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {tier.id === "free" || tier.id === "api" ? (
-                    <Button
-                      variant={tier.highlight ? "default" : "outline"}
-                      className="w-full"
-                      asChild
-                    >
-                      <Link href={tier.ctaHref}>{tier.cta}</Link>
-                    </Button>
-                  ) : (
-                  <Button
-                      variant={tier.highlight ? "default" : "outline"}
-                      className="w-full"
-                      asChild
-                    >
-                      <Link href="/auth/signup">{tier.cta}</Link>
-                    </Button>
-                  )}
-                  <div className="border-t border-border pt-4">
-                    {tier.features.map((f) => (
-                      <CheckRow key={f.text} text={f.text} included={f.included} />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <PricingSection />
         </section>
 
         <section className="mx-auto max-w-3xl px-6 pb-24">
@@ -235,7 +99,7 @@ export default function PricingPage() {
               <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground">
                 Ready to cut through the noise?
               </h2>
-              <p className="text-sm leading-relaxed text-muted-foreground max-w-lg mx-auto">
+<p className="text-sm leading-relaxed text-muted-foreground max-w-lg mx-auto">
                 Join researchers, developers, and curious readers who stay informed in seconds, not hours.
               </p>
               <div className="flex flex-wrap justify-center gap-4">

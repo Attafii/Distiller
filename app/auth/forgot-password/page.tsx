@@ -1,35 +1,40 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-
 import AuthLayout from "@/components/auth/AuthForms";
+import Link from "next/link";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const metadata: Metadata = {
-  title: "Forgot password",
-  description: "Password reset is not available yet"
+  title: "Forgot Password · Distiller",
+  description: "Reset your Distiller password.",
+  alternates: { canonical: "https://distiller.attafii.dev/auth/forgot-password" }
 };
 
 export default function ForgotPasswordPage() {
   return (
     <AuthLayout>
-      <div className="w-full max-w-sm">
-        <Card className="border-border bg-card shadow-soft">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="font-display text-2xl">Password reset</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
-              Password reset is not enabled in this environment yet.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-4">
-            <p className="text-sm text-muted-foreground">
-              Use the email and password you signed up with, or contact support if you need help accessing your account.
-            </p>
-            <Button asChild className="w-full">
-              <Link href="/auth/login">Back to sign in</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-soft">
+        <CardHeader className="text-center pb-2">
+          <CardTitle className="font-display text-2xl">Reset password</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            Enter your email and we&apos;ll send you a reset link.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-4">
+          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Input id="email" type="email" placeholder="you@example.com" className="h-10" required />
+            </div>
+            <Button type="submit" className="w-full">Send reset link</Button>
+          </form>
+          <p className="text-center text-sm text-muted-foreground">
+            Remember your password?{" "}
+            <Link href="/auth/login" className="font-medium text-primary hover:underline">Sign in</Link>
+          </p>
+        </CardContent>
       </div>
     </AuthLayout>
   );

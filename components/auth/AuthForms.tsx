@@ -223,7 +223,7 @@ export function SignupForm() {
         throw new Error(await readErrorMessage(res, "Sign up failed"));
       }
 
-      window.location.href = callbackUrl;
+      window.location.href = "/onboarding";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
