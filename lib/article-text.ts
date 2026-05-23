@@ -1,5 +1,5 @@
 import { Readability } from "@mozilla/readability";
-import { JSDOM, VirtualConsole } from "jsdom";
+import { Window } from "happy-dom";
 
 import { fetchWithTimeout } from "@/lib/http";
 import { normalizeEnvString } from "@/lib/utils";
@@ -370,16 +370,12 @@ function extractBestReadableText(html: string, title: string) {
 
 function extractReadableArticleText(html: string, url: string, title: string) {
   try {
-    const virtualConsole = new VirtualConsole();
-    virtualConsole.on("jsdomError", () => undefined);
-
-    const dom = new JSDOM(html, {
-      url,
-      virtualConsole
-    });
+    const window = new Window();
+    window.location.href = url;
+    window.document.write(html);
 
     try {
-      const readability = new Readability(dom.window.document);
+      const readability = new Readability(window.document as unknown as Document, { charThreshold: 0 });
       const parsed = readability.parse();
       const readabilityText = normalizeText(
         [parsed?.title ?? title, parsed?.textContent]
@@ -391,7 +387,7 @@ function extractReadableArticleText(html: string, url: string, title: string) {
         return readabilityText;
       }
     } finally {
-      dom.window.close();
+      window.close();
     }
   } catch (error) {
     console.warn("Readability extraction failed", {

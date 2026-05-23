@@ -13,8 +13,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "postinstall": "node scripts/fix-jsdom-esm.js"
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
@@ -35,7 +34,7 @@
     "compromise": "^14.15.0",
     "drizzle-orm": "^0.45.2",
     "framer-motion": "^12.0.0",
-    "jsdom": "^29.0.2",
+    "happy-dom": "^20.9.0",
     "lru-cache": "^11.3.6",
     "lucide-react": "^0.475.0",
     "nanoid": "^5.1.11",
@@ -50,8 +49,6 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/jsdom": "^28.0.1",
-    "html-encoding-sniffer": "5.0.0",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
@@ -62,8 +59,5 @@
     "postcss": "^8.5.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.8.2"
-  },
-  "overrides": {
-    "html-encoding-sniffer": "5.0.0"
   }
 }
