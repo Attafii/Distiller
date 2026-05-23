@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { globSync } from "glob";
 const WRONG = "distiller.attafii.app";
-const files = globSync("**/*.{ts,tsx,mjs,js,json}", { ignore: ["node_modules/**",".next/**","drizzle/**","dist/**"] });
+const files = globSync("**/*.{ts,tsx,mjs,js,json}", { ignore: ["node_modules/**",".next/**","drizzle/**","dist/**","scripts/**"] });
 let bad = false;
 for (const f of files) {
   const c = readFileSync(f, "utf-8");

@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { ArrowUpRight, Globe2, Layers, Sparkles, Rss, CheckCircle2, Star, Check, Minus } from "lucide-react";
 
+import { AskTheNewsForm } from "@/components/AskTheNewsForm";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -93,36 +95,7 @@ export default function HomePage() {
             that keep you informed without the information overload.
           </p>
 
-          <div className="mx-auto mt-8 max-w-xl">
-            <p className="text-sm font-medium text-muted-foreground mb-2">
-              Ask the news — get sourced answers in seconds.
-            </p>
-            <p className="text-xs text-muted-foreground mb-3">
-              Type a question. Distiller searches today&apos;s coverage, finds the strongest match, and answers with the source.
-            </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const input = e.currentTarget.elements.namedItem("hero-query") as HTMLInputElement;
-                const q = input?.value;
-                if (q?.trim()) window.location.href = `/RefinedFeed?mode=assistant&q=${encodeURIComponent(q.trim())}`;
-              }}
-              className="flex gap-2"
-            >
-              <input
-                name="hero-query"
-                type="text"
-                placeholder="What happened in AI this week?"
-                className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                type="submit"
-                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
-              >
-                Ask →
-              </button>
-            </form>
-          </div>
+          <AskTheNewsForm />
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Button size="lg" asChild>
