@@ -4,27 +4,29 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+
 export const metadata: Metadata = {
   title: "About · Distiller",
   description: "About Distiller — built because staying informed shouldn't cost you 2 hours a day.",
-  alternates: { canonical: "https://distiller.attafii.dev/about" },
+  alternates: { canonical: `${siteUrl}/about` },
   openGraph: {
-    url: "https://distiller.attafii.dev/about",
+    url: `${siteUrl}/about`,
     title: "About · Distiller",
     description: "About Distiller — built because staying informed shouldn't cost you 2 hours a day.",
-    images: [{ url: "https://distiller.attafii.dev/api/og?title=About", width: 1200, height: 630, alt: "About" }]
+    images: [{ url: `${siteUrl}/api/og?title=About`, width: 1200, height: 630, alt: "About" }]
   },
   twitter: {
     card: "summary_large_image",
     title: "About · Distiller",
-    images: ["https://distiller.attafii.dev/api/og?title=About"]
+    images: [`${siteUrl}/api/og?title=About`]
   }
 };
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-6 py-20">
+      <div className="mx-auto max-w-2xl 2xl:max-w-3xl px-4 md:px-6 lg:px-8 py-20">
         <div className="mb-12">
           <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground mb-4">
             About Distiller

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PricingSection } from "@/components/pricing/PricingSection";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+
 const faqs = [
   {
     q: "Can I cancel anytime?",
@@ -31,18 +33,18 @@ const faqs = [
 export const metadata: Metadata = {
   title: "Pricing · Distiller",
   description: "Simple, transparent pricing for Distiller — AI-powered news intelligence.",
-  alternates: { canonical: "https://distiller.attafii.dev/pricing" },
+  alternates: { canonical: `${siteUrl}/pricing` },
   openGraph: {
-    url: "https://distiller.attafii.dev/pricing",
+    url: `${siteUrl}/pricing`,
     title: "Pricing · Distiller",
     description: "Simple, transparent pricing for Distiller — AI-powered news intelligence.",
-    images: [{ url: "https://distiller.attafii.dev/api/og?title=Pricing&description=Simple+pricing", width: 1200, height: 630, alt: "Pricing" }]
+    images: [{ url: `${siteUrl}/api/og?title=Pricing&description=Simple+pricing`, width: 1200, height: 630, alt: "Pricing" }]
   },
   twitter: {
     card: "summary_large_image",
     title: "Pricing · Distiller",
     description: "Simple, transparent pricing for Distiller.",
-    images: ["https://distiller.attafii.dev/api/og?title=Pricing"]
+    images: [`${siteUrl}/api/og?title=Pricing`]
   }
 };
 
@@ -64,11 +66,11 @@ export default function PricingPage() {
           </p>
         </section>
 
-        <section id="pricing" className="mx-auto max-w-6xl px-6 pb-24">
+        <section id="pricing" className="mx-auto max-w-[1440px] px-4 md:px-6 lg:px-8 pb-24">
           <PricingSection />
         </section>
 
-        <section className="mx-auto max-w-3xl px-6 pb-24">
+        <section className="mx-auto max-w-3xl px-4 md:px-6 lg:px-8 pb-24">
           <h2 className="mb-10 text-center font-display text-3xl font-semibold tracking-tight text-foreground">
             Frequently asked
           </h2>
@@ -93,7 +95,7 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-4xl px-6 pb-24 text-center">
+        <section className="mx-auto max-w-4xl px-4 md:px-6 lg:px-8 pb-24 text-center">
           <Card className="border-border bg-card/80 shadow-soft">
             <CardContent className="space-y-6 px-8 py-12">
               <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground">
@@ -102,7 +104,7 @@ export default function PricingPage() {
 <p className="text-sm leading-relaxed text-muted-foreground max-w-lg mx-auto">
                 Join researchers, developers, and curious readers who stay informed in seconds, not hours.
               </p>
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex flex-wrap justify-center gap-4 2xl:gap-8">
                 <Button size="lg" asChild>
                   <Link href="/auth/signup">Start for free</Link>
                 </Button>

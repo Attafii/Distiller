@@ -144,3 +144,14 @@ export async function reserveMonthlyArticleUsage(
 
   return usage ?? null;
 }
+
+export async function getMonthlyArticleUsage(userId: string): Promise<number> {
+  const yearMonth = new Date().toISOString().slice(0, 7);
+  const [result] = await getDb()
+    .select({ count: userArticleUsage.count })
+    .from(userArticleUsage)
+    .where(
+      and(eq(userArticleUsage.userId, userId), eq(userArticleUsage.yearMonth, yearMonth))
+    );
+  return result?.count ?? 0;
+}

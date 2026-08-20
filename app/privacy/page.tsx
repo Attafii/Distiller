@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+
 export const metadata: Metadata = {
   title: "Privacy Policy · Distiller",
   description: "Privacy Policy for Distiller — how we collect, use, and protect your data.",
-  alternates: { canonical: "https://distiller.attafii.dev/privacy" },
+  alternates: { canonical: `${siteUrl}/privacy` },
   openGraph: {
-    url: "https://distiller.attafii.dev/privacy",
+    url: `${siteUrl}/privacy`,
     title: "Privacy Policy · Distiller",
     description: "Privacy Policy for Distiller.",
-    images: [{ url: "https://distiller.attafii.dev/api/og?title=Privacy+Policy", width: 1200, height: 630, alt: "Privacy" }]
+    images: [{ url: `${siteUrl}/api/og?title=Privacy+Policy`, width: 1200, height: 630, alt: "Privacy" }]
   },
   twitter: {
     card: "summary_large_image",
     title: "Privacy Policy · Distiller",
-    images: ["https://distiller.attafii.dev/api/og?title=Privacy+Policy"]
+    images: [`${siteUrl}/api/og?title=Privacy+Policy`]
   }
 };
 

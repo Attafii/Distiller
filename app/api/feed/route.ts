@@ -4,38 +4,14 @@ import { z } from "zod";
 import { DistillService } from "@/lib/ai";
 import { annotateArticleReactions, getClientIp } from "@/lib/article-reactions";
 import { CATEGORY_VALUES, COUNTRY_VALUES, DATE_RANGE_VALUES } from "@/lib/news-options";
-import { fetchNewsArticles } from "@/services/newsapi";
+import { checkGuestFeedAccess, GUEST_ALLOWED_TOPICS, incrementGuestCount } from "@/lib/plans";
+import { fetchWithFallback } from "@/services/news-providers";
 import { checkRateLimit } from "@/lib/rate-limit";
-import type { DistilledArticle, DistilledSummary, NewsArticle } from "@/types/news";
+import type { DistilledSummary, NewsArticle } from "@/types/news";
 import { auth } from "@/lib/auth";
+import { getUserSubscription, reserveMonthlyArticleUsage } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
-
-const GUEST_DAILY_LIMIT = 50;
-const GUEST_ALLOWED_CATEGORIES: Array<"world" | "tech"> = ["world", "tech"];
-
-const guestViewCounts = new Map<string, { count: number; dateStr: string }>();
-
-function getGuestCount(ip: string): number {
-  const today = new Date().toISOString().split("T")[0];
-  const entry = guestViewCounts.get(ip);
-  if (!entry || entry.dateStr !== today) {
-    guestViewCounts.set(ip, { count: 0, dateStr: today });
-    return 0;
-  }
-  return entry.count;
-}
-
-function incrementGuestCount(ip: string): number {
-  const today = new Date().toISOString().split("T")[0];
-  const entry = guestViewCounts.get(ip);
-  if (!entry || entry.dateStr !== today) {
-    guestViewCounts.set(ip, { count: 1, dateStr: today });
-    return 1;
-  }
-  entry.count += 1;
-  return entry.count;
-}
 
 function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
   return {
@@ -101,8 +77,8 @@ export async function GET(request: NextRequest) {
   const isGuest = !session?.user;
 
   if (isGuest) {
-    const currentCount = getGuestCount(viewerIp);
-    if (currentCount >= GUEST_DAILY_LIMIT) {
+    const access = await checkGuestFeedAccess(viewerIp);
+    if (!access.ok) {
       return NextResponse.json({
         articles: [],
         totalResults: 0,
@@ -114,8 +90,8 @@ export async function GET(request: NextRequest) {
     }
 
     country = "global";
-    category = GUEST_ALLOWED_CATEGORIES.includes(category as "world" | "tech") ? category : "world";
-    pageSize = Math.min(pageSize, GUEST_DAILY_LIMIT - currentCount);
+    category = GUEST_ALLOWED_TOPICS.includes(category as "world" | "tech") ? category : "world";
+    pageSize = Math.min(pageSize, access.remaining);
     if (pageSize <= 0) {
       return NextResponse.json({
         articles: [],
@@ -128,8 +104,25 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Enforce free-plan monthly article limits for authenticated users
+  if (!isGuest && session?.user) {
+    const sub = await getUserSubscription(session.user.id);
+    const plan = sub?.plan ?? "free";
+
+    if (plan === "free") {
+      const yearMonth = new Date().toISOString().slice(0, 7);
+      const usage = await reserveMonthlyArticleUsage(session.user.id, yearMonth);
+      if (!usage) {
+        return NextResponse.json({
+          error: "Monthly article limit reached. Upgrade to Pro for unlimited articles.",
+          limitReached: true
+        }, { status: 429, headers });
+      }
+    }
+  }
+
   try {
-    const { articles, totalResults } = await fetchNewsArticles({ category, country, dateRange, page, pageSize, query });
+    const { articles, provider } = await fetchWithFallback({ category, country, dateRange, page, pageSize, query });
     const distillService = DistillService.fromEnv();
     const batchSize = Math.max(1, Number(process.env.DISTILL_BATCH_SIZE ?? "3"));
     const distilled: Array<NewsArticle & { summary: DistilledSummary }> = [];
@@ -161,20 +154,26 @@ export async function GET(request: NextRequest) {
       articlesWithReactions = await annotateArticleReactions(distilled, viewerIp);
     } catch (reactionError) {
       console.warn("Failed to load article reactions, proceeding without:", reactionError instanceof Error ? reactionError.message : String(reactionError));
+      articlesWithReactions = distilled.map((article) => ({
+        ...article,
+        likeCount: 0,
+        likedByViewer: false
+      }));
     }
 
     if (isGuest) {
-      incrementGuestCount(viewerIp);
+      await incrementGuestCount(viewerIp);
     }
 
-    const guestLimitReached = isGuest && getGuestCount(viewerIp) >= GUEST_DAILY_LIMIT;
+    const guestLimitReached = isGuest && !(await checkGuestFeedAccess(viewerIp)).ok;
 
     return NextResponse.json({
       articles: articlesWithReactions,
-      totalResults,
+      totalResults: articlesWithReactions.length,
       page,
       pageSize,
-      hasMore: articlesWithReactions.length === pageSize && page * pageSize < totalResults,
+      hasMore: articlesWithReactions.length === pageSize,
+      provider,
       ...(guestLimitReached ? { guestLimitReached: true } : {})
     }, { headers });
   } catch {

@@ -1,13 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300..900;1,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-
 @import "tailwindcss";
 
 /* ─── Light Mode (Default) ─── */
 :root {
-  --font-crimson-pro: "Crimson Pro", Georgia, serif;
-  --font-dm-sans: "DM Sans", system-ui, sans-serif;
-  --font-ibm-plex-mono: "IBM Plex Mono", ui-monospace, monospace;
-
   color-scheme: light;
 
   /* Premium editorial palette — warm off-white + ink + indigo */
@@ -123,6 +117,31 @@
   --radius-lg: var(--radius);
 }
 
+/* ─── Shadow Utilities ─── */
+.shadow-soft {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+}
+
+.dark .shadow-soft {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+}
+
+.shadow-elevated {
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-elevated {
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
+}
+
+.shadow-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.dark .shadow-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
 /* ─── Base Styles ─── */
 @layer base {
   * {
@@ -149,7 +168,7 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--muted) / 0.5);
+    background: color-mix(in oklab, var(--muted) 50%, transparent);
   }
 
   ::-webkit-scrollbar-thumb {
@@ -158,17 +177,17 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.4);
+    background: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--border) hsl(var(--muted) / 0.5);
+    scrollbar-color: var(--border) color-mix(in oklab, var(--muted) 50%, transparent);
   }
 
   /* Text selection */
   ::selection {
-    background: hsl(var(--primary) / 0.15);
+    background: color-mix(in oklab, var(--primary) 15%, transparent);
     color: var(--foreground);
   }
 
@@ -276,9 +295,9 @@
 
 /* ─── Badge AI Style ─── */
 .badge-ai {
-  background: hsl(var(--primary) / 0.1);
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
   color: var(--primary);
-  border: 1px solid hsl(var(--primary) / 0.2);
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
 }
 
 /* ─── Gradient Text ─── */
@@ -293,11 +312,11 @@
 .card-premium {
   background: var(--card);
   border: 1px solid var(--border);
-  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04), 0 1px 2px hsl(var(--foreground) / 0.06);
+  box-shadow: 0 1px 3px color-mix(in oklab, var(--foreground) 4%, transparent), 0 1px 2px color-mix(in oklab, var(--foreground) 6%, transparent);
 }
 
 .card-premium:hover {
-  box-shadow: 0 4px 12px hsl(var(--foreground) / 0.08), 0 2px 4px hsl(var(--foreground) / 0.04);
+  box-shadow: 0 4px 12px color-mix(in oklab, var(--foreground) 8%, transparent), 0 2px 4px color-mix(in oklab, var(--foreground) 4%, transparent);
 }
 
 /* ─── Bullet List ─── */
@@ -314,21 +333,21 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: hsl(var(--primary) / 0.6);
+  background: color-mix(in oklab, var(--primary) 60%, transparent);
 }
 
 /* ─── Shimmer Loading ─── */
 @keyframes shimmer {
-  "0%" { background-position: -200% 0; }
-  "100%" { background-position: 200% 0; }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .animate-shimmer {
   background: linear-gradient(
     90deg,
-    hsl(var(--muted) / 0.5) 25%,
-    hsl(var(--muted)) 50%,
-    hsl(var(--muted) / 0.5) 75%
+    color-mix(in oklab, var(--muted) 50%, transparent) 25%,
+    var(--muted) 50%,
+    color-mix(in oklab, var(--muted) 50%, transparent) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -342,14 +361,14 @@
 
 /* ─── Glass Effect ─── */
 .glass {
-  background: hsl(var(--card) / 0.8);
+  background: color-mix(in oklab, var(--card) 80%, transparent);
   backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--border) / 0.5);
+  border: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
 }
 
 /* ─── Indigo Glow ─── */
 .glow-indigo {
-  box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
+  box-shadow: 0 0 20px color-mix(in oklab, var(--primary) 20%, transparent);
 }
 
 /* ─── Pulse Dot ─── */

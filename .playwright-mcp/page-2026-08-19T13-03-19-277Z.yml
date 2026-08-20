@@ -1,0 +1,57 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - banner [ref=f1e3]:
+      - navigation [ref=f1e4]:
+        - link [ref=f1e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f1e9]:
+            - paragraph [ref=f1e10]: Distiller
+            - paragraph [ref=f1e11]: News Intelligence
+    - main [ref=f1e16]:
+      - main [ref=f1e17]:
+        - generic [ref=f1e18]:
+          - generic [ref=f1e19]:
+            - heading "About Distiller" [level=1] [ref=f1e20]
+            - paragraph [ref=f1e21]: Built because staying informed shouldn't cost you 2 hours a day.
+          - generic [ref=f1e22]:
+            - paragraph [ref=f1e23]: "Distiller started as a personal frustration. Every morning meant the same ritual: opening fifteen browser tabs, skimming headlines, losing 90 minutes to context-switching before getting to actual work. The world produces more news than any human can reasonably process — and most of it is noise."
+            - paragraph [ref=f1e24]: "The idea is simple: what if an AI could read everything, distill it down to exactly what matters, and present it in a format you can scan in 60 seconds? Three bullets. One insight. A clear conclusion. No padding, no speculation, no filler."
+            - paragraph [ref=f1e25]: Every brief is grounded in the original source text using RAG and NVIDIA embeddings, so you always know what's real and what the model inferred. Citations aren't decorative — they're the foundation.
+            - paragraph [ref=f1e26]: The product is still young. We cover 15 topics across 15 regions, with a free tier that gives you 50 articles per month. The goal isn't to replace your news diet — it's to make sure the time you spend on it is actually worth it.
+          - generic [ref=f1e29]:
+            - paragraph [ref=f1e30]:
+              - text: Questions, feedback, or partnership inquiries? Reach us at
+              - link "hello@distiller.attafii.dev" [ref=f1e31] [cursor=pointer]:
+                - /url: mailto:hello@distiller.attafii.dev
+            - generic [ref=f1e32]:
+              - link "Browse the feed" [ref=f1e33] [cursor=pointer]:
+                - /url: /RefinedFeed
+              - link "View pricing" [ref=f1e36] [cursor=pointer]:
+                - /url: /pricing
+    - contentinfo [ref=f1e37]:
+      - generic [ref=f1e38]:
+        - generic [ref=f1e39]:
+          - paragraph [ref=f1e40]: © 2026 Distiller.
+          - generic [ref=f1e41]:
+            - link "Twitter" [ref=f1e42] [cursor=pointer]:
+              - /url: https://x.com/attafii
+            - link "GitHub" [ref=f1e43] [cursor=pointer]:
+              - /url: https://github.com/ahmedattafi
+        - generic [ref=f1e44]:
+          - link "Feed" [ref=f1e45] [cursor=pointer]:
+            - /url: /RefinedFeed
+          - link "About" [ref=f1e46] [cursor=pointer]:
+            - /url: /about
+          - link "Pricing" [ref=f1e47] [cursor=pointer]:
+            - /url: /pricing
+          - link "MENA" [ref=f1e48] [cursor=pointer]:
+            - /url: /mena
+          - link "RSS" [ref=f1e49] [cursor=pointer]:
+            - /url: /feed.xml
+          - link "Terms" [ref=f1e50] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f1e51] [cursor=pointer]:
+            - /url: /privacy
+          - link "Sign in" [ref=f1e52] [cursor=pointer]:
+            - /url: /auth/login
+  - region "Notifications"

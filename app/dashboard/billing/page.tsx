@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { CreditCard, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { UpgradeButton, ManageBillingButton } from "@/components/dashboard/BillingActions";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
@@ -94,9 +95,7 @@ export default async function BillingPage() {
             )}
             {subscription.stripeCustomerId && currentPlan !== "free" && (
               <div className="mt-4">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/dashboard/settings">Manage billing</Link>
-                </Button>
+                <ManageBillingButton label="Manage billing" variant="outline" size="sm" />
               </div>
             )}
           </CardContent>
@@ -126,18 +125,17 @@ export default async function BillingPage() {
                   </li>
                 ))}
               </ul>
-              <Button
-                variant={plan.highlighted ? "outline" : "default"}
-                className="w-full"
-                asChild={!plan.highlighted}
-                disabled={plan.highlighted}
-              >
-                {plan.highlighted ? (
+              {plan.highlighted ? (
+                <Button variant="outline" className="w-full" disabled>
                   <span className="cursor-default">{plan.cta}</span>
-                ) : (
-                  <Link href="/pricing">{plan.cta}</Link>
-                )}
-              </Button>
+                </Button>
+              ) : plan.id === "free" ? (
+                <Button variant="default" className="w-full" disabled>
+                  {plan.cta}
+                </Button>
+              ) : (
+                <UpgradeButton plan={plan.id as "pro" | "team"} label={plan.cta} />
+              )}
             </CardContent>
           </Card>
         ))}
@@ -152,9 +150,7 @@ export default async function BillingPage() {
           {subscription?.stripeCustomerId && currentPlan !== "free" ? (
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Customer ID: {subscription.stripeCustomerId}</p>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard/settings">Manage in Stripe</Link>
-              </Button>
+              <ManageBillingButton label="Manage in Stripe" variant="outline" size="sm" />
             </div>
           ) : (
             <div>

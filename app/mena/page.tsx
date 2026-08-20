@@ -5,21 +5,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+
 export const metadata: Metadata = {
   title: "MENA & Africa · Distiller",
   description: "Coverage of Tunisia, Egypt, Nigeria, Kenya, Morocco, Saudi Arabia, UAE, and across the continent. North Africa and MENA news distilled in 3 bullets.",
   keywords: ["Tunisia news", "MENA news", "Africa startup news", "arabic news summary", "North Africa", "Middle East", "African news"],
-  alternates: { canonical: "https://distiller.attafii.dev/mena" },
+  alternates: { canonical: `${siteUrl}/mena` },
   openGraph: {
-    url: "https://distiller.attafii.dev/mena",
+    url: `${siteUrl}/mena`,
     title: "MENA & Africa · Distiller",
     description: "North Africa and MENA news distilled in 3 bullets.",
-    images: [{ url: "https://distiller.attafii.dev/api/og?title=MENA+and+Africa", width: 1200, height: 630, alt: "MENA Edition" }]
+    images: [{ url: `${siteUrl}/api/og?title=MENA+and+Africa`, width: 1200, height: 630, alt: "MENA Edition" }]
   },
   twitter: {
     card: "summary_large_image",
     title: "MENA & Africa · Distiller",
-    images: ["https://distiller.attafii.dev/api/og?title=MENA+and+Africa"]
+    images: [`${siteUrl}/api/og?title=MENA+and+Africa`]
   }
 };
 
@@ -35,7 +37,7 @@ export default function MenaPage() {
           Your slice of the world&apos;s<br />
           <span className="text-gradient">most dynamic region.</span>
         </h1>
-        <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground mb-8">
+        <p className="mx-auto max-w-2xl 2xl:max-w-3xl text-lg leading-relaxed text-muted-foreground mb-8">
           Coverage of Tunisia, Egypt, Nigeria, Kenya, Morocco, Saudi Arabia, UAE, and across the continent —
           distilled in 3 bullets per story.
         </p>

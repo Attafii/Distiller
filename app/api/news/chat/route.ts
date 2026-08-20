@@ -4,7 +4,6 @@ import { z } from "zod";
 import { DistillService } from "@/lib/ai";
 import { CATEGORY_VALUES } from "@/lib/news-options";
 import { checkRateLimit } from "@/lib/rate-limit";
-import type { ArticleChatMessage, DistilledArticle } from "@/types/news";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +42,7 @@ const articleSchema = z.object({
     confidence: z.number().min(0).max(1),
     retrievedContext: z.array(z.string())
   })
-}).strict();
+}).passthrough();
 
 const requestSchema = z.object({
   article: articleSchema,
@@ -103,7 +102,10 @@ export async function POST(request: NextRequest) {
       history
     });
 
-    return NextResponse.json(result, { headers });
+    return NextResponse.json({
+      answer: result.answer,
+      retrievedContext: result.retrievedContext
+    }, { headers });
   } catch {
     return NextResponse.json({ error: "An error occurred processing your request" }, { status: 502, headers });
   }

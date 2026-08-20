@@ -23,7 +23,11 @@ export function AskTheNewsForm() {
         Type a question. Distiller searches today&apos;s coverage, finds the strongest match, and answers with the source.
       </p>
       <form onSubmit={handleSubmit} className="flex gap-2">
+        <label htmlFor="news-query" className="sr-only">
+          Ask the news
+        </label>
         <input
+          id="news-query"
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

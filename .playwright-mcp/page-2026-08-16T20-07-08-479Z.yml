@@ -1,0 +1,47 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - navigation [ref=e4]:
+        - link [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e9]:
+            - paragraph [ref=e10]: Distiller
+            - paragraph [ref=e11]: News Intelligence
+    - main [ref=e16]:
+      - main [ref=e17]:
+        - generic [ref=e19]:
+          - generic [ref=e24]:
+            - heading "Page not found" [level=1] [ref=e25]
+            - paragraph [ref=e26]: The page you're looking for doesn't exist or may have been moved. Try searching for what you need or head back to the feed.
+          - generic [ref=e27]:
+            - link "Browse the feed" [ref=e28] [cursor=pointer]:
+              - /url: /RefinedFeed
+            - link "Go home" [ref=e29] [cursor=pointer]:
+              - /url: /
+    - contentinfo [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - paragraph [ref=e33]: © 2026 Distiller.
+          - generic [ref=e34]:
+            - link "Twitter" [ref=e35] [cursor=pointer]:
+              - /url: https://x.com/attafii
+            - link "GitHub" [ref=e36] [cursor=pointer]:
+              - /url: https://github.com/ahmedattafi
+        - generic [ref=e37]:
+          - link "Feed" [ref=e38] [cursor=pointer]:
+            - /url: /RefinedFeed
+          - link "About" [ref=e39] [cursor=pointer]:
+            - /url: /about
+          - link "Pricing" [ref=e40] [cursor=pointer]:
+            - /url: /pricing
+          - link "MENA" [ref=e41] [cursor=pointer]:
+            - /url: /mena
+          - link "RSS" [ref=e42] [cursor=pointer]:
+            - /url: /feed.xml
+          - link "Terms" [ref=e43] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=e44] [cursor=pointer]:
+            - /url: /privacy
+          - link "Sign in" [ref=e45] [cursor=pointer]:
+            - /url: /auth/login
+  - region "Notifications"

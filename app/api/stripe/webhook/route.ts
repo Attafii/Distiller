@@ -48,6 +48,18 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Fetch the actual subscription to get the real current_period_end
+        // (session.expires_at is the checkout session expiry, not the subscription period end)
+        let currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const subscriptionId = session.subscription as string;
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const sub = subscription as unknown as { current_period_end?: number };
+          if (sub.current_period_end) {
+            currentPeriodEnd = new Date(sub.current_period_end * 1000);
+          }
+        }
+
         const existingSubscription = await getDb().query.subscriptions.findFirst({
           where: eq(subscriptions.userId, userId)
         });
@@ -59,9 +71,7 @@ export async function POST(request: NextRequest) {
               stripeSubscriptionId: session.subscription as string | null,
               plan,
               status: "active",
-              currentPeriodEnd: session.expires_at
-                ? new Date(session.expires_at * 1000)
-                : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              currentPeriodEnd,
               updatedAt: new Date()
             })
             .where(eq(subscriptions.id, existingSubscription.id));
@@ -72,10 +82,22 @@ export async function POST(request: NextRequest) {
             stripeSubscriptionId: session.subscription as string | null,
             plan,
             status: "active",
-            currentPeriodEnd: session.expires_at
-              ? new Date(session.expires_at * 1000)
-              : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            currentPeriodEnd
           });
+        }
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as unknown as { subscription?: string };
+        const subscriptionId = invoice.subscription;
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const customerId = subscription.customer as string;
+          await getDb()
+            .update(subscriptions)
+            .set({ status: "past_due", updatedAt: new Date() })
+            .where(eq(subscriptions.stripeCustomerId, customerId));
         }
         break;
       }

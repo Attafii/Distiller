@@ -1,0 +1,228 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - banner [ref=f1e3]:
+      - navigation [ref=f1e4]:
+        - link [ref=f1e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f1e9]:
+            - paragraph [ref=f1e10]: Distiller
+            - paragraph [ref=f1e11]: News Intelligence
+    - main [ref=f1e16]:
+      - main [ref=f1e17]:
+        - link "Skip to main content" [ref=f1e18] [cursor=pointer]:
+          - /url: "#main-content"
+        - generic [ref=f1e19]:
+          - generic [ref=f1e22]:
+            - generic [ref=f1e23]: News intelligence for curious minds
+            - heading "The world's news, three bullets." [level=1] [ref=f1e26]: The world's news,three bullets.
+            - paragraph [ref=f1e27]: Stop skimming hundreds of articles. Distiller delivers concise, verified briefings that keep you informed without the information overload.
+            - generic [ref=f1e28]:
+              - paragraph [ref=f1e29]: Ask the news — get sourced answers in seconds.
+              - paragraph [ref=f1e30]: Type a question. Distiller searches today's coverage, finds the strongest match, and answers with the source.
+              - generic [ref=f1e31]:
+                - textbox "What happened in AI this week?" [ref=f1e32]
+                - button "Ask →" [ref=f1e33]
+            - generic [ref=f1e34]:
+              - link "Start for free" [ref=f1e35] [cursor=pointer]:
+                - /url: /auth/signup
+              - link "Browse the feed" [ref=f1e39] [cursor=pointer]:
+                - /url: /RefinedFeed
+            - paragraph [ref=f1e40]: 7-day Pro trial included · No credit card required
+          - generic [ref=f1e42]:
+            - generic [ref=f1e43]:
+              - paragraph [ref=f1e44]: "15"
+              - paragraph [ref=f1e45]: Topics
+            - generic [ref=f1e46]:
+              - paragraph [ref=f1e47]: "15"
+              - paragraph [ref=f1e48]: Regions
+            - generic [ref=f1e49]:
+              - paragraph [ref=f1e50]: "3"
+              - paragraph [ref=f1e51]: Bullets/Article
+            - generic [ref=f1e52]:
+              - paragraph [ref=f1e53]: Free
+              - paragraph [ref=f1e54]: To start
+        - generic [ref=f1e57]:
+          - generic [ref=f1e58]:
+            - generic [ref=f1e59]: Technology
+            - heading "Large Language Models Show Emergent Reasoning Capabilities at Scale" [level=2] [ref=f1e60]
+            - generic [ref=f1e61]:
+              - listitem [ref=f1e62]: Models above 70B parameters demonstrate chain-of-thought reasoning without explicit prompting
+              - listitem [ref=f1e63]: Scaling laws predict 2x improvement on complex tasks with 4x compute budget increase
+              - listitem [ref=f1e64]: Researchers confirm capability emergence is consistent across different architecture families
+            - generic [ref=f1e65]:
+              - paragraph [ref=f1e66]: Key insight
+              - paragraph [ref=f1e67]: The study validates that reasoning emerges predictably at scale, suggesting current frontier models are still on the steep part of the learning curve.
+          - generic [ref=f1e68]:
+            - paragraph [ref=f1e69]: Sample summary
+            - generic [ref=f1e70]:
+              - generic [ref=f1e71]: 3 concise bullets
+              - generic [ref=f1e76]: Verified source
+              - generic [ref=f1e81]: Key insight + conclusion
+              - generic [ref=f1e86]: Source attribution
+            - paragraph [ref=f1e92]: arXiv · 2h ago
+        - generic [ref=f1e94]:
+          - generic [ref=f1e95]:
+            - heading "Verified Sources" [level=3] [ref=f1e102]
+            - paragraph [ref=f1e103]: Every brief pulls directly from the original article. No guesswork, no fabrication — just the facts.
+          - generic [ref=f1e104]:
+            - heading "Three Bullets" [level=3] [ref=f1e109]
+            - paragraph [ref=f1e110]: Compact briefs with a key insight and a conclusion. Scan the world's news in minutes, not hours.
+          - generic [ref=f1e111]:
+            - heading "15 Topics, 15 Regions" [level=3] [ref=f1e119]
+            - paragraph [ref=f1e120]: From AI to finance to Tunisia — filter by what matters to you and get exactly your slice of the world.
+          - generic [ref=f1e121]:
+            - generic [ref=f1e127]:
+              - heading "Live RSS Feed" [level=3] [ref=f1e128]
+              - generic [ref=f1e129]: Pro
+            - paragraph [ref=f1e130]: Subscribe via RSS (Pro). Stay updated in your favorite reader app — Feedly, NetNewsWire, or any RSS client.
+        - generic [ref=f1e131]:
+          - heading "What early readers are saying" [level=2] [ref=f1e132]
+          - paragraph [ref=f1e133]: Real feedback from beta users — paid plans not required.
+          - generic [ref=f1e134]:
+            - generic [ref=f1e135]:
+              - generic [ref=f1e136]:
+                - generic [ref=f1e137]: SK
+                - generic [ref=f1e138]:
+                  - paragraph [ref=f1e139]: Sarah K.
+                  - paragraph [ref=f1e140]: ML Researcher
+              - paragraph [ref=f1e141]: "\"I replaced my 45-minute news ritual with 5 minutes in Distiller. The AI summaries are tight — no filler, no spin.\""
+            - generic [ref=f1e142]:
+              - generic [ref=f1e143]:
+                - generic [ref=f1e144]: MO
+                - generic [ref=f1e145]:
+                  - paragraph [ref=f1e146]: Mehdi O.
+                  - paragraph [ref=f1e147]: Software Engineer
+              - paragraph [ref=f1e148]: "\"The MENA coverage is what sold me. Finally a product that doesn't treat Africa as an afterthought.\""
+            - generic [ref=f1e149]:
+              - generic [ref=f1e150]:
+                - generic [ref=f1e151]: JL
+                - generic [ref=f1e152]:
+                  - paragraph [ref=f1e153]: Julien L.
+                  - paragraph [ref=f1e154]: Freelance Journalist
+              - paragraph [ref=f1e155]: "\"The Distiller Score is genius. I can instantly see which stories are solid sourcing vs questionable.\""
+        - generic [ref=f1e156]:
+          - heading "Free vs Pro" [level=2] [ref=f1e157]
+          - generic [ref=f1e158]:
+            - generic [ref=f1e159]:
+              - paragraph [ref=f1e160]: Free
+              - generic [ref=f1e161]:
+                - generic [ref=f1e162]: 50 articles/month
+                - generic [ref=f1e165]: 2 topics
+                - generic [ref=f1e168]: 2 regions
+                - generic [ref=f1e171]: Basic filters
+                - generic [ref=f1e174]: Deep summaries
+                - generic [ref=f1e176]: Bookmarks
+                - generic [ref=f1e178]: Daily email briefing
+                - generic [ref=f1e180]: RSS feed
+                - generic [ref=f1e182]: Shareable briefs
+            - generic [ref=f1e184]:
+              - generic [ref=f1e185]:
+                - paragraph [ref=f1e186]: Pro
+                - generic [ref=f1e187]: Most popular
+              - generic [ref=f1e188]:
+                - generic [ref=f1e189]: Unlimited articles
+                - generic [ref=f1e192]: All 15 topics
+                - generic [ref=f1e195]: All 15 regions
+                - generic [ref=f1e198]: Advanced filters + Deep mode
+                - generic [ref=f1e201]: Bookmarks
+                - generic [ref=f1e204]: Daily email briefing
+                - generic [ref=f1e207]: RSS feed
+                - generic [ref=f1e210]: Shareable briefs
+              - link "Start 7-day free trial" [ref=f1e213] [cursor=pointer]:
+                - /url: /auth/signup
+        - generic [ref=f1e220]:
+          - heading "Deep Summary Mode" [level=3] [ref=f1e221]
+          - paragraph [ref=f1e222]: Pro readers get extended briefs — more context, more nuance, same zero fluff. Switch modes per article or set it as your default.
+        - generic [ref=f1e224]:
+          - generic [ref=f1e225]: 100% free to start
+          - heading "No credit card. No catch." [level=2] [ref=f1e226]
+          - paragraph [ref=f1e227]: Begin with 50 articles per month on the free plan. Upgrade to Pro for unlimited access, advanced filters, and bookmarking. Cancel anytime.
+          - generic [ref=f1e228]:
+            - link "Create free account" [ref=f1e229] [cursor=pointer]:
+              - /url: /auth/signup
+            - link "View all plans" [ref=f1e230] [cursor=pointer]:
+              - /url: /pricing
+        - generic [ref=f1e231]:
+          - heading "Topics we cover" [level=2] [ref=f1e232]
+          - generic [ref=f1e233]:
+            - link [ref=f1e234] [cursor=pointer]:
+              - /url: /RefinedFeed?category=world
+              - button "World" [ref=f1e235]
+            - link [ref=f1e236] [cursor=pointer]:
+              - /url: /RefinedFeed?category=politics
+              - button "Politics" [ref=f1e237]
+            - link [ref=f1e238] [cursor=pointer]:
+              - /url: /RefinedFeed?category=technology
+              - button "Technology" [ref=f1e239]
+            - link [ref=f1e240] [cursor=pointer]:
+              - /url: /RefinedFeed?category=ai
+              - button "AI" [ref=f1e241]
+            - link [ref=f1e242] [cursor=pointer]:
+              - /url: /RefinedFeed?category=science
+              - button "Science" [ref=f1e243]
+            - link [ref=f1e244] [cursor=pointer]:
+              - /url: /RefinedFeed?category=business
+              - button "Business" [ref=f1e245]
+            - link [ref=f1e246] [cursor=pointer]:
+              - /url: /RefinedFeed?category=finance
+              - button "Finance" [ref=f1e247]
+            - link [ref=f1e248] [cursor=pointer]:
+              - /url: /RefinedFeed?category=stocks
+              - button "Stocks" [ref=f1e249]
+            - link [ref=f1e250] [cursor=pointer]:
+              - /url: /RefinedFeed?category=climate
+              - button "Climate" [ref=f1e251]
+            - link [ref=f1e252] [cursor=pointer]:
+              - /url: /RefinedFeed?category=health
+              - button "Health" [ref=f1e253]
+            - link [ref=f1e254] [cursor=pointer]:
+              - /url: /RefinedFeed?category=education
+              - button "Education" [ref=f1e255]
+            - link [ref=f1e256] [cursor=pointer]:
+              - /url: /RefinedFeed?category=sports
+              - button "Sports" [ref=f1e257]
+            - link [ref=f1e258] [cursor=pointer]:
+              - /url: /RefinedFeed?category=entertainment
+              - button "Entertainment" [ref=f1e259]
+            - link [ref=f1e260] [cursor=pointer]:
+              - /url: /RefinedFeed?category=culture
+              - button "Culture" [ref=f1e261]
+            - link [ref=f1e262] [cursor=pointer]:
+              - /url: /RefinedFeed?category=llm
+              - button "LLM" [ref=f1e263]
+        - generic [ref=f1e266]:
+          - generic [ref=f1e270]:
+            - heading "Ready to cut through the noise?" [level=2] [ref=f1e271]
+            - paragraph [ref=f1e272]: Join researchers, developers, and curious readers who stay informed in seconds, not hours.
+          - generic [ref=f1e273]:
+            - link "Get started free" [ref=f1e274] [cursor=pointer]:
+              - /url: /auth/signup
+            - link "Browse feed" [ref=f1e275] [cursor=pointer]:
+              - /url: /RefinedFeed
+    - contentinfo [ref=f1e276]:
+      - generic [ref=f1e277]:
+        - generic [ref=f1e278]:
+          - paragraph [ref=f1e279]: © 2026 Distiller.
+          - generic [ref=f1e280]:
+            - link "Twitter" [ref=f1e281] [cursor=pointer]:
+              - /url: https://x.com/attafii
+            - link "GitHub" [ref=f1e282] [cursor=pointer]:
+              - /url: https://github.com/ahmedattafi
+        - generic [ref=f1e283]:
+          - link "Feed" [ref=f1e284] [cursor=pointer]:
+            - /url: /RefinedFeed
+          - link "About" [ref=f1e285] [cursor=pointer]:
+            - /url: /about
+          - link "Pricing" [ref=f1e286] [cursor=pointer]:
+            - /url: /pricing
+          - link "MENA" [ref=f1e287] [cursor=pointer]:
+            - /url: /mena
+          - link "RSS" [ref=f1e288] [cursor=pointer]:
+            - /url: /feed.xml
+          - link "Terms" [ref=f1e289] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f1e290] [cursor=pointer]:
+            - /url: /privacy
+          - link "Sign in" [ref=f1e291] [cursor=pointer]:
+            - /url: /auth/login
+  - region "Notifications"

@@ -40,7 +40,8 @@ export async function generateMetadata({ searchParams }: BriefPageProps): Promis
   };
 }
 
-export default async function BriefPage({ searchParams }: BriefPageProps) {
+export default async function BriefPage({ params, searchParams }: BriefPageProps) {
+  const pathParams = await params;
   const queryParams = await searchParams;
   const title = queryParams.title ? decodeURIComponent(queryParams.title) : "Article Brief";
   const bulletsStr = queryParams.bullets ? decodeURIComponent(queryParams.bullets) : "[]";
@@ -52,24 +53,14 @@ export default async function BriefPage({ searchParams }: BriefPageProps) {
   const url = queryParams.url && queryParams.url !== "#" ? queryParams.url : null;
 
   const shareText = `🗞 ${title} — distilled in 3 bullets\nvia @distillerdev`;
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+  const shareUrl = `${siteUrl}/brief/${encodeURIComponent(pathParams.slug ?? "brief")}`;
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-3xl px-6 py-16">
-        <div className="mb-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl border border-border bg-primary text-primary-foreground shadow-sm">
-              <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M4 6h16M4 12h12M4 18h8" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-display text-lg font-semibold tracking-tight">Distiller</p>
-              <p className="text-xs text-muted-foreground">News Intelligence</p>
-            </div>
-          </Link>
+        <div className="mb-8 flex items-center justify-end">
           <Link href="/RefinedFeed">
             <Button variant="outline" size="sm">← Back to feed</Button>
           </Link>
@@ -137,7 +128,7 @@ export default async function BriefPage({ searchParams }: BriefPageProps) {
         <div className="mt-16 pt-8 border-t border-border text-center">
           <p className="text-xs text-muted-foreground">
             Briefed by{" "}
-            <a href="https://distiller.attafii.dev" className="text-primary hover:underline">Distiller</a>
+            <a href={siteUrl} className="text-primary hover:underline">Distiller</a>
             {" "}— AI-powered news intelligence
           </p>
         </div>

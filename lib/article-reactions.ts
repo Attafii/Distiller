@@ -2,7 +2,7 @@ import "server-only";
 
 import { getDb } from "@/lib/db";
 import { articleReactions } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import type { ArticleLikeResponse } from "@/types/news";
 
@@ -40,7 +40,7 @@ async function getReactionCounts(articleIds: string[]): Promise<Map<string, numb
       count: sql<number>`count(distinct ${articleReactions.ipHash})`
     })
     .from(articleReactions)
-    .where(sql`${articleReactions.articleId} = ANY(${articleIds})`)
+    .where(inArray(articleReactions.articleId, articleIds))
     .groupBy(articleReactions.articleId);
 
   return new Map(results.map((r) => [r.articleId, r.count]));
@@ -55,7 +55,10 @@ async function getViewerLikedArticles(articleIds: string[], viewerIp: string): P
     .select({ articleId: articleReactions.articleId })
     .from(articleReactions)
     .where(
-      sql`${articleReactions.articleId} = ANY(${articleIds}) AND ${articleReactions.ipHash} = ${ipHash}`
+      and(
+        inArray(articleReactions.articleId, articleIds),
+        eq(articleReactions.ipHash, ipHash)
+      )
     );
 
   return new Set(results.map((r) => r.articleId));
@@ -86,21 +89,11 @@ export async function registerArticleLike(articleId: string, viewerIp?: string):
 
   const db = getDb();
 
-  // Check if already liked
-  const existing = await db
-    .select({ id: articleReactions.id })
-    .from(articleReactions)
-    .where(
-      sql`${articleReactions.articleId} = ${articleId} AND ${articleReactions.ipHash} = ${ipHash}`
-    )
-    .limit(1);
-
-  if (existing.length === 0) {
-    await db.insert(articleReactions).values({
-      articleId,
-      ipHash
-    });
-  }
+  // Insert with conflict handling — unique index on (article_id, ip_hash) prevents duplicates
+  await db
+    .insert(articleReactions)
+    .values({ articleId, ipHash })
+    .onConflictDoNothing();
 
   // Get updated count
   const [result] = await db

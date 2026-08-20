@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -6,6 +7,7 @@ import { Newspaper } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { COPY } from "@/lib/copy";
 import { TOPIC_OPTIONS } from "@/lib/news-options";
 
 interface ArticlePageProps {
@@ -55,7 +57,6 @@ export async function generateMetadata({ params, searchParams }: ArticlePageProp
   const title = queryParams.title ? decodeURIComponent(queryParams.title) : null;
   const description = buildDescription(queryParams.description, "AI-powered news summary from Distiller — 3 concise bullets, grounded in source text.");
   const imageUrl = queryParams.imageUrl ? decodeURIComponent(queryParams.imageUrl) : undefined;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
 
   const ogTitle = title ? `${title} · Distiller` : "Article · Distiller";
   const ogDescription = truncate(description, 200);
@@ -99,7 +100,6 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
   const imageUrl = queryParams.imageUrl ? decodeURIComponent(queryParams.imageUrl) : null;
   const publishedAt = queryParams.publishedAt ?? new Date().toISOString();
   const sourceName = queryParams.sourceName ?? "Unknown source";
-  const sourceId = queryParams.sourceId ?? null;
   const category = (queryParams.category ?? "world") as string;
   const bullets = parseBullets(queryParams.bullets);
   const insight = queryParams.insight ? decodeURIComponent(queryParams.insight) : null;
@@ -174,20 +174,6 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
 
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 lg:px-8">
-          <a href="/RefinedFeed" className="flex items-center gap-3 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
-              <Newspaper className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold tracking-tight">Distiller</p>
-              <p className="text-xs text-muted-foreground">Article summary</p>
-            </div>
-          </a>
-        </div>
-      </header>
-
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8" id="main-content">
         <nav className="mb-8 text-sm text-muted-foreground" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2">
@@ -230,7 +216,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
               {confidence > 0 ? (
                 <>
                   <span aria-hidden="true">·</span>
-                  <span>{Math.round(confidence * 100)}% confidence</span>
+                  <span title={COPY.scoreTooltip}>{Math.round(confidence * 100)}% RAG retrieval confidence</span>
                 </>
               ) : null}
             </div>
@@ -238,11 +224,13 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
 
           {imageUrl ? (
             <div className="mb-8 rounded-2xl border border-border overflow-hidden bg-muted">
-              <img
+              <Image
                 src={imageUrl}
                 alt={title}
+                width={1200}
+                height={500}
                 className="w-full max-h-[500px] object-cover"
-                loading="eager"
+                priority
               />
             </div>
           ) : null}

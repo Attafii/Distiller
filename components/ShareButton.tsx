@@ -13,6 +13,8 @@ interface ShareButtonProps {
   url?: string;
 }
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+
 export function ShareButton({ title, briefSlug, bullets, insight, sourceName, publishedAt, url }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
@@ -25,7 +27,7 @@ export function ShareButton({ title, briefSlug, bullets, insight, sourceName, pu
     ...(url ? { url: encodeURIComponent(url) } : {})
   });
 
-  const briefUrl = `https://distiller.attafii.dev/brief/${briefSlug}?${params.toString()}`;
+  const briefUrl = `${siteUrl}/brief/${briefSlug}?${params.toString()}`;
 
   async function handleCopy() {
     try {

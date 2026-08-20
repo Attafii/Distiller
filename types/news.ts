@@ -17,7 +17,7 @@ export type Category =
   | "entertainment"
   | "culture";
 export type CountryCode = "global" | "tn" | "us" | "gb" | "ca" | "au" | "in" | "de" | "fr" | "jp" | "cn" | "ru" | "br" | "ae" | "sg";
-export type DateRange = "any" | "24h" | "7d" | "30d";
+export type DateRange = "any" | "24h" | "7d" | "30d" | "viral";
 export type SummarizationMode = "auto" | "fast" | "balanced" | "deep";
 
 export interface NewsSource {
@@ -52,7 +52,6 @@ export interface DistilledArticle extends NewsArticle {
   likeCount: number;
   likedByViewer: boolean;
   bookmarked?: boolean;
-  distillerScore?: number;
 }
 
 export interface ArticleLikeResponse {
@@ -101,7 +100,6 @@ export interface ArticleChatRequest {
 
 export interface ArticleChatResponse {
   answer: string;
-  model: string;
   retrievedContext: string[];
 }
 
@@ -124,7 +122,6 @@ export interface NewsAssistantArticleContext {
 
 export interface NewsAssistantResponse {
   answer: string;
-  model: string;
   retrievedContext: string[];
   searchQuery: string;
   articles: NewsAssistantArticleReference[];

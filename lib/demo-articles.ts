@@ -29,8 +29,7 @@ export const DEMO_ARTICLES: DistilledArticle[] = [
     },
     likeCount: 0,
     likedByViewer: false,
-    bookmarked: false,
-    distillerScore: 84
+    bookmarked: false
   },
   {
     id: "demo-2",
@@ -57,8 +56,7 @@ export const DEMO_ARTICLES: DistilledArticle[] = [
     },
     likeCount: 0,
     likedByViewer: false,
-    bookmarked: false,
-    distillerScore: 91
+    bookmarked: false
   },
   {
     id: "demo-3",
@@ -85,8 +83,7 @@ export const DEMO_ARTICLES: DistilledArticle[] = [
     },
     likeCount: 0,
     likedByViewer: false,
-    bookmarked: false,
-    distillerScore: 78
+    bookmarked: false
   },
   {
     id: "demo-4",
@@ -113,8 +110,7 @@ export const DEMO_ARTICLES: DistilledArticle[] = [
     },
     likeCount: 0,
     likedByViewer: false,
-    bookmarked: false,
-    distillerScore: 88
+    bookmarked: false
   },
   {
     id: "demo-5",
@@ -141,8 +137,7 @@ export const DEMO_ARTICLES: DistilledArticle[] = [
     },
     likeCount: 0,
     likedByViewer: false,
-    bookmarked: false,
-    distillerScore: 95
+    bookmarked: false
   },
   {
     id: "demo-6",
@@ -169,8 +164,7 @@ export const DEMO_ARTICLES: DistilledArticle[] = [
     },
     likeCount: 0,
     likedByViewer: false,
-    bookmarked: false,
-    distillerScore: 82
+    bookmarked: false
   },
   {
     id: "demo-7",
@@ -197,8 +191,7 @@ export const DEMO_ARTICLES: DistilledArticle[] = [
     },
     likeCount: 0,
     likedByViewer: false,
-    bookmarked: false,
-    distillerScore: 76
+    bookmarked: false
   },
   {
     id: "demo-8",
@@ -225,7 +218,6 @@ export const DEMO_ARTICLES: DistilledArticle[] = [
     },
     likeCount: 0,
     likedByViewer: false,
-    bookmarked: false,
-    distillerScore: 89
+    bookmarked: false
   }
 ];

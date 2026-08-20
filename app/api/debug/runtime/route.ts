@@ -11,7 +11,6 @@ export async function GET() {
   const contentBaseUrl = normalizeEnvString(process.env.NEWSAPI_BASE_URL, "https://newsapi.org/v2").replace(/\/$/, "");
   const aiServiceBaseUrl = normalizeEnvString(process.env.NVIDIA_BUILD_BASE_URL, "https://integrate.api.nvidia.com/v1").replace(/\/$/, "");
 
-  const fastModel = normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_FAST, "nvidia/llama-3.1-nemotron-nano-8b-v1");
   const balancedModel = normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_BALANCED, "nvidia/llama-3.3-nemotron-super-49b-v1");
   const embedModel = normalizeEnvString(process.env.NVIDIA_BUILD_EMBED_MODEL, "nvidia/nv-embedqa-e5-v5");
 

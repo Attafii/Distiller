@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Loader2, BookMarked, History, Bell, Settings, CreditCard, LayoutDashboard, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X, Loader2, BookMarked, History, Bell, Settings, CreditCard, LayoutDashboard, LogOut } from "lucide-react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +24,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<{ name: string; email: string; image?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -73,7 +72,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar - desktop only */}
-      <aside className="hidden w-64 flex-col border-r border-border bg-card lg:flex">
+      <aside className="hidden w-64 flex-col border-r border-border bg-card lg:flex 2xl:w-72">
         <div className="flex items-center gap-3 border-b border-border px-6 py-5">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex size-9 items-center justify-center rounded-lg border border-border bg-primary text-primary-foreground">

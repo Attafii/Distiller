@@ -119,7 +119,6 @@ export async function POST(request: NextRequest) {
 
     const response: NewsAssistantResponse = {
       answer: result.answer,
-      model: result.model,
       retrievedContext: result.retrievedContext,
       searchQuery: analysis.searchQuery,
       articles: normalizedArticles.map((article, index) => ({

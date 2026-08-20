@@ -88,6 +88,48 @@ function CheckRow({ text, included }: { text: string; included: boolean }) {
   );
 }
 
+function PricingCTA({ tier }: { tier: typeof tiers[number] }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleCheckout = async (plan: "pro" | "team") => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan })
+      });
+      if (res.status === 401) {
+        window.location.href = `/auth/signup?plan=${plan}`;
+        return;
+      }
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (tier.id === "free") {
+    return (
+      <Button variant={tier.highlight ? "default" : "outline"} className="w-full" asChild>
+        <Link href={tier.ctaHref}>{tier.cta}</Link>
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      variant={tier.highlight ? "default" : "outline"}
+      className="w-full"
+      disabled={loading}
+      onClick={() => handleCheckout(tier.id as "pro" | "team")}
+    >
+      {loading ? "Redirecting..." : tier.cta}
+    </Button>
+  );
+}
+
 export function PricingSection() {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
@@ -159,13 +201,7 @@ export function PricingSection() {
                 )}
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button
-                  variant={tier.highlight ? "default" : "outline"}
-                  className="w-full"
-                  asChild
-                >
-                  <Link href={tier.ctaHref}>{tier.cta}</Link>
-                </Button>
+                <PricingCTA tier={tier} />
                 <div className="border-t border-border pt-4">
                   {tier.features.map((f) => (
                     <CheckRow key={f.text} text={f.text} included={f.included} />

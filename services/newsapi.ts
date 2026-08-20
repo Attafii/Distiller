@@ -1,7 +1,7 @@
 ﻿import "server-only";
 
 import { classifyArticlePriority } from "@/lib/article-signals";
-import { fetchFullArticleText } from "@/lib/article-text";
+import { stripNewsApiTruncation } from "@/lib/article-text-utils";
 import { fetchWithTimeout } from "@/lib/http";
 import { buildGlobalQuery, buildRegionalQuery, getDateRangeCutoff, getRegionLanguage, NEWSAPI_CATEGORY_MAP } from "@/lib/news-options";
 import { normalizeEnvString } from "@/lib/utils";
@@ -468,7 +468,7 @@ async function fetchNewsApi(
   url: string,
   category: Category,
   dateRange?: DateRange
-): Promise<{ articles: NewsArticle[]; totalResults: number }> {
+): Promise<{ articles: NewsArticle[]; totalResults: number; _demo?: boolean }> {
   try {
     const response = await fetchWithTimeout(url, {
       cache: "no-store"
@@ -496,58 +496,46 @@ async function fetchNewsApi(
       };
     }
 
-    const enrichedArticles = await Promise.all(
-      articles.map(async (article) => {
-        try {
-          const fullText = await fetchFullArticleText({
-            title: article.title,
-            description: article.description,
-            content: article.content,
-            url: article.url
-          });
+    // ponytail: local text builder replaces fetchFullArticleText — no external fetch, strips NewsAPI truncation marker
+    const enrichedArticles = articles.map((article) => {
+      const content = [article.title, article.description, stripNewsApiTruncation(article.content)]
+        .filter(Boolean)
+        .join("\n\n");
 
-          const content = fullText.fullText.trim();
+      if (!content || content.length <= (article.content ?? "").length) {
+        return article;
+      }
 
-          if (!content || content.length <= (article.content ?? "").length) {
-            return article;
-          }
-
-          return {
-            ...article,
-            content,
-            priority: classifyArticlePriority({
-              title: article.title,
-              description: article.description,
-              content
-            })
-          };
-        } catch (error) {
-          console.warn("Unable to expand article text from source", {
-            articleUrl: article.url,
-            error: error instanceof Error ? error.message : String(error)
-          });
-
-          return article;
-        }
-      })
-    );
+      return {
+        ...article,
+        content,
+        priority: classifyArticlePriority({
+          title: article.title,
+          description: article.description,
+          content
+        })
+      };
+    });
 
     return {
       articles: sortByDateDesc(enrichedArticles),
       totalResults: payload.totalResults ?? articles.length
     };
   } catch (error) {
-    console.error("Content API fetch failed", {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[NewsAPI] Live fetch failed — serving demo articles as fallback", {
       category,
       dateRange,
-      error: error instanceof Error ? error.message : String(error)
+      error: errorMessage
     });
+    console.warn("[NewsAPI] Users are seeing demo content, not live news. Check NEWSAPI_KEY and network connectivity.");
 
     const demoArticles = buildDemoArticles(category);
 
     return {
       articles: demoArticles,
-      totalResults: demoArticles.length
+      totalResults: demoArticles.length,
+      _demo: true as const
     };
   }
 }
@@ -562,15 +550,17 @@ export async function fetchNewsArticles({
 }: FetchNewsArticlesInput): Promise<{
   articles: NewsArticle[];
   totalResults: number;
+  _demo?: boolean;
 }> {
   if (!NEWS_API_KEY) {
-    console.warn("API key is missing, using demo articles", { category, country, dateRange });
+    console.warn("[NewsAPI] NEWSAPI_KEY is missing — serving demo articles. Set the key in .env.local for live news.");
 
     const demoArticles = buildDemoArticles(category);
 
     return {
       articles: demoArticles,
-      totalResults: demoArticles.length
+      totalResults: demoArticles.length,
+      _demo: true as const
     };
   }
 
@@ -578,7 +568,9 @@ export async function fetchNewsArticles({
   const resolvedPageSize = Math.max(1, Math.min(pageSize, 12));
   const currentCountry = country;
   const currentDateRange = dateRange;
-  const useEverything = currentCountry === "global" || Boolean(REGION_QUERY_HINTS[currentCountry]) || Boolean(query?.trim());
+  const hasDateFilter = currentDateRange !== "any" && currentDateRange !== "viral";
+  const isViral = currentDateRange === "viral";
+  const useEverything = currentCountry === "global" || Boolean(REGION_QUERY_HINTS[currentCountry]) || Boolean(query?.trim()) || hasDateFilter || isViral;
   const endpoint = new URL(useEverything ? `${NEWS_BASE_URL}/everything` : `${NEWS_BASE_URL}/top-headlines`);
 
   if (useEverything) {
@@ -591,7 +583,8 @@ export async function fetchNewsArticles({
       endpoint.searchParams.set("searchIn", "title,description,content");
     }
 
-    endpoint.searchParams.set("sortBy", "publishedAt");
+    // Viral uses popularity sort; otherwise use publishedAt
+    endpoint.searchParams.set("sortBy", isViral ? "popularity" : "publishedAt");
     endpoint.searchParams.set("language", getRegionLanguage(currentCountry));
     endpoint.searchParams.set("to", new Date().toISOString());
 

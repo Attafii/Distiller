@@ -21,7 +21,8 @@ interface NewsAssistantMessage {
 function formatPublishedAt(publishedAt: string) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
-    timeStyle: "short"
+    timeStyle: "short",
+    timeZone: "Africa/Tunis"
   }).format(new Date(publishedAt));
 }
 
@@ -31,14 +32,6 @@ function makeId() {
   }
 
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function shortModelName(model: string | null) {
-  if (!model) {
-    return null;
-  }
-
-  return model === "fallback" ? "fallback" : model.split("/").pop() ?? model;
 }
 
 export function NewsAssistant({
@@ -53,14 +46,12 @@ export function NewsAssistant({
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<NewsAssistantMessage[]>([]);
   const [latestSources, setLatestSources] = useState<NewsAssistantResponse["articles"]>([]);
-  const [latestModel, setLatestModel] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const categoryLabel = TOPIC_OPTIONS.find((option) => option.id === category)?.label ?? category;
   const countryLabel = COUNTRY_OPTIONS.find((option) => option.id === country)?.label ?? country;
   const dateRangeLabel = DATE_RANGE_OPTIONS.find((option) => option.id === dateRange)?.label ?? dateRange;
-  const displayedModel = shortModelName(latestModel);
 
   const starterPrompts = useMemo(
     () => [
@@ -106,7 +97,6 @@ export function NewsAssistant({
     setQuestion("");
     setLoading(true);
     setError(null);
-    setLatestModel(null);
 
     try {
       const response = await fetch("/api/news/assistant", {
@@ -130,7 +120,6 @@ export function NewsAssistant({
 
       const payload = (await response.json()) as NewsAssistantResponse;
       setLatestSources(payload.articles);
-      setLatestModel(payload.model);
       setMessages((current) => [
         ...current,
         {
@@ -143,7 +132,6 @@ export function NewsAssistant({
       const message = submitError instanceof Error ? submitError.message : "Unknown assistant error";
       setError(message);
       setLatestSources([]);
-      setLatestModel(null);
       setMessages((current) => [
         ...current,
         {
@@ -200,11 +188,6 @@ export function NewsAssistant({
               <Badge variant="outline" className="border-border text-muted-foreground">
                 {dateRangeLabel}
               </Badge>
-              {displayedModel ? (
-                <Badge variant="outline" className="border-border text-muted-foreground">
-                  Model {displayedModel}
-                </Badge>
-              ) : null}
             </div>
           </div>
 
@@ -256,7 +239,7 @@ export function NewsAssistant({
                   className={`flex gap-3 rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
                     message.role === "user"
                       ? "ml-auto max-w-3xl border-primary/25 bg-primary/12 text-foreground"
-                      : "mr-auto max-w-4xl border-border bg-white text-foreground"
+                      : "mr-auto max-w-4xl border-border bg-card text-foreground"
                   }`}
                 >
                   <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">

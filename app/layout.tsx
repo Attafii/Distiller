@@ -1,16 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
-import { IBM_Plex_Mono } from "next/font/google";
+import { Crimson_Pro, DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
+import { ConsentAnalytics } from "@/components/ConsentAnalytics";
 import { CookieBanner } from "@/components/CookieBanner";
 import "./globals.css";
+
+const crimsonPro = Crimson_Pro({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-crimson-pro",
+  display: "swap",
+  style: ["normal"]
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap"
+});
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -102,8 +114,21 @@ export { metadata, viewport };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${crimsonPro.variable} ${dmSans.variable} ${ibmPlexMono.variable}`}>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('distiller-theme');
+                  var resolved = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                  document.documentElement.classList.add(resolved);
+                } catch(e) {}
+              })();
+            `
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -158,8 +183,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
               <Footer />
             </div>
-            <Analytics />
-            <SpeedInsights />
+            <ConsentAnalytics />
             <CookieBanner />
           </ToastProvider>
         </ThemeProvider>

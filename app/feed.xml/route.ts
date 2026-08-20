@@ -5,6 +5,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 
 export const revalidate = 300;
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+
 function escapeXml(value: string | null | undefined): string {
   if (!value) return "";
   return value
@@ -20,7 +22,7 @@ function buildEmptyFeedXml(): string {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Distiller — News Intelligence</title>
-    <link>https://distiller.attafii.dev</link>
+    <link>${siteUrl}</link>
     <description>Concise news briefings that cut through the noise.</description>
   </channel>
 </rss>`;
@@ -31,8 +33,6 @@ export async function GET() {
   if (!rateLimit.allowed) {
     return new NextResponse("Rate limit exceeded", { status: 429 });
   }
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
 
   async function generateFeed() {
     const distillService = DistillService.fromEnv();

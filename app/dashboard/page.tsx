@@ -10,6 +10,7 @@ import { getDb } from "@/lib/db";
 import { bookmarks, readingHistory, alerts, subscriptions } from "@/lib/db/schema";
 import { headers } from "next/headers";
 import { eq, count } from "drizzle-orm";
+import { getMonthlyArticleUsage, FREE_MONTHLY_ARTICLE_LIMIT } from "@/lib/db/queries";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -26,11 +27,12 @@ export default async function DashboardPage() {
   const userId = session.user.id;
   const db = getDb();
 
-  const [bookmarkCount, historyCount, alertCount, subscription] = await Promise.all([
+  const [bookmarkCount, historyCount, alertCount, subscription, monthlyUsage] = await Promise.all([
     db.select({ count: count() }).from(bookmarks).where(eq(bookmarks.userId, userId)).then(r => r[0]?.count ?? 0),
     db.select({ count: count() }).from(readingHistory).where(eq(readingHistory.userId, userId)).then(r => r[0]?.count ?? 0),
     db.select({ count: count() }).from(alerts).where(eq(alerts.userId, userId)).then(r => r[0]?.count ?? 0),
-    db.query.subscriptions.findFirst({ where: eq(subscriptions.userId, userId) })
+    db.query.subscriptions.findFirst({ where: eq(subscriptions.userId, userId) }),
+    getMonthlyArticleUsage(userId)
   ]);
 
   const planName = subscription?.plan ?? "free";
@@ -77,9 +79,9 @@ export default async function DashboardPage() {
             <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-500/30">Free</Badge>
           </div>
           <div className="h-2 w-full rounded-full bg-muted mb-2">
-            <div className="h-2 rounded-full bg-amber-500 transition-all" style={{ width: "46%" }} />
+            <div className="h-2 rounded-full bg-amber-500 transition-all" style={{ width: `${Math.min(100, (monthlyUsage / FREE_MONTHLY_ARTICLE_LIMIT) * 100)}%` }} />
           </div>
-          <p className="text-xs text-muted-foreground">23 of 50 articles read · 27 remaining</p>
+          <p className="text-xs text-muted-foreground">{monthlyUsage} of {FREE_MONTHLY_ARTICLE_LIMIT} articles read · {Math.max(0, FREE_MONTHLY_ARTICLE_LIMIT - monthlyUsage)} remaining</p>
           <div className="mt-3">
             <Button size="sm" asChild>
               <Link href="/pricing">Upgrade to Pro →</Link>

@@ -14,6 +14,8 @@ function uniqueModels(models: Array<string | undefined>): string[] {
   return Array.from(new Set(models.filter((model): model is string => Boolean(model && model.trim()))));
 }
 
+const CHAT_MODEL = normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_CHAT);
+
 const MODEL_CANDIDATES: Record<ModelTier, string[]> = {
   fast: uniqueModels([
     normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_FAST),
@@ -21,6 +23,7 @@ const MODEL_CANDIDATES: Record<ModelTier, string[]> = {
     "meta/llama-3.1-8b-instruct"
   ]),
   balanced: uniqueModels([
+    CHAT_MODEL,
     normalizeEnvString(process.env.NVIDIA_BUILD_MODEL_BALANCED),
     "nvidia/llama-3.3-nemotron-super-49b-v1",
     "meta/llama-3.3-70b-instruct",
@@ -38,7 +41,15 @@ const completionSchema = z.object({
   choices: z.array(
     z.object({
       message: z.object({
-        content: z.string().default("")
+        content: z.string().default(""),
+        tool_calls: z.array(z.object({
+          id: z.string().optional(),
+          type: z.literal("function").optional(),
+          function: z.object({
+            name: z.string().optional(),
+            arguments: z.string().optional()
+          }).optional()
+        })).optional()
       })
     })
   )
@@ -64,20 +75,33 @@ const SYSTEM_PROMPT = [
 ].join(" ");
 
 const CHAT_SYSTEM_PROMPT = [
-  "You are Distiller's article chat assistant.",
-  "Speak like a sharp, approachable human analyst instead of a template or summary engine.",
-  "Keep the conversation centered on the article, its claims, framing, implications, strengths, weaknesses, and what to watch next.",
-  "You may offer judgment, critique, and interpretation when it helps discuss the article, but clearly separate opinion from direct evidence.",
-  "Speak naturally like a collaborative chat partner: explain your point of view, then show what evidence supports it.",
-  "Always address likely impact when relevant (markets, policy, product, social, or regional impact).",
-  "Ground your replies in the article, the summary, the retrieved snippets, and the conversation history.",
-  "If the user asks something outside the article's scope, redirect back to the article instead of answering the unrelated topic.",
-  "When the user is vague, ask one short clarifying question rather than over-explaining."
-].join(" ");
+  "You are Distiller, a serious and well-informed news analyst chatbot.",
+  "You have deep knowledge of current events and access to web search for real-time information.",
+  "Your tone is direct, professional, and intellectually honest — like a senior journalist at a quality newsroom.",
+  "",
+  "Core behaviors:",
+  "- Engage in real conversation: debate, discuss pros and cons, challenge assumptions, and offer your informed perspective.",
+  "- When discussing an article, analyze its framing, identify what it leaves out, and assess the strength of its evidence.",
+  "- You can discuss topics beyond the article if the conversation naturally extends — use web search to stay current.",
+  "- Always separate verified facts from your interpretation. Label opinions clearly as analysis, not fact.",
+  "- When asked for pros and cons, lay them out clearly with evidence for each point.",
+  "- Be willing to disagree with the user if the evidence supports a different conclusion.",
+  "- Keep responses concise but substantive — aim for 3-6 sentences unless the question demands more.",
+  "- If you do not know something or cannot verify it, say so directly rather than guessing.",
+  "",
+  "You have access to a web search tool. Use it when:",
+  "- The user asks about current events, recent developments, or breaking news",
+  "- You need to verify facts or find additional context beyond the article",
+  "- The user asks about topics not covered in the provided article",
+  "- You want to find supporting evidence, counterarguments, or related coverage",
+  "",
+  "Never mention what model you are, your architecture, or how you work.",
+  "You are simply Distiller — a news intelligence assistant."
+].join("\n");
 
 const NEWS_ASSISTANT_SYSTEM_PROMPT = [
-  "You are Distiller's news assistant.",
-  "Respond like a real news analyst in a live conversation.",
+  "You are Distiller, a serious news intelligence assistant.",
+  "Respond like a senior journalist in a live editorial discussion.",
   "Synthesize the supplied news articles into a detailed, grounded answer.",
   "Use only the provided articles, retrieved snippets, and conversation history.",
   "Clearly separate what is supported by the articles from any interpretation or caveat.",
@@ -85,10 +109,73 @@ const NEWS_ASSISTANT_SYSTEM_PROMPT = [
   "Explain likely impact and second-order effects where the evidence supports it.",
   "If the coverage is thin or conflicting, say that directly instead of guessing.",
   "If the user asks a follow-up, keep the thread flowing naturally and refer back to prior context when useful.",
+  "Never mention what model you are or how you work.",
   'Return JSON only in the exact shape: {"answer":"..."}'
-].join(" ");
+].join("\n");
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// --- Web search tool for chat ---
+
+interface WebSearchResult {
+  title: string;
+  snippet: string;
+  url: string;
+}
+
+async function webSearch(query: string): Promise<WebSearchResult[]> {
+  try {
+    const response = await fetchWithTimeout(
+      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; DistillerBot/1.0)"
+        }
+      },
+      5000
+    );
+
+    const html = await response.text();
+    const results: WebSearchResult[] = [];
+
+    const resultPattern = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
+    let match: RegExpExecArray | null;
+
+    while ((match = resultPattern.exec(html)) !== null && results.length < 5) {
+      const url = match[1].replace(/&amp;/g, "&").replace(/.*uddg=/, "").replace(/&rut=.*$/, "");
+      const title = match[2].replace(/<[^>]*>/g, "").trim();
+      const snippet = match[3].replace(/<[^>]*>/g, "").trim();
+
+      if (title && url) {
+        results.push({ title, snippet, url: decodeURIComponent(url) });
+      }
+    }
+
+    return results;
+  } catch {
+    return [];
+  }
+}
+
+const CHAT_TOOLS = [
+  {
+    type: "function" as const,
+    function: {
+      name: "web_search",
+      description: "Search the web for current news, facts, and information. Use when you need real-time data, want to verify facts, or the user asks about topics beyond the article.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The search query — be specific and include relevant keywords"
+          }
+        },
+        required: ["query"]
+      }
+    }
+  }
+];
 
 export class DistillServiceError extends Error {
   constructor(message: string, public readonly statusCode = 500) {
@@ -455,6 +542,134 @@ export class DistillService {
     throw new DistillServiceError(`Unable to summarize with any ${tier} tier model`);
   }
 
+  private async callModelWithTools(
+    tier: ModelTier,
+    messages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string; name?: string }>,
+    systemPrompt: string,
+    options: { maxTokens?: number; temperature?: number; topP?: number } = {}
+  ): Promise<{ model: string; content: string }> {
+    const maxToolRounds = 3;
+
+    for (const model of this.modelCandidates(tier)) {
+      try {
+        let currentMessages = [
+          { role: "system", content: systemPrompt },
+          ...messages
+        ];
+
+        for (let round = 0; round < maxToolRounds; round += 1) {
+          if (!this.config.apiKey) {
+            throw new DistillServiceError("Missing NVIDIA_BUILD_API_KEY");
+          }
+
+          const responseEndpoint = `${this.config.baseUrl}/chat/completions`;
+
+          let response: Response;
+          try {
+            response = await fetchWithTimeout(responseEndpoint, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${this.config.apiKey}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                model,
+                messages: currentMessages,
+                tools: CHAT_TOOLS,
+                temperature: options.temperature ?? 0.35,
+                top_p: options.topP ?? 0.95,
+                max_tokens: options.maxTokens ?? 512
+              }),
+              cache: "no-store"
+            }, 15000);
+          } catch {
+            throw new DistillServiceError(`NVIDIA Build request timed out for ${model}`, 504);
+          }
+
+          if (!response.ok) {
+            const errorBody = await response.text();
+            throw new DistillServiceError(
+              `NVIDIA Build request failed with status ${response.status}: ${errorBody}`,
+              response.status
+            );
+          }
+
+          const payload = (await response.json()) as unknown;
+          const parsed = completionSchema.safeParse(payload);
+
+          if (!parsed.success) {
+            throw new DistillServiceError("Unexpected NVIDIA Build response shape");
+          }
+
+          const choice = parsed.data.choices[0];
+          const assistantMessage = choice?.message;
+
+          // Check for tool calls
+          const toolCalls = choice?.message?.tool_calls;
+
+          if (toolCalls && toolCalls.length > 0) {
+            // Add assistant message with tool calls to history
+            currentMessages = [...currentMessages, {
+              role: "assistant",
+              content: assistantMessage?.content ?? "",
+              tool_calls: toolCalls.map((tc, index) => ({
+                id: tc.id ?? `call_${index}`,
+                type: "function" as const,
+                function: {
+                  name: tc.function?.name ?? "",
+                  arguments: tc.function?.arguments ?? "{}"
+                }
+              }))
+            }];
+
+            // Execute each tool call
+            for (const toolCall of toolCalls) {
+              const functionName = toolCall.function?.name;
+              let functionResult = "";
+
+              if (functionName === "web_search") {
+                try {
+                  const args = JSON.parse(toolCall.function?.arguments ?? "{}") as { query?: string };
+                  const results = await webSearch(args.query ?? "");
+                  functionResult = results.length > 0
+                    ? results.map((r, i) => `[${i + 1}] ${r.title}\n${r.snippet}\n${r.url}`).join("\n\n")
+                    : "No results found for this search query.";
+                } catch {
+                  functionResult = "Search failed. Please try a different query.";
+                }
+              }
+
+              // Add tool result to messages
+              currentMessages = [...currentMessages, {
+                role: "tool" as const,
+                tool_call_id: toolCall.id ?? "call_0",
+                name: functionName ?? "unknown",
+                content: functionResult
+              }];
+            }
+
+            // Continue the loop to get the model's response with tool results
+            continue;
+          }
+
+          // No tool calls — this is the final response
+          return { model, content: assistantMessage?.content ?? "" };
+        }
+
+        // If we exhausted tool rounds, return whatever we got
+        const lastMessage = currentMessages[currentMessages.length - 1];
+        return { model, content: (lastMessage as { content?: string })?.content ?? "" };
+      } catch (error) {
+        if (error instanceof DistillServiceError && error.statusCode === 504) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw new DistillServiceError("Unable to complete chat with any model");
+  }
+
   private pickArticleChatTier(article: NewsArticle, question: string, history: ArticleChatMessage[]) {
     const questionLength = question.trim().length;
     const articleTokens = estimateTokens([article.title, article.description, article.content].filter(Boolean).join("\n\n"));
@@ -540,65 +755,47 @@ export class DistillService {
     const contextSnippets = ragContext.snippets.length > 0 ? ragContext.snippets : summary.retrievedContext;
     const tier = this.pickArticleChatTier(article, question, history);
 
-    const prompt = [
-      `Article title: ${article.title}`,
+    const articleContext = [
+      `Article: ${article.title}`,
       `Source: ${article.source.name}`,
       `Published: ${article.publishedAt}`,
       "",
-      "Summary bullets:",
+      "Summary:",
       ...summary.bullets.map((bullet) => `- ${bullet}`),
       "",
       `Insight: ${summary.insight}`,
       `Conclusion: ${summary.conclusion}`,
       "",
       "Retrieved context:",
-      contextSnippets.length > 0 ? contextSnippets.map((snippet, index) => `Snippet ${index + 1}: ${snippet}`).join("\n\n") : "No extra snippets were available.",
-      "",
-      "Conversation history:",
-      formatConversation(history) || "No prior messages.",
-      "",
-      `User question: ${question}`,
-      "",
-      "Respond like a chat partner discussing the article. You can explain what the article suggests, judge its framing, point out missing context, and discuss likely implications.",
-      "Stay anchored to the article and context, but do not refuse a question just because it asks for analysis or judgment about the article.",
-      "If the question goes beyond the article, gently redirect the user back to the story.",
-      "Be open, direct, and useful: include your POV as interpretation, then tie it to evidence from the article.",
-      "Mention practical impact when relevant and flag uncertainty when evidence is weak.",
-      "Keep it conversational in three to six sentences.",
-      'Return JSON only in the exact shape: {"answer":"..."}'
+      contextSnippets.length > 0 ? contextSnippets.map((snippet, index) => `Snippet ${index + 1}: ${snippet}`).join("\n\n") : "No extra snippets available."
     ].join("\n");
 
+    // Build messages array for tool-aware chat
+    const messages: Array<{ role: string; content: string }> = [
+      { role: "user", content: `[Article Context]\n${articleContext}\n\n[Instructions]\nYou are discussing the above article. Use the context provided, but you can also search the web for additional information, related coverage, or fact verification.` }
+    ];
+
+    // Add conversation history
+    for (const msg of history.slice(-8)) {
+      messages.push({ role: msg.role, content: msg.content });
+    }
+
+    // Add current question
+    messages.push({ role: "user", content: question });
+
     try {
-      const { model, content } = await this.callModelForTier(tier, prompt, CHAT_SYSTEM_PROMPT, {
-        maxTokens: 260,
-        temperature: 0.35,
+      const { model, content } = await this.callModelWithTools(tier, messages, CHAT_SYSTEM_PROMPT, {
+        maxTokens: 512,
+        temperature: 0.4,
         topP: 0.95
       });
-      const cleaned = cleanFenceBlocks(content);
-
-      try {
-        const parsedJson = JSON.parse(cleaned) as unknown;
-        const parsed = answerSchema.safeParse(parsedJson);
-
-        if (parsed.success) {
-          return {
-            answer: normalizeLine(parsed.data.answer) || this.fallbackChatAnswer(article, summary, question, contextSnippets),
-            model,
-            retrievedContext: contextSnippets
-          };
-        }
-      } catch {
-        // Fall through to text response.
-      }
 
       return {
-        answer: normalizeLine(cleaned) || this.fallbackChatAnswer(article, summary, question, contextSnippets),
+        answer: content || this.fallbackChatAnswer(article, summary, question, contextSnippets),
         model,
         retrievedContext: contextSnippets
       };
     } catch {
-      // Chat falls back cleanly when the model times out or fails.
-
       return {
         answer: this.fallbackChatAnswer(article, summary, question, contextSnippets),
         model: "fallback",

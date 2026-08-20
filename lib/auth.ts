@@ -13,7 +13,7 @@ const authSchema = {
 };
 
 function createAuth() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+  const siteUrl = process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
   const normalizedSiteOrigin = (() => {
     try {
       return new URL(siteUrl).origin;
@@ -44,18 +44,50 @@ function createAuth() {
         })(),
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: false
+      requireEmailVerification: false,
+      sendResetPassword: async ({ user, url }) => {
+        if (!process.env.RESEND_API_KEY) {
+          console.warn("[Auth] RESEND_API_KEY not set — password reset email not sent");
+          console.log("[Auth] Reset URL (dev):", url);
+          return;
+        }
+
+        try {
+          const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              from: "Distiller <noreply@distiller.attafii.dev>",
+              to: user.email,
+              subject: "Reset your Distiller password",
+              html: `<p>Click <a href="${url}">here</a> to reset your password. This link expires in 1 hour.</p>`
+            })
+          });
+
+          if (!response.ok) {
+            const errorBody = await response.text();
+            console.error("[Auth] Resend API error:", response.status, errorBody);
+            console.log("[Auth] Reset URL (fallback):", url);
+          }
+        } catch (error) {
+          console.error("[Auth] Failed to send reset email:", error);
+          console.log("[Auth] Reset URL (fallback):", url);
+        }
+      }
     },
     socialProviders: {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID ?? "",
         clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-        redirectURI: `${siteUrl}/api/auth/callback/google`
+        redirectURI: `${normalizedSiteOrigin}/api/auth/callback/google`
       },
       github: {
         clientId: process.env.GITHUB_CLIENT_ID ?? "",
         clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
-        redirectURI: `${siteUrl}/api/auth/callback/github`
+        redirectURI: `${normalizedSiteOrigin}/api/auth/callback/github`
       }
     },
     session: {
@@ -66,7 +98,7 @@ function createAuth() {
         maxAge: 5 * 60
       }
     },
-    secret: process.env.BETTER_AUTH_SECRET ?? "change-me-in-production"
+    secret: process.env.BETTER_AUTH_SECRET
   };
 
   return betterAuth(authOptions);

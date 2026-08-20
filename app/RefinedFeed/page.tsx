@@ -1,21 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Newspaper, RefreshCcw, Search, SlidersHorizontal, X, Menu } from "lucide-react";
+import { motion } from "framer-motion";
+import { Loader2, Newspaper, RefreshCcw, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { DistilledCard } from "@/components/DistilledCard";
-import { GitHubRepoWidget } from "@/components/GitHubRepoWidget";
 import { NewsArticleModal } from "@/components/NewsArticleModal";
 import { NewsAssistant } from "@/components/NewsAssistant";
-import { UserNav } from "@/components/UserNav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getPriorityLabel } from "@/lib/article-signals";
 import { COUNTRY_OPTIONS, DATE_RANGE_OPTIONS, TOPIC_OPTIONS } from "@/lib/news-options";
 import { DEMO_ARTICLES } from "@/lib/demo-articles";
 import type { ArticleLikeResponse, ArticlePriority, Category, CountryCode, DateRange, DistilledArticle, FeedResponse, SummarizationMode } from "@/types/news";
@@ -41,7 +39,7 @@ const GUEST_ALLOWED_TOPICS: Array<{ id: Category; label: string }> = [
 
 function FeedSkeleton() {
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
+    <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
@@ -87,9 +85,30 @@ export default function RefinedFeedPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
-  const [selectedArticleStartExpanded, setSelectedArticleStartExpanded] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const urlCategory = searchParams.get("category");
+    const urlCountry = searchParams.get("country");
+    const urlQuery = searchParams.get("q") ?? searchParams.get("query");
+    const urlMode = searchParams.get("mode");
+
+    if (urlCategory && TOPIC_OPTIONS.some((o) => o.id === urlCategory)) {
+      setCategory(urlCategory as Category);
+    }
+    if (urlCountry && COUNTRY_OPTIONS.some((o) => o.id === urlCountry)) {
+      setCountry(urlCountry as CountryCode);
+    }
+    if (urlQuery) {
+      setSearchTerm(urlQuery);
+      setSearchQuery(urlQuery);
+    }
+    if (urlMode && ["auto", "fast", "balanced", "deep"].includes(urlMode)) {
+      setSummaryMode(urlMode as SummarizationMode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     async function checkAuth() {
@@ -108,17 +127,6 @@ export default function RefinedFeedPage() {
     }
     checkAuth();
   }, []);
-
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -177,7 +185,7 @@ export default function RefinedFeedPage() {
 
     loadFeed();
     return () => controller.abort();
-  }, [category, country, dateRange, page, searchQuery, summaryMode]);
+  }, [category, country, dateRange, guestLimitReached, isGuest, page, searchQuery, summaryMode]);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -205,7 +213,6 @@ export default function RefinedFeedPage() {
     setLoading(true);
     setError(null);
     setSelectedArticleId(null);
-    setSelectedArticleStartExpanded(false);
     setGuestLimitReached(false);
   };
 
@@ -255,17 +262,15 @@ export default function RefinedFeedPage() {
     resetResults();
   };
 
-  const handleOpenArticle = (article: DistilledArticle) => {
+  const handleOpenArticle = useCallback((article: DistilledArticle) => {
     setSelectedArticleId(article.id);
-    setSelectedArticleStartExpanded(true);
-  };
+  }, []);
 
-  const closeArticle = () => {
+  const closeArticle = useCallback(() => {
     setSelectedArticleId(null);
-    setSelectedArticleStartExpanded(false);
-  };
+  }, []);
 
-  const handleShareArticle = async (article: DistilledArticle) => {
+  const handleShareArticle = useCallback(async (article: DistilledArticle) => {
     const sharePayload = {
       title: article.title,
       text: article.description ?? article.summary.insight,
@@ -291,9 +296,9 @@ export default function RefinedFeedPage() {
         console.error("Unable to share article", error);
       }
     }
-  };
+  }, []);
 
-  const handleLikeArticle = async (article: DistilledArticle) => {
+  const handleLikeArticle = useCallback(async (article: DistilledArticle) => {
     if (article.likedByViewer) {
       return;
     }
@@ -327,9 +332,9 @@ export default function RefinedFeedPage() {
     } catch (error) {
       console.error("Unable to like article", error);
     }
-  };
+  }, []);
 
-  const handleBookmarkArticle = async (article: DistilledArticle) => {
+  const handleBookmarkArticle = useCallback(async (article: DistilledArticle) => {
     try {
       if (article.bookmarked) {
         const response = await fetch(`/api/bookmarks?articleId=${encodeURIComponent(article.id)}`, {
@@ -381,9 +386,8 @@ export default function RefinedFeedPage() {
     } catch (error) {
       console.error("Unable to bookmark article", error);
     }
-  };
+  }, []);
 
-  const activeTopicLabel = TOPIC_OPTIONS.find((option) => option.id === category)?.label ?? category;
   const activeCountryLabel = COUNTRY_OPTIONS.find((option) => option.id === country)?.label ?? country;
   const activeDateLabel = DATE_RANGE_OPTIONS.find((option) => option.id === dateRange)?.label ?? dateRange;
   const activePriorityLabel = priorityFilters.find((option) => option.id === priorityFilter)?.label ?? priorityFilter;
@@ -399,105 +403,14 @@ export default function RefinedFeedPage() {
 
   return (
     <main className="min-h-screen bg-transparent text-foreground">
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-8 flex items-center justify-between rounded-2xl border border-border bg-white/85 px-4 py-3 backdrop-blur">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-primary text-primary-foreground">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M4 6h16M4 12h12M4 18h8" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold tracking-tight">Distiller</p>
-              <p className="text-xs text-muted-foreground">Refined feed</p>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-3 sm:flex">
-              <UserNav />
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background transition-colors hover:bg-muted sm:hidden"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-4 w-4 text-foreground" />
-              ) : (
-                <Menu className="h-4 w-4 text-foreground" />
-              )}
-            </button>
-          </div>
-        </header>
-
-        {/* Mobile slide-down menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="fixed inset-0 z-40 bg-black/50 sm:hidden"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute left-0 right-0 z-50 sm:hidden"
-                style={{ top: "90px" }}
-              >
-                <div className="mx-4 rounded-2xl border border-border bg-card shadow-soft">
-                  <nav className="p-4">
-                    <div className="space-y-1">
-                      {[
-                        { href: "/RefinedFeed", label: "Browse", icon: Newspaper },
-                        { href: "/pricing", label: "Pricing", icon: SlidersHorizontal },
-                        { href: "/auth/login", label: "Sign in", icon: null },
-                        { href: "/auth/signup", label: "Get started", icon: null }
-                      ].map((item, index) => (
-                        <motion.div
-                          key={item.href}
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                        >
-                          <Link
-                            href={item.href}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
-                              item.href === "/RefinedFeed"
-                                ? "bg-primary/10 text-primary"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            }`}
-                          >
-                            {item.icon && <item.icon className="h-4 w-4" />}
-                            {item.label}
-                          </Link>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </nav>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-
+      <section className="mx-auto max-w-[1440px] px-4 md:px-6 lg:px-8 py-6">
         <NewsAssistant category={category} country={country} dateRange={dateRange} />
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="mb-8 grid gap-5 rounded-3xl border border-border bg-white/75 p-6 shadow-soft lg:grid-cols-[1.25fr_0.75fr] lg:p-8"
+          className="mb-8 grid gap-5 rounded-3xl border border-border bg-background/75 p-6 shadow-soft lg:grid-cols-[1.25fr_0.75fr] lg:p-8"
         >
           <div className="space-y-4">
             <Badge variant="outline" className="border-border text-muted-foreground">
@@ -514,27 +427,6 @@ export default function RefinedFeedPage() {
               </p>
             </div>
           </div>
-
-          <Card className="border-border bg-card/90">
-            <CardContent className="space-y-4 p-6">
-              <div className="flex items-center justify-between gap-3">
-                <Badge variant="default">Current mode</Badge>
-                <Badge variant="outline">{summaryMode}</Badge>
-              </div>
-              <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-                <p>Category: <span className="text-foreground">{activeTopicLabel}</span></p>
-                <p>Region: <span className="text-foreground">{activeCountryLabel}</span></p>
-                <p>Date window: <span className="text-foreground">{activeDateLabel}</span></p>
-                <p>Articles loaded: <span className="text-foreground">{articles.length}</span></p>
-                <p>Visible after filters: <span className="text-foreground">{visibleArticles.length}</span></p>
-                <p>Priority filter: <span className="text-foreground">{activePriorityLabel}</span></p>
-                <p>Infinite scroll: <span className="text-foreground">{hasMore ? "active" : "complete"}</span></p>
-                <p>Source verification: <span className="text-foreground">enabled</span></p>
-                <p>Smart matching: <span className="text-foreground">active</span></p>
-                <p className="text-xs text-muted-foreground">Red dot means important or breaking news.</p>
-              </div>
-            </CardContent>
-          </Card>
         </motion.div>
 
         <form
@@ -789,7 +681,7 @@ export default function RefinedFeedPage() {
                 <span className="text-muted-foreground">These are sample previews to show you how Distiller works.</span>
               </p>
             </div>
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
               {DEMO_ARTICLES.map((article) => (
                 <DistilledCard
                   key={article.id}
@@ -806,7 +698,7 @@ export default function RefinedFeedPage() {
 
         {visibleArticles.length > 0 ? (
           <>
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
               {visibleArticles.map((article) => (
                 <DistilledCard
                   key={article.id}
@@ -866,7 +758,6 @@ export default function RefinedFeedPage() {
         onCloseAction={closeArticle}
         onLikeAction={handleLikeArticle}
         onShareAction={handleShareArticle}
-        initialShowFullText={selectedArticleStartExpanded}
       />
     </main>
   );

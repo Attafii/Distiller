@@ -71,13 +71,14 @@ export const COUNTRY_VALUES = [
   "sg"
 ] as const;
 
-export const DATE_RANGE_VALUES = ["any", "24h", "7d", "30d"] as const;
+export const DATE_RANGE_VALUES = ["any", "24h", "7d", "30d", "viral"] as const;
 
 export const DATE_RANGE_OPTIONS: Array<{ id: DateRange; label: string }> = [
   { id: "any", label: "Any time" },
   { id: "24h", label: "24 hours" },
   { id: "7d", label: "7 days" },
-  { id: "30d", label: "30 days" }
+  { id: "30d", label: "30 days" },
+  { id: "viral", label: "Viral" }
 ];
 
 export const NEWSAPI_CATEGORY_MAP: Record<Category, string> = {
@@ -161,10 +162,21 @@ export function getRegionLanguage(country: CountryCode): string {
 }
 
 export function getDateRangeCutoff(dateRange: DateRange): Date | null {
-  if (dateRange === "any") {
+  if (dateRange === "any" || dateRange === "viral") {
     return null;
   }
 
-  const hours = dateRange === "24h" ? 24 : dateRange === "7d" ? 24 * 7 : 24 * 30;
+  if (dateRange === "24h") {
+    // Use midnight Tunisia time (GMT+1) as the cutoff for "today"
+    const now = new Date();
+    const tunisOffsetMs = 1 * 60 * 60 * 1000; // GMT+1
+    const tunisNow = new Date(now.getTime() + tunisOffsetMs);
+    const midnightTunis = new Date(tunisNow);
+    midnightTunis.setUTCHours(0, 0, 0, 0);
+    // Convert back to UTC
+    return new Date(midnightTunis.getTime() - tunisOffsetMs);
+  }
+
+  const hours = dateRange === "7d" ? 24 * 7 : 24 * 30;
   return new Date(Date.now() - hours * 60 * 60 * 1000);
 }

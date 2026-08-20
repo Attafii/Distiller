@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import { motion } from "framer-motion";
 import { Bookmark, Copy, ExternalLink, Heart, Layers3, Share2, Sparkles } from "lucide-react";
 
+import { COPY } from "@/lib/copy";
 import { getPriorityLabel } from "@/lib/article-signals";
 import { buttonStyles, Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,15 +17,12 @@ import type { DistilledArticle } from "@/types/news";
 function formatPublishedAt(publishedAt: string) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
-    timeStyle: "short"
+    timeStyle: "short",
+    timeZone: "Africa/Tunis"
   }).format(new Date(publishedAt));
 }
 
-function shortModelName(model: string) {
-  return model === "fallback" ? "fallback" : model.split("/").pop() ?? model;
-}
-
-export function DistilledCard({
+export const DistilledCard = memo(function DistilledCard({
   article,
   onOpenAction,
   onLikeAction,
@@ -81,11 +79,6 @@ export function DistilledCard({
                 {article.likeCount} likes
               </Badge>
             ) : null}
-            {article.distillerScore != null ? (
-              <Badge variant="outline" className="border-border text-muted-foreground">
-                Score {article.distillerScore}
-              </Badge>
-            ) : null}
             <ShareButton
               title={article.title}
               briefSlug={article.id}
@@ -113,8 +106,8 @@ export function DistilledCard({
           <section className="space-y-3" aria-label="AI summary">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
               <span>Distilled insights</span>
-              <span className="font-mono text-[11px] text-muted-foreground">
-                {Math.round(article.summary.confidence * 100)}% confidence
+              <span className="font-mono text-[11px] text-muted-foreground" title={COPY.scoreTooltip}>
+                {Math.round(article.summary.confidence * 100)}% RAG retrieval confidence
               </span>
             </div>
 
@@ -138,7 +131,6 @@ export function DistilledCard({
               {article.description ?? "The article did not include a description, so the summary relies on retrieved source context."}
             </p>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="outline">Model {shortModelName(article.summary.model)}</Badge>
               <Badge variant="outline">{article.summary.retrievedContext.length} snippets</Badge>
             </div>
           </section>
@@ -191,4 +183,4 @@ export function DistilledCard({
       </Card>
     </motion.article>
   );
-}
+});

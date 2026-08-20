@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { ModeToggle } from "@/components/ModeToggle";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 type User = {
@@ -71,9 +71,11 @@ export function UserNav() {
         <ModeToggle />
         <div className="flex items-center gap-2">
           {user.image ? (
-            <img
+            <Image
               src={user.image}
               alt={user.name ?? "User"}
+              width={32}
+              height={32}
               className="h-8 w-8 rounded-full border border-border object-cover"
             />
           ) : (

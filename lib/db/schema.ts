@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, serial, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, serial, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -102,12 +102,19 @@ export const readingHistory = pgTable("reading_history", {
   readAt: timestamp("read_at").notNull().defaultNow()
 });
 
-export const articleReactions = pgTable("article_reactions", {
-  id: serial("id").primaryKey(),
-  articleId: text("article_id").notNull(),
-  ipHash: text("ip_hash").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow()
-});
+export const articleReactions = pgTable(
+  "article_reactions",
+  {
+    id: serial("id").primaryKey(),
+    articleId: text("article_id").notNull(),
+    ipHash: text("ip_hash").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow()
+  },
+  (table) => ({
+    articleIdIdx: uniqueIndex("idx_article_reactions_article_ip").on(table.articleId, table.ipHash),
+    articleIdOnlyIdx: index("idx_article_reactions_article_id").on(table.articleId)
+  })
+);
 
 export const userArticleUsage = pgTable(
   "user_article_usage",

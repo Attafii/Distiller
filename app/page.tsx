@@ -4,26 +4,29 @@ import Link from "next/link";
 import { ArrowUpRight, Globe2, Layers, Sparkles, Rss, CheckCircle2, Star, Check, Minus } from "lucide-react";
 
 import { AskTheNewsForm } from "@/components/AskTheNewsForm";
+import { RevealSection } from "@/components/RevealSection";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+
 export const metadata: Metadata = {
   title: "Distiller — News Intelligence",
   description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
-  alternates: { canonical: "https://distiller.attafii.dev/" },
+  alternates: { canonical: `${siteUrl}/` },
   openGraph: {
-    url: "https://distiller.attafii.dev/",
+    url: `${siteUrl}/`,
     title: "Distiller — News Intelligence",
     description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
-    images: [{ url: "https://distiller.attafii.dev/api/og", width: 1200, height: 630, alt: "Distiller" }]
+    images: [{ url: `${siteUrl}/api/og`, width: 1200, height: 630, alt: "Distiller" }]
   },
   twitter: {
     card: "summary_large_image",
     title: "Distiller — News Intelligence",
     description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
-    images: ["https://distiller.attafii.dev/api/og"]
+    images: [`${siteUrl}/api/og`]
   }
 };
 
@@ -85,7 +88,7 @@ export default function HomePage() {
             News intelligence for curious minds
           </Badge>
 
-          <h1 className="font-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl xl:text-7xl leading-[1.05]">
+          <h1 className="font-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.05]">
             The world&apos;s news,<br />
             <span className="text-gradient">three bullets.</span>
           </h1>
@@ -178,7 +181,7 @@ export default function HomePage() {
         </Card>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 pb-24">
+      <RevealSection className="mx-auto max-w-5xl px-6 pb-24">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => (
             <Card key={feature.title} className="border-border bg-card p-5">
@@ -195,54 +198,31 @@ export default function HomePage() {
             </Card>
           ))}
         </div>
-      </section>
+      </RevealSection>
 
-      <section className="mx-auto max-w-5xl px-6 pb-24">
+      <RevealSection className="mx-auto max-w-5xl px-6 pb-24" aria-label="How Distiller grounds every brief">
         <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-center mb-2">
-          What early readers are saying
+          How Distiller grounds every brief
         </h2>
-        <p className="text-center text-sm text-muted-foreground mb-10">Real feedback from beta users — paid plans not required.</p>
-        <div className="grid gap-6 sm:grid-cols-3">
-          <Card className="border-border bg-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">SK</div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Sarah K.</p>
-                <p className="text-xs text-muted-foreground">ML Researcher</p>
-              </div>
+        <p className="text-center text-sm text-muted-foreground mb-10">Every bullet traces back to source evidence. No guessing, no fabrication.</p>
+        <div className="grid gap-6 sm:grid-cols-5">
+          {[
+            { step: "1", label: "Article", desc: "NewsAPI fetches the original story" },
+            { step: "2", label: "Chunks", desc: "Text split into ~900-char semantic blocks" },
+            { step: "3", label: "Embeddings", desc: "NVIDIA Build encodes query + chunks" },
+            { step: "4", label: "Snippets", desc: "Top 3 retrieved by cosine similarity" },
+            { step: "5", label: "Summary", desc: "LLM generates 3 grounded bullets" }
+          ].map(({ step, label, desc }) => (
+            <div key={step} className="flex flex-col items-center text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg mb-3">{step}</div>
+              <p className="text-sm font-medium text-foreground">{label}</p>
+              <p className="text-xs text-muted-foreground mt-1">{desc}</p>
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              &quot;I replaced my 45-minute news ritual with 5 minutes in Distiller. The AI summaries are tight — no filler, no spin.&quot;
-            </p>
-          </Card>
-          <Card className="border-border bg-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">MO</div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Mehdi O.</p>
-                <p className="text-xs text-muted-foreground">Software Engineer</p>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              &quot;The MENA coverage is what sold me. Finally a product that doesn&apos;t treat Africa as an afterthought.&quot;
-            </p>
-          </Card>
-          <Card className="border-border bg-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">JL</div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Julien L.</p>
-                <p className="text-xs text-muted-foreground">Freelance Journalist</p>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              &quot;The Distiller Score is genius. I can instantly see which stories are solid sourcing vs questionable.&quot;
-            </p>
-          </Card>
+          ))}
         </div>
-      </section>
+      </RevealSection>
 
-      <section className="mx-auto max-w-5xl px-6 pb-24">
+      <RevealSection className="mx-auto max-w-5xl px-6 pb-24">
         <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-center mb-10">
           Free vs Pro
         </h2>
@@ -281,7 +261,7 @@ export default function HomePage() {
             </Button>
           </Card>
         </div>
-      </section>
+      </RevealSection>
 
       <section className="mx-auto max-w-5xl px-6 pb-24">
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6">
@@ -299,7 +279,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 pb-24">
+      <RevealSection className="mx-auto max-w-5xl px-6 pb-24">
         <Card className="border-border bg-card p-8 text-center">
           <Badge variant="outline" className="mb-4 border-border text-muted-foreground">
             100% free to start
@@ -320,9 +300,9 @@ export default function HomePage() {
             </Button>
           </div>
         </Card>
-      </section>
+      </RevealSection>
 
-      <section className="mx-auto max-w-5xl px-6 pb-24">
+      <RevealSection className="mx-auto max-w-5xl px-6 pb-24">
         <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-center mb-10">
           Topics we cover
         </h2>
@@ -339,7 +319,7 @@ export default function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
+      </RevealSection>
 
       <section id="main-content" className="mx-auto max-w-5xl px-6 pb-24">
         <Card className="border-border bg-card p-8">

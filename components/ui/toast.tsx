@@ -41,7 +41,7 @@ export function Toast({ children, variant = "default", onClose, duration = 4000 
     <div
       role="alert"
       aria-live="polite"
-      className={`ToastContainer_root__ transition-all duration-300 ${
+      className={`transition-all duration-300 ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       } ${variantStyles[variant]} flex min-w-[280px] max-w-md items-center gap-3 rounded-xl border px-4 py-3 shadow-elevated`}
     >

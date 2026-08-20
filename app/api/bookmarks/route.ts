@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { eq, and } from "drizzle-orm";
+import { getUserSubscription } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,12 @@ export async function POST(request: NextRequest) {
 
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const sub = await getUserSubscription(session.user.id);
+  const plan = sub?.plan ?? "free";
+  if (plan === "free") {
+    return NextResponse.json({ error: "Bookmarks are a Pro feature. Upgrade to save articles." }, { status: 403, headers });
   }
 
   let body: unknown;
