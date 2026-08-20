@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowUpRight, Globe2, Layers, Sparkles, Rss, CheckCircle2, Star, Check, Minus } from "lucide-react";
 
 import { AskTheNewsForm } from "@/components/AskTheNewsForm";
+import { HeroTerminal } from "@/components/HeroTerminal";
+import { ScrollReveal, StaggerChildren } from "@/components/ScrollReveal";
 import { RevealSection } from "@/components/RevealSection";
 
 import { Badge } from "@/components/ui/badge";
@@ -83,48 +85,61 @@ export default function HomePage() {
         </div>
 
         <div className="mx-auto max-w-5xl px-6 pt-20 pb-16 text-center">
-          <Badge variant="outline" className="mb-6 border-border text-muted-foreground">
-            <Sparkles className="mr-1.5 h-3 w-3" />
-            News intelligence for curious minds
-          </Badge>
+          <ScrollReveal animation="fade-up" delay={0}>
+            <Badge variant="outline" className="mb-6 border-border text-muted-foreground">
+              <Sparkles className="mr-1.5 h-3 w-3" />
+              News intelligence for curious minds
+            </Badge>
+          </ScrollReveal>
 
-          <h1 className="font-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.05]">
-            The world&apos;s news,<br />
-            <span className="text-gradient">three bullets.</span>
-          </h1>
+          <ScrollReveal animation="fade-up" delay={0.1}>
+            <h1 className="font-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.05]">
+              The world&apos;s news,<br />
+              <span className="text-gradient">three bullets.</span>
+            </h1>
+          </ScrollReveal>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Stop skimming hundreds of articles. Distiller delivers concise, verified briefings
-            that keep you informed without the information overload.
-          </p>
+          <ScrollReveal animation="fade-up" delay={0.2}>
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Stop skimming hundreds of articles. Distiller delivers concise, verified briefings
+              that keep you informed without the information overload.
+            </p>
+          </ScrollReveal>
 
-          <AskTheNewsForm />
+          <ScrollReveal animation="fade-up" delay={0.3}>
+            <AskTheNewsForm />
+          </ScrollReveal>
 
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Button size="lg" asChild>
-              <Link href="/auth/signup">
-                Start for free
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link href="/RefinedFeed">Browse the feed</Link>
-            </Button>
-          </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            7-day Pro trial included · No credit card required
-          </p>
+          <ScrollReveal animation="fade-up" delay={0.4}>
+            <div className="mt-10 flex flex-wrap justify-center gap-4">
+              <Button size="lg" asChild>
+                <Link href="/auth/signup">
+                  Start for free
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/RefinedFeed">Browse the feed</Link>
+              </Button>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              7-day Pro trial included · No credit card required
+            </p>
+          </ScrollReveal>
         </div>
 
-        <div className="mx-auto max-w-5xl px-6 pb-20">
-          <div className="grid gap-4 sm:grid-cols-4">
+        {/* Terminal demo */}
+        <HeroTerminal />
+
+        <div className="mx-auto max-w-5xl px-6 pb-20 pt-16">
+          <StaggerChildren staggerDelay={0.1} className="grid gap-4 sm:grid-cols-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="rounded-2xl border border-border bg-card/50 p-4 text-center">
+              <div key={stat.label} className="rounded-2xl border border-border bg-card/50 p-4 text-center transition-all hover:border-primary/30 hover:bg-card hover:shadow-soft">
                 <p className="font-display text-3xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
               </div>
             ))}
-          </div>
+          </StaggerChildren>
         </div>
       </section>
 

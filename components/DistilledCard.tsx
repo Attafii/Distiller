@@ -53,21 +53,21 @@ export const DistilledCard = memo(function DistilledCard({
     <motion.article
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -4 }}
       className="h-full"
     >
-      <Card className="flex h-full flex-col overflow-hidden border-border/90 bg-card/90 shadow-soft backdrop-blur">
+      <Card className="flex h-full flex-col overflow-hidden border-border/90 bg-card/90 shadow-soft backdrop-blur transition-all duration-300 hover:border-primary/30 hover:shadow-lg gradient-border">
         <CardHeader className="space-y-4 border-b border-border/80 bg-card/20">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="default">
+              <Badge variant="default" className="transition-colors duration-200">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 AI Summary
               </Badge>
-              <Badge variant="outline">{topicLabel}</Badge>
+              <Badge variant="outline" className="transition-colors duration-200">{topicLabel}</Badge>
               {article.priority !== "normal" ? (
-                <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-100">
+                <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-100 animate-pulse">
                   <span className="mr-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]" />
                   {priorityLabel}
                 </Badge>
