@@ -104,12 +104,19 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Enforce free-plan monthly article limits for authenticated users
+  // Check free-plan monthly article limits for authenticated users (don't reserve yet)
+  let freePlanUser = false;
   if (!isGuest && session?.user) {
     const sub = await getUserSubscription(session.user.id);
     const plan = sub?.plan ?? "free";
+    freePlanUser = plan === "free";
+  }
 
-    if (plan === "free") {
+  try {
+    const { articles, provider } = await fetchWithFallback({ category, country, dateRange, page, pageSize, query });
+
+    // Reserve quota AFTER successful fetch for free-plan users
+    if (freePlanUser && session?.user) {
       const yearMonth = new Date().toISOString().slice(0, 7);
       const usage = await reserveMonthlyArticleUsage(session.user.id, yearMonth);
       if (!usage) {
@@ -119,10 +126,6 @@ export async function GET(request: NextRequest) {
         }, { status: 429, headers });
       }
     }
-  }
-
-  try {
-    const { articles, provider } = await fetchWithFallback({ category, country, dateRange, page, pageSize, query });
     const distillService = DistillService.fromEnv();
     const batchSize = Math.max(1, Number(process.env.DISTILL_BATCH_SIZE ?? "3"));
     const distilled: Array<NewsArticle & { summary: DistilledSummary }> = [];
