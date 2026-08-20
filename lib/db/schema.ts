@@ -159,6 +159,8 @@ export const userPreferences = pgTable("user_preferences", {
   deliveryPreference: text("delivery_preference").default("web"),
   dailyEmailEnabled: boolean("daily_email_enabled").default(false),
   dailyEmailTime: text("daily_email_time").default("07:00"),
+  breakingNewsEnabled: boolean("breaking_news_enabled").default(false),
+  weeklySummaryEnabled: boolean("weekly_summary_enabled").default(false),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()

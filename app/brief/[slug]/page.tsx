@@ -21,21 +21,23 @@ export async function generateMetadata({ searchParams }: BriefPageProps): Promis
   const params = await searchParams;
   const title = params.title ? decodeURIComponent(params.title) : "Brief";
   const description = params.insight ? decodeURIComponent(params.insight) : "AI-powered news brief from Distiller.";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
+  const slug = (params.title ?? "brief").slice(0, 60).replace(/\s+/g, "-").toLowerCase();
   return {
     title: `${title} · Distiller`,
     description,
-    alternates: { canonical: `https://distiller.attafii.dev/brief/${(params.title ?? "brief").slice(0, 60).replace(/\s+/g, "-").toLowerCase()}` },
+    alternates: { canonical: `${siteUrl}/brief/${slug}` },
     openGraph: {
       title: `${title} · Distiller`,
       description,
-      images: [`https://distiller.attafii.dev/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description.slice(0, 100))}`],
+      images: [`${siteUrl}/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description.slice(0, 100))}`],
       type: "article"
     },
     twitter: {
       card: "summary_large_image",
       title: `${title} · Distiller`,
       description,
-      images: [`https://distiller.attafii.dev/api/og?title=${encodeURIComponent(title)}`]
+      images: [`${siteUrl}/api/og?title=${encodeURIComponent(title)}`]
     }
   };
 }

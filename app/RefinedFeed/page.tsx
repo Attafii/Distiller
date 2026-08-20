@@ -85,6 +85,7 @@ export default function RefinedFeedPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [assistantQuery, setAssistantQuery] = useState<string | undefined>(undefined);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
 
@@ -104,7 +105,9 @@ export default function RefinedFeedPage() {
       setSearchTerm(urlQuery);
       setSearchQuery(urlQuery);
     }
-    if (urlMode && ["auto", "fast", "balanced", "deep"].includes(urlMode)) {
+    if (urlMode === "assistant" && urlQuery) {
+      setAssistantQuery(urlQuery);
+    } else if (urlMode && ["auto", "fast", "balanced", "deep"].includes(urlMode)) {
       setSummaryMode(urlMode as SummarizationMode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -404,7 +407,7 @@ export default function RefinedFeedPage() {
   return (
     <main className="min-h-screen bg-transparent text-foreground">
       <section className="mx-auto max-w-[1440px] px-4 md:px-6 lg:px-8 py-6">
-        <NewsAssistant category={category} country={country} dateRange={dateRange} />
+        <NewsAssistant category={category} country={country} dateRange={dateRange} initialQuery={assistantQuery} />
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}

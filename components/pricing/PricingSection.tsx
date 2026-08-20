@@ -20,8 +20,8 @@ const tiers = [
     highlight: false,
     features: [
       { text: "50 articles/month", included: true },
-      { text: "15 topics", included: true },
-      { text: "15 regions", included: true },
+      { text: "2 topics", included: true },
+      { text: "2 regions", included: true },
       { text: "Basic filters", included: true },
       { text: "Bookmarks", included: false },
       { text: "Reading history", included: false },

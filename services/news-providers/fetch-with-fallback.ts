@@ -1,6 +1,6 @@
 import "server-only";
 
-import { fetchNewsArticles } from "@/services/newsapi";
+import { fetchNewsArticles, buildDemoArticles } from "@/services/newsapi";
 import type { NewsArticle } from "@/types/news";
 
 import { gnewsProvider } from "./gnews";
@@ -54,7 +54,8 @@ export async function fetchWithFallback(params: FetchFeedParams): Promise<{
     }
   }
 
-  // All providers failed — return empty (caller can fall back to demo articles)
-  console.warn("[NewsProviders] All providers exhausted:", errors);
-  return { articles: [], provider: "none" };
+  // All providers failed — fall back to demo articles
+  console.warn("[NewsProviders] All providers exhausted, serving demo articles:", errors);
+  const demoArticles = buildDemoArticles(params.category ?? "tech");
+  return { articles: demoArticles, provider: "demo" };
 }

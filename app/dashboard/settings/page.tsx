@@ -73,8 +73,8 @@ export default async function SettingsPage() {
         <CardContent>
           <NotificationSettings
             dailyEmailEnabled={prefs?.dailyEmailEnabled ?? false}
-            breakingNewsEnabled={false}
-            weeklySummaryEnabled={false}
+            breakingNewsEnabled={prefs?.breakingNewsEnabled ?? false}
+            weeklySummaryEnabled={prefs?.weeklySummaryEnabled ?? false}
           />
         </CardContent>
       </Card>

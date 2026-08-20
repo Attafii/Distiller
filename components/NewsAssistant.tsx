@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { motion } from "framer-motion";
 import { Bot, Loader2, Send, Sparkles, User2 } from "lucide-react";
@@ -37,17 +37,20 @@ function makeId() {
 export function NewsAssistant({
   category,
   country,
-  dateRange
+  dateRange,
+  initialQuery
 }: {
   category: Category;
   country: CountryCode;
   dateRange: DateRange;
+  initialQuery?: string;
 }) {
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(initialQuery ?? "");
   const [messages, setMessages] = useState<NewsAssistantMessage[]>([]);
   const [latestSources, setLatestSources] = useState<NewsAssistantResponse["articles"]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
 
   const categoryLabel = TOPIC_OPTIONS.find((option) => option.id === category)?.label ?? category;
   const countryLabel = COUNTRY_OPTIONS.find((option) => option.id === country)?.label ?? country;
@@ -145,6 +148,21 @@ export function NewsAssistant({
     }
   };
 
+  // Auto-submit when initialQuery is provided
+  useEffect(() => {
+    if (initialQuery && !hasAutoSubmitted && messages.length === 0) {
+      setHasAutoSubmitted(true);
+      // Trigger submit after a short delay to ensure component is mounted
+      const timer = setTimeout(() => {
+        const form = document.querySelector('form[data-news-assistant]') as HTMLFormElement;
+        if (form) {
+          form.requestSubmit();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initialQuery, hasAutoSubmitted, messages.length]);
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -191,7 +209,7 @@ export function NewsAssistant({
             </div>
           </div>
 
-          <form onSubmit={submitQuestion} className="grid gap-3 lg:grid-cols-[1fr_auto]">
+          <form onSubmit={submitQuestion} data-news-assistant className="grid gap-3 lg:grid-cols-[1fr_auto]">
             <label htmlFor="news-assistant-question" className="sr-only">
               Ask the news assistant
             </label>

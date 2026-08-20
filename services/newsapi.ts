@@ -407,7 +407,7 @@ const demoDeck: Record<Category, Array<DemoArticleSeed>> = {
   ]
 };
 
-function buildDemoArticles(category: Category): NewsArticle[] {
+export function buildDemoArticles(category: Category): NewsArticle[] {
   const base = demoDeck[category];
   const publishedAtBase = Date.now();
 
