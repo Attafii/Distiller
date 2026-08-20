@@ -102,6 +102,32 @@ function createAuth() {
       window: 60,
       max: 100
     },
+    advanced: {
+      cookies: {
+        state: {
+          attributes: {
+            sameSite: "lax",
+            secure: true,
+            path: "/"
+          }
+        },
+        session_token: {
+          attributes: {
+            sameSite: "lax",
+            secure: true,
+            path: "/"
+          }
+        }
+      },
+      generateId: () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let id = "";
+        for (let i = 0; i < 32; i++) {
+          id += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return id;
+      }
+    },
     secret: process.env.BETTER_AUTH_SECRET
   };
 
