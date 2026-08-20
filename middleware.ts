@@ -16,32 +16,45 @@ const BLOCKED_PATTERNS = [
   /\.next\//
 ];
 
+const PROTECTED_ROUTES = ["/dashboard", "/onboarding"];
+
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Block sensitive file patterns
   for (const pattern of BLOCKED_PATTERNS) {
     if (pattern.test(pathname)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
   }
 
-  if (pathname.startsWith("/api/")) {
-    const response = NextResponse.next();
-    for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
-      response.headers.set(key, value);
+  // Auth protection for dashboard and onboarding
+  const isProtected = PROTECTED_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  if (isProtected) {
+    const sessionCookie =
+      request.cookies.get("better-auth.session_token") ??
+      request.cookies.get("better-auth.session-token");
+
+    if (!sessionCookie) {
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return addSecurityHeaders(NextResponse.redirect(loginUrl));
     }
-    return response;
   }
 
-  if (pathname === "/" || pathname.startsWith("/RefinedFeed") || pathname.startsWith("/refined-feed")) {
-    const response = NextResponse.next();
-    for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
-      response.headers.set(key, value);
-    }
-    return response;
-  }
-
-  return NextResponse.next();
+  // Add security headers to all responses
+  const response = NextResponse.next();
+  return addSecurityHeaders(response);
 }
 
 export const config = {

@@ -18,12 +18,12 @@ function createAuth() {
     try {
       return new URL(siteUrl).origin;
     } catch {
-      return siteUrl;
+      return siteUrl.replace(/\/+$/, "");
     }
   })();
 
   const authOptions: Parameters<typeof betterAuth>[0] = {
-    baseURL: siteUrl,
+    baseURL: normalizedSiteOrigin,
     trustedOrigins: (request) => {
       const trusted = new Set<string>([normalizedSiteOrigin]);
 
