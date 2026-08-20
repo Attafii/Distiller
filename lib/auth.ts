@@ -85,14 +85,14 @@ function createAuth() {
         state: {
           attributes: {
             sameSite: "lax",
-            secure: true,
+            secure: process.env.NODE_ENV === "production",
             path: "/"
           }
         },
         session_token: {
           attributes: {
             sameSite: "lax",
-            secure: true,
+            secure: process.env.NODE_ENV === "production",
             path: "/"
           }
         }

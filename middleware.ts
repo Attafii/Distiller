@@ -41,8 +41,11 @@ export function middleware(request: NextRequest) {
   );
 
   if (isProtected) {
+    // Better Auth cookie names: in production (HTTPS) it prefixes with __Secure-
     const sessionCookie =
+      request.cookies.get("__Secure-better-auth.session_token") ??
       request.cookies.get("better-auth.session_token") ??
+      request.cookies.get("__Secure-better-auth.session-token") ??
       request.cookies.get("better-auth.session-token");
 
     if (!sessionCookie) {
