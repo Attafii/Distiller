@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, Plus, Trash2 } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
@@ -9,6 +8,7 @@ import { getDb } from "@/lib/db";
 import { alerts } from "@/lib/db/schema";
 import { headers } from "next/headers";
 import { eq, desc, and } from "drizzle-orm";
+import { AlertCreator } from "@/components/dashboard/AlertCreator";
 
 export const metadata: Metadata = {
   title: "Alerts",
@@ -32,18 +32,16 @@ export default async function AlertsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Alerts</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Get notified when keywords appear in the news.</p>
-        </div>
-        <Button asChild>
-          <Link href="/RefinedFeed">
-            <Plus className="h-4 w-4" />
-            Create alert
-          </Link>
-        </Button>
+      <div>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Alerts</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Get notified when keywords appear in the news.</p>
       </div>
+
+      <Card className="border-border bg-card">
+        <CardContent className="p-6">
+          <AlertCreator />
+        </CardContent>
+      </Card>
 
       <Card className="border-border bg-card">
         <CardContent className="p-6">
@@ -54,9 +52,6 @@ export default async function AlertsPage() {
               <p className="mt-2 text-sm text-muted-foreground max-w-xs">
                 Create keyword alerts to get notified when specific topics appear in the feed.
               </p>
-              <Button variant="outline" className="mt-6" asChild>
-                <Link href="/RefinedFeed">Browse topics</Link>
-              </Button>
             </div>
           ) : (
             <div className="space-y-3">
