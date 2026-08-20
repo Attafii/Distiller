@@ -6,7 +6,7 @@ import { analyzeNewsQuestion, rankNewsArticles } from "@/lib/news-assistant";
 import { CATEGORY_VALUES, COUNTRY_VALUES, DATE_RANGE_VALUES } from "@/lib/news-options";
 import { buildRagContext } from "@/lib/rag";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { fetchNewsArticles } from "@/services/newsapi";
+import { fetchWithFallback } from "@/services/news-providers";
 import type { Category, CountryCode, DateRange, NewsAssistantArticleContext, NewsAssistantResponse } from "@/types/news";
 
 export const dynamic = "force-dynamic";
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
   const resolvedDateRange = dateRange ?? "any";
 
   try {
-    const primaryResult = await fetchNewsArticles({
+    const primaryResult = await fetchWithFallback({
       category: resolvedCategory as Category,
       country: resolvedCountry as CountryCode,
       dateRange: resolvedDateRange as DateRange,
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     const fallbackResult = primaryResult.articles.length > 0 || analysis.searchQuery === question.trim()
       ? primaryResult
-      : await fetchNewsArticles({
+      : await fetchWithFallback({
           category: resolvedCategory as Category,
           country: resolvedCountry as CountryCode,
           dateRange: resolvedDateRange as DateRange,
