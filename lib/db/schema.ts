@@ -38,7 +38,12 @@ export const accounts = pgTable("accounts", {
   password: text("password"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()
-});
+}, (table) => ({
+  providerAccountUnique: uniqueIndex("accounts_provider_id_account_id_unique").on(
+    table.providerId,
+    table.accountId
+  )
+}));
 
 export const verifications = pgTable("verifications", {
   id: text("id").primaryKey(),
