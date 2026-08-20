@@ -11,6 +11,7 @@ import { bookmarks, readingHistory, alerts, subscriptions } from "@/lib/db/schem
 import { headers } from "next/headers";
 import { eq, count } from "drizzle-orm";
 import { getMonthlyArticleUsage, FREE_MONTHLY_ARTICLE_LIMIT } from "@/lib/db/queries";
+import { PLAN_LIMITS_DISPLAY } from "@/lib/plans-display";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -104,23 +105,21 @@ export default async function DashboardPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              { name: "Free", price: "$0", features: ["50 articles/month", "Basic filters", "Email support"], highlighted: false },
-              { name: "Pro", price: "$9/mo", features: ["Unlimited articles", "Advanced filters", "Priority support"], highlighted: true },
-              { name: "Team", price: "$29/mo", features: ["5 seats", "Shared feeds", "Priority support"], highlighted: false }
-            ].map((plan) => (
+            {PLAN_LIMITS_DISPLAY.filter((p) => p.publiclyVisible).map((plan) => (
               <div
-                key={plan.name}
+                key={plan.id}
                 className={`rounded-2xl border p-5 ${
-                  plan.highlighted
+                  plan.id === "pro"
                     ? "border-primary/30 bg-primary/5 shadow-soft"
                     : "border-border bg-card"
                 }`}
               >
                 <p className="font-display text-lg font-semibold">{plan.name}</p>
-                <p className="mt-1 text-2xl font-bold">{plan.price}</p>
+                <p className="mt-1 text-2xl font-bold">
+                  {plan.priceMonthly === 0 ? "Free" : `$${plan.priceMonthly}/mo`}
+                </p>
                 <ul className="mt-4 space-y-2">
-                  {plan.features.map((f) => (
+                  {plan.features.slice(0, 3).map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                       {f}
@@ -128,12 +127,12 @@ export default async function DashboardPage() {
                   ))}
                 </ul>
                 <Button
-                  variant={plan.highlighted ? "default" : "outline"}
+                  variant={plan.id === "pro" ? "default" : "outline"}
                   size="sm"
                   className="mt-5 w-full"
                   asChild
                 >
-                  <Link href="/pricing">{plan.highlighted ? "Get started" : "Learn more"}</Link>
+                  <Link href="/pricing">{plan.id === "pro" ? "Get started" : "Learn more"}</Link>
                 </Button>
               </div>
             ))}

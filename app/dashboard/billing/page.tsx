@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { PLAN_LIMITS_DISPLAY } from "@/lib/plans-display";
 
 export const metadata: Metadata = {
   title: "Billing",
@@ -33,38 +34,13 @@ export default async function BillingPage() {
   const currentPlan = subscription?.plan ?? "free";
   const status = subscription?.status ?? "active";
 
-  const plans = [
-    {
-      id: "free",
-      name: "Free",
-      price: "$0",
-      period: "forever",
-      description: "For curious readers",
-      features: ["50 articles/month", "Basic topic filters", "RAG-grounded summaries", "Email support"],
-      cta: "Current plan",
-      highlighted: currentPlan === "free"
-    },
-    {
-      id: "pro",
-      name: "Pro",
-      price: "$9",
-      period: "per month",
-      description: "For power readers",
-      features: ["Unlimited articles", "All regions + topics", "Deep summary mode", "Priority support", "Bookmarks + history"],
-      cta: currentPlan === "pro" ? "Current plan" : "Upgrade to Pro",
-      highlighted: currentPlan === "pro"
-    },
-    {
-      id: "team",
-      name: "Team",
-      price: "$29",
-      period: "per month",
-      description: "For research teams",
-      features: ["5 seats", "Shared team feeds", "All Pro features", "Dedicated support", "Custom alerts"],
-      cta: currentPlan === "team" ? "Current plan" : "Upgrade to Team",
-      highlighted: currentPlan === "team"
-    }
-  ];
+  const plans = PLAN_LIMITS_DISPLAY.filter((p) => p.publiclyVisible).map((plan) => ({
+    ...plan,
+    price: plan.priceMonthly === 0 ? "$0" : `$${plan.priceMonthly}`,
+    period: plan.priceMonthly === 0 ? "forever" : "per month",
+    cta: currentPlan === plan.id ? "Current plan" : `Upgrade to ${plan.name}`,
+    highlighted: currentPlan === plan.id
+  }));
 
   return (
     <div className="space-y-8">
@@ -110,7 +86,7 @@ export default async function BillingPage() {
           >
             <CardHeader>
               <CardTitle className="font-display text-xl">{plan.name}</CardTitle>
-              <CardDescription className="text-sm">{plan.description}</CardDescription>
+              <CardDescription className="text-sm">{plan.tagline}</CardDescription>
               <div className="mt-3 flex items-baseline gap-1">
                 <span className="text-3xl font-bold">{plan.price}</span>
                 <span className="text-sm text-muted-foreground">{plan.period}</span>
