@@ -54,9 +54,10 @@ export async function POST(request: NextRequest) {
         const subscriptionId = session.subscription as string;
         if (subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          const sub = subscription as unknown as { current_period_end?: number };
-          if (sub.current_period_end) {
-            currentPeriodEnd = new Date(sub.current_period_end * 1000);
+          // ponytail: Stripe types don't include current_period_end but it's always there
+          const periodEnd = (subscription as unknown as Record<string, unknown>).current_period_end;
+          if (typeof periodEnd === "number") {
+            currentPeriodEnd = new Date(periodEnd * 1000);
           }
         }
 
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
               stripeSubscriptionId: subscription.id,
               plan: (subscription.metadata?.plan as "pro" | "team") ?? existingRecord.plan,
               status,
-              currentPeriodEnd: new Date((subscription as Stripe.Subscription & { current_period_end: number }).current_period_end * 1000),
+              currentPeriodEnd: new Date(((subscription as unknown as Record<string, unknown>).current_period_end as number) * 1000),
               updatedAt: new Date()
             })
             .where(eq(subscriptions.id, existingRecord.id));
@@ -152,8 +153,8 @@ export async function POST(request: NextRequest) {
         const userId = subscription.metadata?.userId;
         const plan = (subscription.metadata?.plan as "pro" | "team") ?? "pro";
 
-        const sub = subscription as unknown as { current_period_end?: number };
-        const currentPeriodEnd = sub.current_period_end
+        const sub = subscription as unknown as Record<string, unknown>;
+        const currentPeriodEnd = typeof sub.current_period_end === "number"
           ? new Date(sub.current_period_end * 1000)
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 

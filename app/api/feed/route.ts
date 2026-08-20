@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     }
 
     country = "global";
-    category = GUEST_ALLOWED_TOPICS.includes(category as "world" | "tech") ? category : "world";
+    category = GUEST_ALLOWED_TOPICS.includes(category as typeof GUEST_ALLOWED_TOPICS[number]) ? category : "world";
     pageSize = Math.min(pageSize, access.remaining);
     if (pageSize <= 0) {
       return NextResponse.json({

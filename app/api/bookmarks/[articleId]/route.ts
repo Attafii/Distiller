@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { bookmarks } from "@/lib/db/schema";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { and, eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,11 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ articleId: string }> }
 ) {
+  const rateLimit = await checkRateLimit(request);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
+
   const session = await auth.api.getSession({ request, headers: request.headers });
 
   if (!session?.user) {

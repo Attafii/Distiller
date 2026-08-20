@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { NotificationToggle } from "./NotificationToggle";
 
@@ -15,23 +16,32 @@ export function NotificationSettings({
   weeklySummaryEnabled
 }: NotificationSettingsProps) {
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
 
   const updatePreference = async (field: string, value: boolean) => {
-    const res = await fetch("/api/user/preferences", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [field]: value })
-    });
+    setError(null);
+    try {
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value })
+      });
 
-    if (!res.ok) {
-      throw new Error("Failed to update preference");
+      if (!res.ok) {
+        throw new Error("Failed to update preference");
+      }
+
+      router.refresh();
+    } catch {
+      setError("Failed to save. Please try again.");
     }
-
-    router.refresh();
   };
 
   return (
     <div className="space-y-3">
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
       <NotificationToggle
         label="Daily digest email"
         description="Receive a daily summary of top stories"

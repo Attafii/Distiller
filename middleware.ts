@@ -11,8 +11,8 @@ const SECURITY_HEADERS = {
 
 const BLOCKED_PATTERNS = [
   /\.(git|env|log|config|secret|key|crt|pem)$/i,
-  /(^|\/)\.\./,
-  /node_modules/,
+  /(^|\/)\.\.\//,  // ponytail: only block path traversal with trailing slash
+  /\/node_modules\//,
   /\.next\//
 ];
 

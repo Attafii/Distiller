@@ -124,6 +124,7 @@ export async function deleteAlert(userId: string, alertId: number) {
   return deleted;
 }
 
+// ponytail: returns null when limit reached OR on DB error — caller should treat both as "quota exhausted"
 export async function reserveMonthlyArticleUsage(
   userId: string,
   yearMonth: string,

@@ -62,7 +62,26 @@ export const FREE_MONTHLY_ARTICLE_LIMIT = PLAN_LIMITS.free.articlesPerMonth;
 const GUEST_TTL_SECONDS = 24 * 60 * 60;
 
 // ponytail: in-memory fallback when Upstash env vars are missing
+// Cap at 10k entries to prevent unbounded growth; evicts oldest on overflow
+const MAX_GUEST_ENTRIES = 10_000;
 const guestViewCounts = new Map<string, { count: number; dateStr: string }>();
+
+function evictOldEntries(map: Map<string, { count: number; dateStr: string }>) {
+  if (map.size > MAX_GUEST_ENTRIES) {
+    const today = new Date().toISOString().split("T")[0];
+    for (const [key, entry] of map) {
+      if (entry.dateStr !== today) map.delete(key);
+    }
+    // If still over limit, delete oldest 20%
+    if (map.size > MAX_GUEST_ENTRIES) {
+      let toDelete = Math.floor(map.size * 0.2);
+      for (const [key] of map) {
+        if (toDelete-- <= 0) break;
+        map.delete(key);
+      }
+    }
+  }
+}
 
 let redisClient: Redis | null = null;
 
@@ -86,6 +105,7 @@ function getGuestCountInMemory(ip: string): number {
   const entry = guestViewCounts.get(ip);
   if (!entry || entry.dateStr !== today) {
     guestViewCounts.set(ip, { count: 0, dateStr: today });
+    evictOldEntries(guestViewCounts);
     return 0;
   }
   return entry.count;

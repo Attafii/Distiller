@@ -11,12 +11,18 @@ interface BreakerEntry {
 
 const DEFAULT_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_FAILURES = 3;
+const MAX_BREAKERS = 100; // ponytail: only a few providers expected, cap prevents leak
 
 const breakers = new Map<string, BreakerEntry>();
 
 function getBreaker(providerId: string): BreakerEntry {
   let entry = breakers.get(providerId);
   if (!entry) {
+    // Evict if at cap (unlikely with <10 providers)
+    if (breakers.size >= MAX_BREAKERS) {
+      const oldest = breakers.keys().next().value;
+      if (oldest) breakers.delete(oldest);
+    }
     entry = { state: "closed", failures: 0, openedAt: 0, cooldownMs: DEFAULT_COOLDOWN_MS };
     breakers.set(providerId, entry);
   }

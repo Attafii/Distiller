@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { motion } from "framer-motion";
 import { Bot, Loader2, Send, Sparkles, User2 } from "lucide-react";
@@ -51,6 +51,7 @@ export function NewsAssistant({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const categoryLabel = TOPIC_OPTIONS.find((option) => option.id === category)?.label ?? category;
   const countryLabel = COUNTRY_OPTIONS.find((option) => option.id === country)?.label ?? country;
@@ -152,12 +153,8 @@ export function NewsAssistant({
   useEffect(() => {
     if (initialQuery && !hasAutoSubmitted && messages.length === 0) {
       setHasAutoSubmitted(true);
-      // Trigger submit after a short delay to ensure component is mounted
       const timer = setTimeout(() => {
-        const form = document.querySelector('form[data-news-assistant]') as HTMLFormElement;
-        if (form) {
-          form.requestSubmit();
-        }
+        formRef.current?.requestSubmit();
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -209,7 +206,7 @@ export function NewsAssistant({
             </div>
           </div>
 
-          <form onSubmit={submitQuestion} data-news-assistant className="grid gap-3 lg:grid-cols-[1fr_auto]">
+          <form ref={formRef} onSubmit={submitQuestion} className="grid gap-3 lg:grid-cols-[1fr_auto]">
             <label htmlFor="news-assistant-question" className="sr-only">
               Ask the news assistant
             </label>

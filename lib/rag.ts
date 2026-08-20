@@ -153,10 +153,15 @@ async function embedText(text: string): Promise<number[]> {
 }
 
 async function rankWithEmbeddings(chunks: string[], query: string, maxChunks: number): Promise<string[]> {
-  const [queryEmbedding, ...chunkEmbeddings] = await Promise.all([
-    embedText(query),
-    ...chunks.map((chunk) => embedText(chunk))
-  ]);
+  // ponytail: batch chunk embeddings in groups of 3 to avoid API hammering
+  const queryEmbedding = await embedText(query);
+  const chunkEmbeddings: number[][] = [];
+  const BATCH_SIZE = 3;
+  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+    const batch = chunks.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map((chunk) => embedText(chunk)));
+    chunkEmbeddings.push(...results);
+  }
 
   return chunks
     .map((chunk, index) => ({

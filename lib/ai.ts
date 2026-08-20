@@ -138,17 +138,25 @@ async function webSearch(query: string): Promise<WebSearchResult[]> {
     const html = await response.text();
     const results: WebSearchResult[] = [];
 
-    const resultPattern = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
-    let match: RegExpExecArray | null;
+    // ponytail: multiple regex patterns as fallback as DDG HTML structure may change
+    const patterns = [
+      /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi,
+      /<a[^>]*class="result__url"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi,
+      /<a[^>]*rel="nofollow"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi
+    ];
 
-    while ((match = resultPattern.exec(html)) !== null && results.length < 5) {
-      const url = match[1].replace(/&amp;/g, "&").replace(/.*uddg=/, "").replace(/&rut=.*$/, "");
-      const title = match[2].replace(/<[^>]*>/g, "").trim();
-      const snippet = match[3].replace(/<[^>]*>/g, "").trim();
+    for (const pattern of patterns) {
+      let match: RegExpExecArray | null;
+      while ((match = pattern.exec(html)) !== null && results.length < 5) {
+        const url = match[1].replace(/&amp;/g, "&").replace(/.*uddg=/, "").replace(/&rut=.*$/, "");
+        const title = match[2].replace(/<[^>]*>/g, "").trim();
+        const snippet = match[3]?.replace(/<[^>]*>/g, "").trim() ?? "";
 
-      if (title && url) {
-        results.push({ title, snippet, url: decodeURIComponent(url) });
+        if (title && url && !results.some((r) => r.url === url)) {
+          results.push({ title, snippet, url: decodeURIComponent(url) });
+        }
       }
+      if (results.length > 0) break;
     }
 
     return results;
@@ -375,7 +383,7 @@ export class DistillService {
       }
 
       if (typeof parsedJson === "object" && parsedJson !== null) {
-        const structured = parsedJson as { bullets?: unknown; insight?: unknown; conclusion?: unknown };
+        const structured = parsedJson as Record<string, unknown>;
         const bullets = structured.bullets;
         if (Array.isArray(bullets)) {
           const normalized = bullets.map((bullet) => stripBulletPrefix(String(bullet))).filter(Boolean);
@@ -629,8 +637,9 @@ export class DistillService {
 
               if (functionName === "web_search") {
                 try {
-                  const args = JSON.parse(toolCall.function?.arguments ?? "{}") as { query?: string };
-                  const results = await webSearch(args.query ?? "");
+                  const args = JSON.parse(toolCall.function?.arguments ?? "{}") as Record<string, unknown>;
+                  const query = typeof args.query === "string" ? args.query : "";
+                  const results = await webSearch(query);
                   functionResult = results.length > 0
                     ? results.map((r, i) => `[${i + 1}] ${r.title}\n${r.snippet}\n${r.url}`).join("\n\n")
                     : "No results found for this search query.";

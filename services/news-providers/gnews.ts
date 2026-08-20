@@ -9,7 +9,8 @@ import { ProviderUnavailableError } from "./types";
 import type { FetchFeedParams, NewsProvider } from "./types";
 
 const GNEWS_BASE_URL = "https://gnews.io/api/v4";
-const GNEWS_API_KEY = normalizeEnvString(process.env.GNEWS_API_KEY);
+// ponytail: read env at call time, not module load, so dev HMR picks up changes
+function getGnewsKey() { return normalizeEnvString(process.env.GNEWS_API_KEY); }
 
 // GNews categories → our categories
 const CATEGORY_MAP: Partial<Record<Category, string>> = {
@@ -86,6 +87,7 @@ function normalizeGNewsArticle(
 }
 
 async function fetchGNews(params: FetchFeedParams): Promise<NewsArticle[]> {
+  const GNEWS_API_KEY = getGnewsKey();
   if (!GNEWS_API_KEY) {
     throw new ProviderUnavailableError("GNEWS_API_KEY not configured", "gnews");
   }

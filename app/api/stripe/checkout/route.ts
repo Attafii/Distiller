@@ -101,8 +101,8 @@ export async function POST(request: NextRequest) {
             }
       ],
       mode: "subscription",
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/billing?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing?canceled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev"}/dashboard/billing?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev"}/pricing?canceled=true`,
       subscription_data: {
         metadata: {
           userId: session.user.id,

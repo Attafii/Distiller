@@ -24,18 +24,28 @@ export async function GET(request: NextRequest) {
       userId: userPreferences.userId,
       email: users.email,
       topics: userPreferences.topics,
-      regions: userPreferences.regions
+      regions: userPreferences.regions,
+      dailyEmailTime: userPreferences.dailyEmailTime
     })
     .from(userPreferences)
     .innerJoin(users, eq(userPreferences.userId, users.id))
     .where(eq(userPreferences.dailyEmailEnabled, true));
 
-  if (subscribedUsers.length === 0) {
-    console.log("[DailyBriefing] No users with daily email enabled");
-    return NextResponse.json({ sent: 0, failed: 0, note: "No subscribers" });
+  // ponytail: filter by user's preferred hour if cron runs on a schedule
+  // If CRON_SECRET is set, assume Vercel cron which runs at fixed times
+  // Filter users whose preferred hour matches current UTC hour
+  const currentHour = new Date().getUTCHours().toString().padStart(2, "0");
+  const eligibleUsers = subscribedUsers.filter((u) => {
+    const preferredHour = (u.dailyEmailTime ?? "07:00").split(":")[0];
+    return preferredHour === currentHour;
+  });
+
+  if (eligibleUsers.length === 0) {
+    console.log("[DailyBriefing] No users due at this hour");
+    return NextResponse.json({ sent: 0, failed: 0, note: "No subscribers due at this hour" });
   }
 
-  console.log(`[DailyBriefing] Found ${subscribedUsers.length} subscribers`);
+  console.log(`[DailyBriefing] Found ${eligibleUsers.length} subscribers due at ${currentHour}:00`);
 
   // Fetch top articles (global tech news as default)
   let articles;
@@ -93,7 +103,7 @@ export async function GET(request: NextRequest) {
   let sent = 0;
   let failed = 0;
 
-  for (const user of subscribedUsers) {
+  for (const user of eligibleUsers) {
     try {
       const email = buildDailyBriefingEmail(summarizedArticles);
       await sendEmail({ to: user.email, subject: email.subject, html: email.html });

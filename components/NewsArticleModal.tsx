@@ -70,11 +70,19 @@ export function NewsArticleModal({
       return;
     }
 
+    // ponytail: use data attribute to track modal count for nested modals
+    const count = Number(document.body.dataset.modalCount ?? "0") + 1;
+    document.body.dataset.modalCount = String(count);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      const newCount = Number(document.body.dataset.modalCount ?? "1") - 1;
+      document.body.dataset.modalCount = String(Math.max(0, newCount));
+      if (newCount <= 0) {
+        document.body.style.overflow = previousOverflow;
+        delete document.body.dataset.modalCount;
+      }
     };
   }, [open]);
 

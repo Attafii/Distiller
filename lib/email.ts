@@ -1,5 +1,14 @@
 const RESEND_API_URL = "https://api.resend.com/emails";
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 type SendEmailInput = {
   to: string;
   subject: string;
@@ -79,12 +88,12 @@ export function buildDailyBriefingEmail(articles: Array<{ title: string; bullets
     .map(
       (a) => `
       <div style="margin-bottom: 24px; padding: 16px; background: #18181b; border-radius: 8px; border: 1px solid #27272a;">
-        <h3 style="color: #fafafa; margin: 0 0 8px; font-size: 16px;">${a.title}</h3>
+        <h3 style="color: #fafafa; margin: 0 0 8px; font-size: 16px;">${escapeHtml(a.title)}</h3>
         <ul style="color: #a1a1aa; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
-          ${a.bullets.map((b) => `<li>${b}</li>`).join("")}
+          ${a.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join("")}
         </ul>
         <p style="margin: 8px 0 0;">
-          <a href="${a.url}" style="color: #3b82f6; font-size: 13px;">Read on ${a.source} →</a>
+          <a href="${a.url}" style="color: #3b82f6; font-size: 13px;">Read on ${escapeHtml(a.source)} →</a>
         </p>
       </div>
     `

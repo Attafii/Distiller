@@ -15,6 +15,15 @@ function rateLimitHeaders(result: { remaining: number; resetIn: number }) {
   };
 }
 
+function sanitizeCsvField(value: string): string {
+  // ponytail: prefix formula-injection chars to prevent Excel formula execution
+  const escaped = value.replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(escaped)) {
+    return `"'${escaped}"`;
+  }
+  return `"${escaped}"`;
+}
+
 export async function GET(request: NextRequest) {
   const rateLimit = await checkRateLimit(request);
   const headers = rateLimitHeaders(rateLimit);
@@ -49,19 +58,20 @@ export async function GET(request: NextRequest) {
     });
 
     if (format === "csv") {
-      const csvHeaders = ["articleId", "title", "url", "description", "source", "category", "publishedAt", "createdAt"];
+      const csvHeaders = ["articleId", "title", "url", "imageUrl", "description", "source", "category", "publishedAt", "createdAt"];
       const csvRows = [
         csvHeaders.join(","),
         ...userBookmarks.map((bm) =>
           [
-            `"${(bm.articleId ?? "").replace(/"/g, '""')}"`,
-            `"${(bm.title ?? "").replace(/"/g, '""')}"`,
-            `"${(bm.url ?? "").replace(/"/g, '""')}"`,
-            `"${(bm.description ?? "").replace(/"/g, '""')}"`,
-            `"${(bm.source ?? "").replace(/"/g, '""')}"`,
-            `"${(bm.category ?? "").replace(/"/g, '""')}"`,
-            `"${bm.publishedAt ? bm.publishedAt.toISOString() : ""}"`,
-            `"${bm.createdAt ? bm.createdAt.toISOString() : ""}"`
+            sanitizeCsvField(bm.articleId ?? ""),
+            sanitizeCsvField(bm.title ?? ""),
+            sanitizeCsvField(bm.url ?? ""),
+            sanitizeCsvField(bm.imageUrl ?? ""),
+            sanitizeCsvField(bm.description ?? ""),
+            sanitizeCsvField(bm.source ?? ""),
+            sanitizeCsvField(bm.category ?? ""),
+            sanitizeCsvField(bm.publishedAt ? bm.publishedAt.toISOString() : ""),
+            sanitizeCsvField(bm.createdAt ? bm.createdAt.toISOString() : "")
           ].join(",")
         )
       ];

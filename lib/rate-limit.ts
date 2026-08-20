@@ -6,6 +6,7 @@ import { normalizeEnvString } from "@/lib/utils";
 
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS = 30;
+const MAX_STORE_ENTRIES = 10_000;
 
 let ratelimit: Ratelimit | null = null;
 let inMemoryStore: Map<string, { count: number; resetAt: number }> | null = null;
@@ -13,6 +14,13 @@ let inMemoryStore: Map<string, { count: number; resetAt: number }> | null = null
 function getInMemoryStore(): Map<string, { count: number; resetAt: number }> {
   if (!inMemoryStore) {
     inMemoryStore = new Map();
+  }
+  // ponytail: evict expired entries to prevent unbounded growth
+  if (inMemoryStore.size > MAX_STORE_ENTRIES) {
+    const now = Date.now();
+    for (const [key, entry] of inMemoryStore) {
+      if (now > entry.resetAt) inMemoryStore.delete(key);
+    }
   }
   return inMemoryStore;
 }
