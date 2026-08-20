@@ -87,23 +87,23 @@ export default function HomePage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-r from-primary/5 via-purple-500/5 to-blue-500/5 blur-3xl" />
         </div>
 
-        <div className="mx-auto max-w-5xl px-6 pt-24 pb-16 text-center">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-16 sm:pt-24 pb-12 sm:pb-16 text-center">
           <ScrollReveal animation="fade-up" delay={0}>
-            <Badge variant="outline" className="mb-8 border-white/[0.08] bg-white/[0.03] text-white/60 backdrop-blur-sm">
+            <Badge variant="outline" className="mb-6 sm:mb-8 border-border/60 bg-card/50 text-muted-foreground backdrop-blur-sm">
               <Sparkles className="mr-1.5 h-3 w-3" />
               News intelligence for curious minds
             </Badge>
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={0.1}>
-            <h1 className="font-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.05]">
+            <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl md:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.1] sm:leading-[1.05]">
               The world&apos;s news,<br />
               <span className="gradient-text">three bullets.</span>
             </h1>
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={0.2}>
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-sm sm:text-base leading-relaxed text-muted-foreground md:text-lg">
               Stop skimming hundreds of articles. Distiller delivers concise, verified briefings
               that keep you informed without the information overload.
             </p>
@@ -114,32 +114,34 @@ export default function HomePage() {
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={0.4}>
-            <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button size="lg" asChild>
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
+              <Button size="lg" asChild className="w-full sm:w-auto">
                 <Link href="/auth/signup">
                   Start for free
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" asChild>
+              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
                 <Link href="/RefinedFeed">Browse the feed</Link>
               </Button>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
               7-day Pro trial included · No credit card required
             </p>
           </ScrollReveal>
         </div>
 
         {/* Terminal demo */}
-        <HeroTerminal />
+        <div className="px-4 sm:px-6">
+          <HeroTerminal />
+        </div>
 
-        <div className="mx-auto max-w-5xl px-6 pb-20 pt-16">
-          <StaggerChildren staggerDelay={0.1} className="grid gap-4 sm:grid-cols-4">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-20 pt-12 sm:pt-16">
+          <StaggerChildren staggerDelay={0.1} className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="rounded-2xl border border-border bg-card/50 p-4 text-center transition-all hover:border-primary/30 hover:bg-card hover:shadow-soft">
-                <p className="font-display text-3xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
+              <div key={stat.label} className="rounded-xl sm:rounded-2xl border border-border bg-card/50 p-3 sm:p-4 text-center transition-all hover:border-primary/30 hover:bg-card hover:shadow-soft">
+                <p className="font-display text-2xl sm:text-3xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
               </div>
             ))}
           </StaggerChildren>
@@ -199,31 +201,31 @@ export default function HomePage() {
         </Card>
       </section>
 
-      <RevealSection className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => (
-            <Card key={feature.title} className="border-border bg-card p-5">
-              <div className="flex size-10 items-center justify-center rounded-xl border border-border bg-primary/10 mb-4">
-                <feature.icon className="h-5 w-5 text-primary" />
+            <Card key={feature.title} className="border-border bg-card p-4 sm:p-5">
+              <div className="flex size-8 sm:size-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-primary/10 mb-3 sm:mb-4">
+                <feature.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-display text-base font-semibold text-foreground">{feature.title}</h3>
+                <h3 className="font-display text-sm sm:text-base font-semibold text-foreground">{feature.title}</h3>
                 {feature.title === "Live RSS Feed" && (
-                  <Badge variant="default" className="text-xs">Pro</Badge>
+                  <Badge variant="default" className="text-[10px] sm:text-xs">Pro</Badge>
                 )}
               </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
             </Card>
           ))}
         </div>
       </RevealSection>
 
-      <RevealSection className="mx-auto max-w-5xl px-6 pb-24" aria-label="How Distiller grounds every brief">
-        <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-center mb-2">
+      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24" aria-label="How Distiller grounds every brief">
+        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground text-center mb-2">
           How Distiller grounds every brief
         </h2>
-        <p className="text-center text-sm text-muted-foreground mb-10">Every bullet traces back to source evidence. No guessing, no fabrication.</p>
-        <div className="grid gap-6 sm:grid-cols-5">
+        <p className="text-center text-xs sm:text-sm text-muted-foreground mb-8 sm:mb-10">Every bullet traces back to source evidence. No guessing, no fabrication.</p>
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-3 lg:grid-cols-5">
           {[
             { step: "1", label: "Article", desc: "We fetch the original story from trusted sources" },
             { step: "2", label: "Chunks", desc: "Text split into ~900-char semantic blocks" },
@@ -232,64 +234,64 @@ export default function HomePage() {
             { step: "5", label: "Summary", desc: "AI generates 3 grounded bullets" }
           ].map(({ step, label, desc }) => (
             <div key={step} className="flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg mb-3">{step}</div>
-              <p className="text-sm font-medium text-foreground">{label}</p>
-              <p className="text-xs text-muted-foreground mt-1">{desc}</p>
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-base sm:text-lg mb-2 sm:mb-3">{step}</div>
+              <p className="text-xs sm:text-sm font-medium text-foreground">{label}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{desc}</p>
             </div>
           ))}
         </div>
       </RevealSection>
 
-      <RevealSection className="mx-auto max-w-5xl px-6 pb-24">
-        <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-center mb-10">
+      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
+        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground text-center mb-8 sm:mb-10">
           Free vs Pro
         </h2>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-border bg-card p-6">
-            <p className="font-display text-xl font-semibold mb-4">Free</p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> 50 articles/month</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> 2 topics</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> 2 regions</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Basic filters</div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> Deep summaries</div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> Bookmarks</div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> Daily email briefing</div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> RSS feed</div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground/50"><Minus className="h-4 w-4" /> Shareable briefs</div>
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+          <Card className="border-border bg-card p-5 sm:p-6">
+            <p className="font-display text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Free</p>
+            <div className="space-y-2 sm:space-y-3">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> 50 articles/month</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> 2 topics</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> 2 regions</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Basic filters</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> Deep summaries</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> Bookmarks</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> Daily email briefing</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> RSS feed</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> Shareable briefs</div>
             </div>
           </Card>
-          <Card className="border-border bg-card p-6 ring-1 ring-primary/15">
-            <div className="flex items-center gap-2 mb-4">
-              <p className="font-display text-xl font-semibold">Pro</p>
-              <Badge variant="default" className="text-xs">Most popular</Badge>
+          <Card className="border-border bg-card p-5 sm:p-6 ring-1 ring-primary/15">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <p className="font-display text-lg sm:text-xl font-semibold">Pro</p>
+              <Badge variant="default" className="text-[10px] sm:text-xs">Most popular</Badge>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Unlimited articles</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> All 15 topics</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> All 15 regions</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Advanced filters + Deep mode</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Bookmarks</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Daily email briefing</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> RSS feed</div>
-              <div className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary" /> Shareable briefs</div>
+            <div className="space-y-2 sm:space-y-3">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Unlimited articles</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> All 15 topics</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> All 15 regions</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Advanced filters + Deep mode</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Bookmarks</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Daily email briefing</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> RSS feed</div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Shareable briefs</div>
             </div>
-            <Button className="mt-5 w-full" asChild>
+            <Button className="mt-4 sm:mt-5 w-full" asChild>
               <Link href="/auth/signup">Start 7-day free trial</Link>
             </Button>
           </Card>
         </div>
       </RevealSection>
 
-      <section className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
-              <Sparkles className="h-5 w-5 text-primary" />
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
+        <div className="rounded-xl sm:rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+            <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl border border-primary/30 bg-primary/10">
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-display text-base font-semibold text-foreground mb-1">Deep Summary Mode</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <h3 className="font-display text-sm sm:text-base font-semibold text-foreground mb-1">Deep Summary Mode</h3>
+              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 Pro readers get extended briefs — more context, more nuance, same zero fluff. Switch modes per article or set it as your default.
               </p>
             </div>
@@ -297,41 +299,41 @@ export default function HomePage() {
         </div>
       </section>
 
-      <RevealSection className="mx-auto max-w-5xl px-6 pb-24">
-        <Card className="border-border bg-card p-8 text-center">
-          <Badge variant="outline" className="mb-4 border-border text-muted-foreground">
+      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
+        <Card className="border-border bg-card p-6 sm:p-8 text-center">
+          <Badge variant="outline" className="mb-3 sm:mb-4 border-border text-muted-foreground">
             100% free to start
           </Badge>
-          <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground mb-4">
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground mb-3 sm:mb-4">
             No credit card. No catch.
           </h2>
-          <p className="mx-auto max-w-lg text-sm leading-relaxed text-muted-foreground mb-8">
+          <p className="mx-auto max-w-lg text-xs sm:text-sm leading-relaxed text-muted-foreground mb-6 sm:mb-8">
             Begin with 50 articles per month on the free plan. Upgrade to Pro for unlimited access,
             advanced filters, and bookmarking. Cancel anytime.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" asChild>
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
+            <Button size="lg" asChild className="w-full sm:w-auto">
               <Link href="/auth/signup">Create free account</Link>
             </Button>
-            <Button variant="ghost" size="lg" asChild>
+            <Button variant="ghost" size="lg" asChild className="w-full sm:w-auto">
               <Link href="/pricing">View all plans</Link>
             </Button>
           </div>
         </Card>
       </RevealSection>
 
-      <RevealSection className="mx-auto max-w-5xl px-6 pb-24">
-        <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-center mb-10">
+      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
+        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground text-center mb-8 sm:mb-10">
           Topics we cover
         </h2>
-        <div className="flex flex-wrap justify-center gap-3">
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
           {[
             "World", "Politics", "Technology", "AI", "Science",
             "Business", "Finance", "Stocks", "Climate",
             "Health", "Education", "Sports", "Entertainment", "Culture", "LLM"
           ].map((topic) => (
             <Link key={topic} href={`/RefinedFeed?category=${topic.toLowerCase()}`}>
-              <Button variant="outline" size="sm" className="rounded-full">
+              <Button variant="outline" size="sm" className="rounded-full text-xs sm:text-sm">
                 {topic}
               </Button>
             </Link>
@@ -339,25 +341,25 @@ export default function HomePage() {
         </div>
       </RevealSection>
 
-      <section id="main-content" className="mx-auto max-w-5xl px-6 pb-24">
-        <Card className="border-border bg-card p-8">
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <div className="flex size-14 items-center justify-center rounded-2xl border border-border bg-primary/10 shrink-0">
-              <Star className="h-6 w-6 text-primary" />
+      <section id="main-content" className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
+        <Card className="border-border bg-card p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <div className="flex size-12 sm:size-14 items-center justify-center rounded-xl sm:rounded-2xl border border-border bg-primary/10 shrink-0">
+              <Star className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
             <div className="text-center sm:text-left flex-1">
-              <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground mb-2">
+              <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-foreground mb-2">
                 Ready to cut through the noise?
               </h2>
-              <p className="text-sm leading-relaxed text-muted-foreground max-w-md">
+              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground max-w-md">
                 Join researchers, developers, and curious readers who stay informed in seconds, not hours.
               </p>
             </div>
-            <div className="flex gap-3 shrink-0">
-              <Button asChild>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
+              <Button asChild className="w-full sm:w-auto">
                 <Link href="/auth/signup">Get started free</Link>
               </Button>
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="w-full sm:w-auto">
                 <Link href="/RefinedFeed">Browse feed</Link>
               </Button>
             </div>

@@ -70,30 +70,30 @@ export function HeroTerminal() {
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="relative mx-auto mt-12 max-w-2xl"
+      className="relative mx-auto mt-8 sm:mt-12 max-w-2xl"
     >
       {/* Ambient glow */}
-      <div className="absolute -inset-8 -z-10">
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-primary/15 via-primary/5 to-transparent blur-2xl" />
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/10 via-transparent to-blue-500/10 blur-3xl" />
+      <div className="absolute -inset-4 sm:-inset-8 -z-10">
+        <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-primary/15 via-primary/5 to-transparent blur-xl sm:blur-2xl" />
+        <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-purple-500/10 via-transparent to-blue-500/10 blur-2xl sm:blur-3xl" />
       </div>
       
       {/* Terminal window - always dark */}
-      <div className="dark overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0f]/95 shadow-2xl backdrop-blur-xl">
+      <div className="dark overflow-hidden rounded-xl sm:rounded-2xl border border-white/[0.08] bg-[#0a0a0f]/95 shadow-2xl backdrop-blur-xl">
         {/* Terminal header */}
-        <div className="flex items-center gap-2 border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
-          <div className="flex gap-2">
-            <div className="h-3 w-3 rounded-full bg-[#ff5f57] shadow-[0_0_8px_rgba(255,95,87,0.4)]" />
-            <div className="h-3 w-3 rounded-full bg-[#febc2e] shadow-[0_0_8px_rgba(254,188,46,0.4)]" />
-            <div className="h-3 w-3 rounded-full bg-[#28c840] shadow-[0_0_8px_rgba(40,200,64,0.4)]" />
+        <div className="flex items-center gap-2 border-b border-white/[0.06] bg-white/[0.02] px-3 sm:px-4 py-2 sm:py-3">
+          <div className="flex gap-1.5 sm:gap-2">
+            <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-[#ff5f57] shadow-[0_0_8px_rgba(255,95,87,0.4)]" />
+            <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-[#febc2e] shadow-[0_0_8px_rgba(254,188,46,0.4)]" />
+            <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-[#28c840] shadow-[0_0_8px_rgba(40,200,64,0.4)]" />
           </div>
-          <span className="ml-3 text-[11px] font-medium text-white/30">distiller — ai summarize</span>
+          <span className="ml-2 sm:ml-3 text-[10px] sm:text-[11px] font-medium text-white/30">distiller — ai summarize</span>
         </div>
 
         {/* Terminal body */}
         <div
           ref={terminalRef}
-          className="max-h-72 overflow-y-auto p-5 font-mono text-[13px] leading-[1.7]"
+          className="max-h-56 sm:max-h-72 overflow-y-auto p-3 sm:p-5 font-mono text-[11px] sm:text-[13px] leading-[1.6] sm:leading-[1.7]"
           aria-label="Terminal animation showing AI summarization process"
         >
           {displayedLines.map((line, i) => (
@@ -106,7 +106,7 @@ export function HeroTerminal() {
               <span className={getLineColor(TERMINAL_LINES[currentLine].type)}>
                 {TERMINAL_LINES[currentLine].text.slice(0, currentChar)}
               </span>
-              <span className="inline-block h-[14px] w-[7px] animate-pulse rounded-sm bg-primary" />
+              <span className="inline-block h-3 w-1.5 sm:h-[14px] sm:w-[7px] animate-pulse rounded-sm bg-primary" />
             </div>
           )}
 
@@ -114,20 +114,20 @@ export function HeroTerminal() {
           {isComplete && (
             <div className="flex items-center gap-2 text-white/20">
               <span>$</span>
-              <span className="inline-block h-[14px] w-[7px] animate-pulse rounded-sm bg-primary" />
+              <span className="inline-block h-3 w-1.5 sm:h-[14px] sm:w-[7px] animate-pulse rounded-sm bg-primary" />
             </div>
           )}
         </div>
       </div>
 
-      {/* Floating badge */}
+      {/* Floating badge - hidden on very small screens */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ delay: 2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute -bottom-4 -right-4 flex items-center gap-2 rounded-full border border-border/60 bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-xl backdrop-blur-xl"
+        className="absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-4 hidden sm:flex items-center gap-2 rounded-full border border-border/60 bg-card/90 px-3 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-medium text-foreground shadow-xl backdrop-blur-xl"
       >
-        <Sparkles className="h-3.5 w-3.5 text-primary" />
+        <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
         AI-powered
       </motion.div>
     </motion.div>

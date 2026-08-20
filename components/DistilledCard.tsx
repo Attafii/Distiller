@@ -105,71 +105,71 @@ export const DistilledCard = memo(function DistilledCard({
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-1 flex-col gap-5 p-6">
-          <section className="space-y-3" aria-label="AI summary">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+        <CardContent className="flex flex-1 flex-col gap-4 sm:gap-5 p-4 sm:p-6">
+          <section className="space-y-2 sm:space-y-3" aria-label="AI summary">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-xs uppercase tracking-[0.24em] text-muted-foreground">
               <span>Distilled insights</span>
-              <span className="font-mono text-[11px] text-muted-foreground" title={COPY.scoreTooltip}>
+              <span className="font-mono text-[10px] sm:text-[11px] text-muted-foreground" title={COPY.scoreTooltip}>
                 {Math.round(article.summary.confidence * 100)}% RAG retrieval confidence
               </span>
             </div>
 
-            <ul className="space-y-3">
+            <ul className="space-y-2 sm:space-y-3">
               {article.summary.bullets.map((bullet, index) => (
                   <li
                   key={`${article.id}-bullet-${index}`}
-                  className="rounded-2xl border border-border bg-card/75 px-4 py-3 text-sm leading-relaxed text-muted-foreground"
+                  className="rounded-xl sm:rounded-2xl border border-border bg-card/75 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm leading-relaxed text-muted-foreground"
                 >
                   {bullet}
                 </li>
               ))}
             </ul>
           </section>
-          <section className="space-y-3 rounded-2xl border border-border bg-card/40 p-4">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              <Layers3 className="h-3.5 w-3.5" />
+          <section className="space-y-2 sm:space-y-3 rounded-xl sm:rounded-2xl border border-border bg-card/40 p-3 sm:p-4">
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs uppercase tracking-[0.24em] text-muted-foreground">
+              <Layers3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span>RAG grounding</span>
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
+            <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
               {article.description ?? "The article did not include a description, so the summary relies on retrieved source context."}
             </p>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
               <Badge variant="outline">{article.summary.retrievedContext.length} snippets</Badge>
             </div>
           </section>
         </CardContent>
-        <CardFooter className="flex flex-wrap gap-2 border-t border-border p-6 pt-5">
+        <CardFooter className="flex flex-wrap gap-1.5 sm:gap-2 border-t border-border p-4 sm:p-6 pt-4 sm:pt-5">
           <Button
             variant="outline"
             size="sm"
-            className={article.likedByViewer ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/10" : "border-border text-foreground hover:bg-card"}
+            className={`text-xs sm:text-sm ${article.likedByViewer ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/10" : "border-border text-foreground hover:bg-card"}`}
             onClick={() => onLikeAction?.(article)}
             disabled={article.likedByViewer}
           >
-            <Heart className="h-4 w-4" fill={article.likedByViewer ? "currentColor" : "none"} />
-            {article.likedByViewer ? "Liked" : "Like"}
+            <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill={article.likedByViewer ? "currentColor" : "none"} />
+            <span className="hidden sm:inline">{article.likedByViewer ? "Liked" : "Like"}</span>
           </Button>
 
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => onShareAction?.(article)}>
-            <Share2 className="h-4 w-4" />
-            Share
+          <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground" onClick={() => onShareAction?.(article)}>
+            <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Share</span>
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
-            className={`hover:text-foreground ${article.bookmarked ? "text-primary" : "text-muted-foreground"}`}
+            className={`text-xs sm:text-sm hover:text-foreground ${article.bookmarked ? "text-primary" : "text-muted-foreground"}`}
             onClick={() => onBookmarkAction?.(article)}
           >
-            <Bookmark className="h-4 w-4" fill={article.bookmarked ? "currentColor" : "none"} />
-            {article.bookmarked ? "Saved" : "Save"}
+            <Bookmark className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill={article.bookmarked ? "currentColor" : "none"} />
+            <span className="hidden sm:inline">{article.bookmarked ? "Saved" : "Save"}</span>
           </Button>
 
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={copySummary}>
-            <Copy className="h-4 w-4" />
-            {copied ? "Copied" : "Copy summary"}
+          <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground" onClick={copySummary}>
+            <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
           </Button>
-          <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-card" onClick={() => onOpenAction?.(article)}>
+          <Button variant="outline" size="sm" className="text-xs sm:text-sm border-border text-foreground hover:bg-card" onClick={() => onOpenAction?.(article)}>
             See more
           </Button>
 
@@ -177,10 +177,11 @@ export const DistilledCard = memo(function DistilledCard({
             href={article.url}
             target="_blank"
             rel="noreferrer"
-            className={buttonStyles({ variant: "secondary", size: "sm", className: "ml-auto" })}
+            className={buttonStyles({ variant: "secondary", size: "sm", className: "ml-auto text-xs sm:text-sm" })}
           >
-            Read original
-            <ExternalLink className="h-4 w-4" />
+            <span className="hidden sm:inline">Read original</span>
+            <span className="sm:hidden">Read</span>
+            <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </a>
         </CardFooter>
       </Card>
