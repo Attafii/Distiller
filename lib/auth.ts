@@ -60,7 +60,7 @@ function createAuth() {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              from: "Distiller <noreply@distiller.attafii.dev>",
+              from: "Distiller <onboarding@resend.dev>",
               to: user.email,
               subject: "Reset your Distiller password",
               html: `<p>Click <a href="${url}">here</a> to reset your password. This link expires in 1 hour.</p>`
