@@ -17,8 +17,17 @@ export async function GET(req: NextRequest) {
       email: session.user.email,
       image: session.user.image
     });
-  } catch {
-    return NextResponse.json({ error: "Failed to get user" }, { status: 500 });
+  } catch (error) {
+    // Distinguish between auth failure and server error
+    const message = error instanceof Error ? error.message : String(error);
+    const isDbError = message.includes("database") || message.includes("connection") || message.includes("ECONNREFUSED");
+
+    console.error("[get-user] Error:", message);
+
+    return NextResponse.json(
+      { error: isDbError ? "Service temporarily unavailable" : "Failed to get user" },
+      { status: isDbError ? 503 : 500 }
+    );
   }
 }
 

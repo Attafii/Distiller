@@ -25,19 +25,10 @@ function createAuth() {
 
   const authOptions: Parameters<typeof betterAuth>[0] = {
     baseURL: normalizedSiteOrigin,
-    trustedOrigins: (request) => {
-      const trusted = new Set<string>([normalizedSiteOrigin]);
-
-      if (request) {
-        try {
-          trusted.add(new URL(request.url).origin);
-        } catch {
-          // Ignore malformed request URLs and fall back to the configured origin.
-        }
-      }
-
-      return [...trusted];
-    },
+    trustedOrigins: [
+      normalizedSiteOrigin,
+      "http://localhost:3000"
+    ],
     database: db
       ? drizzleAdapter(db, { provider: "pg", schema: authSchema })
       : (() => {
@@ -47,20 +38,15 @@ function createAuth() {
       enabled: true,
       requireEmailVerification: false,
       sendResetPassword: async ({ user, url }) => {
-        try {
-          // Better Auth generates /reset-password/{token} but our page is at /auth/reset-password
-          // Extract token from the URL and redirect to our custom page
-          const parsedUrl = new URL(url);
-          const pathParts = parsedUrl.pathname.split("/");
-          const token = pathParts[pathParts.length - 1];
-          const customUrl = `${normalizedSiteOrigin}/auth/reset-password?token=${token}`;
+        // Better Auth generates /reset-password/{token} but our page is at /auth/reset-password
+        // Extract token from the URL and redirect to our custom page
+        const parsedUrl = new URL(url);
+        const pathParts = parsedUrl.pathname.split("/");
+        const token = pathParts[pathParts.length - 1];
+        const customUrl = `${normalizedSiteOrigin}/auth/reset-password?token=${token}`;
 
-          const email = buildPasswordResetEmail(customUrl);
-          await sendEmail({ to: user.email, subject: email.subject, html: email.html });
-        } catch (error) {
-          console.error("[Auth] Failed to send reset email:", error);
-          console.log("[Auth] Reset URL (fallback):", url);
-        }
+        const email = buildPasswordResetEmail(customUrl);
+        await sendEmail({ to: user.email, subject: email.subject, html: email.html });
       }
     },
     socialProviders: {
