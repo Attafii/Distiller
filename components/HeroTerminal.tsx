@@ -78,8 +78,8 @@ export function HeroTerminal() {
         <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/10 via-transparent to-blue-500/10 blur-3xl" />
       </div>
       
-      {/* Terminal window */}
-      <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0f]/95 shadow-2xl backdrop-blur-xl">
+      {/* Terminal window - always dark */}
+      <div className="dark overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0f]/95 shadow-2xl backdrop-blur-xl">
         {/* Terminal header */}
         <div className="flex items-center gap-2 border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
           <div className="flex gap-2">
@@ -125,7 +125,7 @@ export function HeroTerminal() {
         initial={{ opacity: 0, scale: 0.8, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ delay: 2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute -bottom-4 -right-4 flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#0a0a0f]/90 px-4 py-2 text-xs font-medium text-white/70 shadow-xl backdrop-blur-xl"
+        className="absolute -bottom-4 -right-4 flex items-center gap-2 rounded-full border border-border/60 bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-xl backdrop-blur-xl"
       >
         <Sparkles className="h-3.5 w-3.5 text-primary" />
         AI-powered

@@ -159,6 +159,25 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /* Animated gradient background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: linear-gradient(
+      -45deg,
+      hsl(245 65% 45% / 0.03),
+      hsl(270 60% 55% / 0.02),
+      hsl(200 80% 60% / 0.03),
+      hsl(245 65% 45% / 0.02)
+    );
+    background-size: 400% 400%;
+    animation: gradient-shift 15s ease infinite;
   }
 
   /* Custom scrollbar */
@@ -210,6 +229,19 @@
   code, pre, kbd, samp {
     font-family: var(--font-ibm-plex-mono);
   }
+}
+
+/* Dark mode gradient */
+.dark body::before {
+  background: linear-gradient(
+    -45deg,
+    hsl(245 70% 60% / 0.06),
+    hsl(270 60% 65% / 0.04),
+    hsl(200 80% 55% / 0.06),
+    hsl(245 70% 60% / 0.04)
+  );
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
 }
 
 /* ─── Serif Display Class ─── */
@@ -353,6 +385,13 @@ button:active, a:active, [role="button"]:active {
   );
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
+}
+
+/* ─── Gradient Shift (Background Animation) ─── */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* ─── Glow Pulse ─── */
