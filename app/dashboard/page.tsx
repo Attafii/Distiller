@@ -37,6 +37,7 @@ export default async function DashboardPage() {
   ]);
 
   const planName = subscription?.plan ?? "free";
+  const isFreePlan = !planName || planName === "free" || planName === "guest";
   const planLabel = planName.charAt(0).toUpperCase() + planName.slice(1);
 
   const stats = [
@@ -73,7 +74,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {planName === "free" && (
+      {isFreePlan && (
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-foreground">This month&apos;s usage</p>

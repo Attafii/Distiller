@@ -97,7 +97,8 @@ export const alerts = pgTable("alerts", {
   keyword: text("keyword").notNull(),
   frequency: text("frequency").notNull().default("daily"),
   active: boolean("active").notNull().default(true),
-  createdAt: timestamp("created_at").notNull().defaultNow()
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
 }, (table) => ({
   userIdIdx: index("alerts_user_id_idx").on(table.userId)
 }));
