@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { sendEmail, buildPasswordResetEmail, buildVerificationEmail } from "@/lib/email";
 
 const authSchema = {
   user: schema.users,
@@ -46,32 +47,9 @@ function createAuth() {
       enabled: true,
       requireEmailVerification: false,
       sendResetPassword: async ({ user, url }) => {
-        if (!process.env.RESEND_API_KEY) {
-          console.warn("[Auth] RESEND_API_KEY not set — password reset email not sent");
-          console.log("[Auth] Reset URL (dev):", url);
-          return;
-        }
-
         try {
-          const response = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              from: "Distiller <onboarding@resend.dev>",
-              to: user.email,
-              subject: "Reset your Distiller password",
-              html: `<p>Click <a href="${url}">here</a> to reset your password. This link expires in 1 hour.</p>`
-            })
-          });
-
-          if (!response.ok) {
-            const errorBody = await response.text();
-            console.error("[Auth] Resend API error:", response.status, errorBody);
-            console.log("[Auth] Reset URL (fallback):", url);
-          }
+          const email = buildPasswordResetEmail(url);
+          await sendEmail({ to: user.email, subject: email.subject, html: email.html });
         } catch (error) {
           console.error("[Auth] Failed to send reset email:", error);
           console.log("[Auth] Reset URL (fallback):", url);
