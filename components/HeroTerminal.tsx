@@ -2,20 +2,20 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 const TERMINAL_LINES = [
   { type: "command", text: "$ distiller summarize --topic ai" },
-  { type: "status", text: "→ Fetching articles from NewsAPI..." },
-  { type: "status", text: "→ Building RAG context (3 snippets retrieved)" },
-  { type: "status", text: "→ Routing to balanced tier (nvidia/llama-3.3-nemotron-super-49b)" },
+  { type: "status", text: "→ Fetching latest articles..." },
+  { type: "status", text: "→ Building context (3 relevant snippets found)" },
+  { type: "status", text: "→ Analyzing with AI model..." },
   { type: "output", text: "" },
   { type: "label", text: "── AI Summary ──────────────────────────────" },
   { type: "bullet", text: "• Models above 70B parameters demonstrate chain-of-thought reasoning" },
   { type: "bullet", text: "• Scaling laws predict 2x improvement with 4x compute budget" },
   { type: "bullet", text: "• Capability emergence is consistent across architecture families" },
   { type: "output", text: "" },
-  { type: "meta", text: "✓ 3 bullets · 94% confidence · 1.2s · grounded in 3 snippets" },
+  { type: "meta", text: "✓ 3 bullets · 94% confidence · 1.2s · grounded in source" },
 ];
 
 function useTypingAnimation(lines: typeof TERMINAL_LINES, speed = 30) {
@@ -67,30 +67,33 @@ export function HeroTerminal() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.98 }}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="relative mx-auto mt-10 max-w-2xl"
+      transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="relative mx-auto mt-12 max-w-2xl"
     >
-      {/* Glow effect behind terminal */}
-      <div className="absolute -inset-4 -z-10 rounded-2xl bg-gradient-to-b from-primary/20 via-primary/5 to-transparent blur-xl" />
+      {/* Ambient glow */}
+      <div className="absolute -inset-8 -z-10">
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-primary/15 via-primary/5 to-transparent blur-2xl" />
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/10 via-transparent to-blue-500/10 blur-3xl" />
+      </div>
       
       {/* Terminal window */}
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card/95 shadow-soft backdrop-blur">
+      <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0f]/95 shadow-2xl backdrop-blur-xl">
         {/* Terminal header */}
-        <div className="flex items-center gap-2 border-b border-border/40 bg-muted/30 px-4 py-2.5">
-          <div className="flex gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-red-500/80" />
-            <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-            <div className="h-3 w-3 rounded-full bg-green-500/80" />
+        <div className="flex items-center gap-2 border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <div className="flex gap-2">
+            <div className="h-3 w-3 rounded-full bg-[#ff5f57] shadow-[0_0_8px_rgba(255,95,87,0.4)]" />
+            <div className="h-3 w-3 rounded-full bg-[#febc2e] shadow-[0_0_8px_rgba(254,188,46,0.4)]" />
+            <div className="h-3 w-3 rounded-full bg-[#28c840] shadow-[0_0_8px_rgba(40,200,64,0.4)]" />
           </div>
-          <span className="ml-2 text-xs font-medium text-muted-foreground">distiller — ai summarize</span>
+          <span className="ml-3 text-[11px] font-medium text-white/30">distiller — ai summarize</span>
         </div>
 
         {/* Terminal body */}
         <div
           ref={terminalRef}
-          className="max-h-80 overflow-y-auto p-4 font-mono text-sm leading-relaxed"
+          className="max-h-72 overflow-y-auto p-5 font-mono text-[13px] leading-[1.7]"
           aria-label="Terminal animation showing AI summarization process"
         >
           {displayedLines.map((line, i) => (
@@ -103,15 +106,15 @@ export function HeroTerminal() {
               <span className={getLineColor(TERMINAL_LINES[currentLine].type)}>
                 {TERMINAL_LINES[currentLine].text.slice(0, currentChar)}
               </span>
-              <span className="inline-block h-4 w-2 animate-pulse bg-primary" />
+              <span className="inline-block h-[14px] w-[7px] animate-pulse rounded-sm bg-primary" />
             </div>
           )}
 
           {/* Cursor at end when complete */}
           {isComplete && (
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="flex items-center gap-2 text-white/20">
               <span>$</span>
-              <span className="inline-block h-4 w-2 animate-pulse bg-primary" />
+              <span className="inline-block h-[14px] w-[7px] animate-pulse rounded-sm bg-primary" />
             </div>
           )}
         </div>
@@ -119,13 +122,13 @@ export function HeroTerminal() {
 
       {/* Floating badge */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1.5, duration: 0.4 }}
-        className="absolute -bottom-3 -right-3 flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-soft"
+        initial={{ opacity: 0, scale: 0.8, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ delay: 2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute -bottom-4 -right-4 flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#0a0a0f]/90 px-4 py-2 text-xs font-medium text-white/70 shadow-xl backdrop-blur-xl"
       >
-        <Sparkles className="h-3 w-3 text-primary" />
-        Powered by NVIDIA Build
+        <Sparkles className="h-3.5 w-3.5 text-primary" />
+        AI-powered
       </motion.div>
     </motion.div>
   );
@@ -144,16 +147,16 @@ function getLineColor(type: string): string {
     case "command":
       return "text-primary font-semibold";
     case "status":
-      return "text-muted-foreground";
+      return "text-white/40";
     case "label":
-      return "text-muted-foreground/60 text-xs tracking-wider";
+      return "text-white/20 text-[11px] tracking-[0.2em] font-light";
     case "bullet":
-      return "text-foreground";
+      return "text-white/80";
     case "meta":
-      return "text-emerald-500 dark:text-emerald-400";
+      return "text-emerald-400/80";
     case "output":
-      return "";
+      return "h-2";
     default:
-      return "text-foreground";
+      return "text-white/70";
   }
 }

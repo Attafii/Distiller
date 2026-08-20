@@ -7,6 +7,7 @@ import { AskTheNewsForm } from "@/components/AskTheNewsForm";
 import { HeroTerminal } from "@/components/HeroTerminal";
 import { ScrollReveal, StaggerChildren } from "@/components/ScrollReveal";
 import { RevealSection } from "@/components/RevealSection";
+import { ScrollProgress } from "@/components/ScrollProgress";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,16 +78,18 @@ const sampleSummary = {
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
+      <ScrollProgress />
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/8 via-transparent to-transparent" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-r from-primary/5 via-purple-500/5 to-blue-500/5 blur-3xl" />
         </div>
 
-        <div className="mx-auto max-w-5xl px-6 pt-20 pb-16 text-center">
+        <div className="mx-auto max-w-5xl px-6 pt-24 pb-16 text-center">
           <ScrollReveal animation="fade-up" delay={0}>
-            <Badge variant="outline" className="mb-6 border-border text-muted-foreground">
+            <Badge variant="outline" className="mb-8 border-white/[0.08] bg-white/[0.03] text-white/60 backdrop-blur-sm">
               <Sparkles className="mr-1.5 h-3 w-3" />
               News intelligence for curious minds
             </Badge>
@@ -95,7 +98,7 @@ export default function HomePage() {
           <ScrollReveal animation="fade-up" delay={0.1}>
             <h1 className="font-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.05]">
               The world&apos;s news,<br />
-              <span className="text-gradient">three bullets.</span>
+              <span className="gradient-text">three bullets.</span>
             </h1>
           </ScrollReveal>
 
@@ -222,11 +225,11 @@ export default function HomePage() {
         <p className="text-center text-sm text-muted-foreground mb-10">Every bullet traces back to source evidence. No guessing, no fabrication.</p>
         <div className="grid gap-6 sm:grid-cols-5">
           {[
-            { step: "1", label: "Article", desc: "NewsAPI fetches the original story" },
+            { step: "1", label: "Article", desc: "We fetch the original story from trusted sources" },
             { step: "2", label: "Chunks", desc: "Text split into ~900-char semantic blocks" },
-            { step: "3", label: "Embeddings", desc: "NVIDIA Build encodes query + chunks" },
-            { step: "4", label: "Snippets", desc: "Top 3 retrieved by cosine similarity" },
-            { step: "5", label: "Summary", desc: "LLM generates 3 grounded bullets" }
+            { step: "3", label: "Embeddings", desc: "AI encodes query + chunks for relevance" },
+            { step: "4", label: "Snippets", desc: "Top 3 retrieved by semantic similarity" },
+            { step: "5", label: "Summary", desc: "AI generates 3 grounded bullets" }
           ].map(({ step, label, desc }) => (
             <div key={step} className="flex flex-col items-center text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg mb-3">{step}</div>

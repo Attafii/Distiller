@@ -49,7 +49,7 @@ export default function AboutPage() {
             insight. A clear conclusion. No padding, no speculation, no filler.
           </p>
           <p>
-            Every brief is grounded in the original source text using RAG and NVIDIA embeddings,
+            Every brief is grounded in the original source text using retrieval-augmented generation,
             so you always know what&apos;s real and what the model inferred. Citations aren&apos;t
             decorative — they&apos;re the foundation.
           </p>

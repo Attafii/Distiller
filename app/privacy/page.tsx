@@ -45,7 +45,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">3. AI Processing</h2>
-            <p>Your article reading activity is processed by our NVIDIA-powered AI pipeline to generate summaries. Source article text is processed in memory only and is not stored beyond the session. Summaries are generated on-demand and are not stored persistently.</p>
+            <p>Your article reading activity is processed by our AI pipeline to generate summaries. Source article text is processed in memory only and is not stored beyond the session. Summaries are generated on-demand and are not stored persistently.</p>
           </section>
 
           <section>
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">7. Third-Party Services</h2>
-            <p>We use: Neon (PostgreSQL database), Vercel (hosting and analytics), Stripe (payments), NewsAPI (news data), NVIDIA Build (AI summarization). Each has their own privacy policy.</p>
+            <p>We use: Neon (PostgreSQL database), Vercel (hosting and analytics), Stripe (payments). Each has their own privacy policy.</p>
           </section>
 
           <section>

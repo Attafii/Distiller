@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
                 backgroundColor: "#22c55e"
               }}
             />
-            Powered by NVIDIA Build + RAG
+            Powered by AI + RAG
           </span>
         </div>
       </div>

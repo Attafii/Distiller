@@ -51,24 +51,27 @@ export const DistilledCard = memo(function DistilledCard({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -4 }}
-      className="h-full"
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ y: -6, transition: { duration: 0.3 } }}
+      className="h-full group"
     >
-      <Card className="flex h-full flex-col overflow-hidden border-border/90 bg-card/90 shadow-soft backdrop-blur transition-all duration-300 hover:border-primary/30 hover:shadow-lg gradient-border">
-        <CardHeader className="space-y-4 border-b border-border/80 bg-card/20">
+      <Card className="flex h-full flex-col overflow-hidden border-white/[0.06] bg-[#0a0a0f]/80 shadow-2xl backdrop-blur-xl transition-all duration-500 hover:border-primary/20 hover:shadow-primary/5 gradient-border relative">
+        {/* Shimmer effect on hover */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 shimmer pointer-events-none" />
+        
+        <CardHeader className="space-y-4 border-b border-white/[0.04] bg-white/[0.01]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="default" className="transition-colors duration-200">
+              <Badge variant="default" className="transition-all duration-300 group-hover:shadow-primary/20 group-hover:shadow-lg">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 AI Summary
               </Badge>
-              <Badge variant="outline" className="transition-colors duration-200">{topicLabel}</Badge>
+              <Badge variant="outline" className="transition-colors duration-300">{topicLabel}</Badge>
               {article.priority !== "normal" ? (
-                <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-100 animate-pulse">
-                  <span className="mr-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]" />
+                <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-400 animate-pulse">
+                  <span className="mr-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
                   {priorityLabel}
                 </Badge>
               ) : null}
