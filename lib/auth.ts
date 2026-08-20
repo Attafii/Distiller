@@ -48,7 +48,14 @@ function createAuth() {
       requireEmailVerification: false,
       sendResetPassword: async ({ user, url }) => {
         try {
-          const email = buildPasswordResetEmail(url);
+          // Better Auth generates /reset-password/{token} but our page is at /auth/reset-password
+          // Extract token from the URL and redirect to our custom page
+          const parsedUrl = new URL(url);
+          const pathParts = parsedUrl.pathname.split("/");
+          const token = pathParts[pathParts.length - 1];
+          const customUrl = `${normalizedSiteOrigin}/auth/reset-password?token=${token}`;
+
+          const email = buildPasswordResetEmail(customUrl);
           await sendEmail({ to: user.email, subject: email.subject, html: email.html });
         } catch (error) {
           console.error("[Auth] Failed to send reset email:", error);
