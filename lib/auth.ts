@@ -98,6 +98,10 @@ function createAuth() {
         maxAge: 5 * 60
       }
     },
+    rateLimit: {
+      window: 60,
+      max: 100
+    },
     secret: process.env.BETTER_AUTH_SECRET
   };
 
