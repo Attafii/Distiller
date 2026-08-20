@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       relevance: topScore > 0 ? Math.max(1, Math.round((article.relevance / topScore) * 100)) : 0
     }));
 
-    const enrichedArticles = await Promise.all(normalizedArticles.map((article) => enrichArticle(article, question)))
+    const enrichedArticles = await Promise.all(normalizedArticles.map((article) => enrichArticle(article, question)));
     const distillService = DistillService.fromEnv();
     const result = await distillService.answerNewsQuestion({
       question,

@@ -11,7 +11,7 @@ type CreateAlertFormProps = {
 
 export function CreateAlertForm({ onCreated }: CreateAlertFormProps) {
   const [keyword, setKeyword] = useState("");
-  const [frequency, setFrequency] = useState<"daily" | "weekly" | "instant">("daily");
+  const [frequency, setFrequency] = useState<"daily" | "weekly">("daily");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -55,12 +55,12 @@ export function CreateAlertForm({ onCreated }: CreateAlertFormProps) {
         />
         <select
           value={frequency}
-          onChange={(e) => setFrequency(e.target.value as "daily" | "weekly" | "instant")}
+          onChange={(e) => setFrequency(e.target.value as "daily" | "weekly")}
+          aria-label="Alert frequency"
           className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground"
         >
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
-          <option value="instant">Instant</option>
         </select>
         <Button type="submit" disabled={loading || !keyword.trim()}>
           {loading ? (

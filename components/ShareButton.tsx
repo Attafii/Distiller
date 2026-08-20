@@ -15,19 +15,31 @@ interface ShareButtonProps {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
 
+function createSafeSlug(id: string): string {
+  // Create a URL-safe slug from the article ID
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    const char = id.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
+
 export function ShareButton({ title, briefSlug, bullets, insight, sourceName, publishedAt, url }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
+  const safeSlug = createSafeSlug(briefSlug);
   const params = new URLSearchParams({
-    title: encodeURIComponent(title),
-    ...(bullets ? { bullets: encodeURIComponent(JSON.stringify(bullets)) } : {}),
-    ...(insight ? { insight: encodeURIComponent(insight) } : {}),
-    ...(sourceName ? { sourceName: encodeURIComponent(sourceName) } : {}),
-    ...(publishedAt ? { publishedAt: encodeURIComponent(publishedAt) } : {}),
-    ...(url ? { url: encodeURIComponent(url) } : {})
+    title,
+    ...(bullets ? { bullets: JSON.stringify(bullets) } : {}),
+    ...(insight ? { insight } : {}),
+    ...(sourceName ? { sourceName } : {}),
+    ...(publishedAt ? { publishedAt } : {}),
+    ...(url ? { url } : {})
   });
 
-  const briefUrl = `${siteUrl}/brief/${briefSlug}?${params.toString()}`;
+  const briefUrl = `${siteUrl}/brief/${safeSlug}?${params.toString()}`;
 
   async function handleCopy() {
     try {

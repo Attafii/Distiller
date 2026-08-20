@@ -49,9 +49,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (format === "csv") {
-      const headers = ["articleId", "title", "url", "description", "source", "category", "publishedAt", "createdAt"];
+      const csvHeaders = ["articleId", "title", "url", "description", "source", "category", "publishedAt", "createdAt"];
       const csvRows = [
-        headers.join(","),
+        csvHeaders.join(","),
         ...userBookmarks.map((bm) =>
           [
             `"${(bm.articleId ?? "").replace(/"/g, '""')}"`,

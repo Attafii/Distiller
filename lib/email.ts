@@ -12,7 +12,10 @@ export async function sendEmail({ to, subject, html, from }: SendEmailInput) {
   const fromAddress = from ?? process.env.EMAIL_FROM ?? "Distiller <onboarding@resend.dev>";
 
   if (!apiKey) {
-    console.warn("[Email] RESEND_API_KEY not set — falling back to console");
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[Email] RESEND_API_KEY not set in production — email not sent");
+      return { id: `skipped-${Date.now()}`, provider: "skipped" };
+    }
     console.log("📧 EMAIL TO:", to);
     console.log("📧 SUBJECT:", subject);
     console.log("📧 BODY:", html.slice(0, 200));

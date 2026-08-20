@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { fetchNewsArticles } from "@/services/newsapi";
 import { DistillService } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -28,8 +28,8 @@ function buildEmptyFeedXml(): string {
 </rss>`;
 }
 
-export async function GET() {
-  const rateLimit = await checkRateLimit(new Request("https://distiller.attafii.dev/feed.xml"));
+export async function GET(request: NextRequest) {
+  const rateLimit = await checkRateLimit(request);
   if (!rateLimit.allowed) {
     return new NextResponse("Rate limit exceeded", { status: 429 });
   }

@@ -66,7 +66,9 @@ export const subscriptions = pgTable("subscriptions", {
   currentPeriodEnd: timestamp("current_period_end"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()
-});
+}, (table) => ({
+  userIdIdx: index("subscriptions_user_id_idx").on(table.userId)
+}));
 
 export const bookmarks = pgTable("bookmarks", {
   id: serial("id").primaryKey(),
@@ -82,7 +84,10 @@ export const bookmarks = pgTable("bookmarks", {
   category: text("category"),
   publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").notNull().defaultNow()
-});
+}, (table) => ({
+  userIdIdx: index("bookmarks_user_id_idx").on(table.userId),
+  userIdArticleIdIdx: index("bookmarks_user_article_idx").on(table.userId, table.articleId)
+}));
 
 export const alerts = pgTable("alerts", {
   id: serial("id").primaryKey(),
@@ -93,7 +98,9 @@ export const alerts = pgTable("alerts", {
   frequency: text("frequency").notNull().default("daily"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow()
-});
+}, (table) => ({
+  userIdIdx: index("alerts_user_id_idx").on(table.userId)
+}));
 
 export const readingHistory = pgTable("reading_history", {
   id: serial("id").primaryKey(),
@@ -105,7 +112,9 @@ export const readingHistory = pgTable("reading_history", {
   url: text("url").notNull(),
   category: text("category"),
   readAt: timestamp("read_at").notNull().defaultNow()
-});
+}, (table) => ({
+  userIdIdx: index("reading_history_user_id_idx").on(table.userId)
+}));
 
 export const articleReactions = pgTable(
   "article_reactions",

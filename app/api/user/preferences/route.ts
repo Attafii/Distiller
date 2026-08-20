@@ -8,10 +8,13 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 const preferencesSchema = z.object({
-  topics: z.array(z.string()),
-  regions: z.array(z.string()),
-  deliveryPreference: z.string().default("web"),
-  onboardingCompleted: z.boolean().default(false)
+  topics: z.array(z.string()).optional(),
+  regions: z.array(z.string()).optional(),
+  deliveryPreference: z.string().optional(),
+  onboardingCompleted: z.boolean().optional(),
+  dailyEmailEnabled: z.boolean().optional(),
+  breakingNewsEnabled: z.boolean().optional(),
+  weeklySummaryEnabled: z.boolean().optional()
 });
 
 export async function POST(request: NextRequest) {
@@ -31,27 +34,50 @@ export async function POST(request: NextRequest) {
     if (existing) {
       await getDb()
         .update(userPreferences)
-        .set({
-          topics: data.topics,
-          regions: data.regions,
-          deliveryPreference: data.deliveryPreference,
-          onboardingCompleted: data.onboardingCompleted,
-          updatedAt: new Date()
-        })
+        .set({ ...data, updatedAt: new Date() })
         .where(eq(userPreferences.userId, session.user.id));
     } else {
       await getDb().insert(userPreferences).values({
         userId: session.user.id,
-        topics: data.topics,
-        regions: data.regions,
-        deliveryPreference: data.deliveryPreference,
-        onboardingCompleted: data.onboardingCompleted
+        ...data
       });
     }
 
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to save preferences" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const data = preferencesSchema.parse(body);
+
+    const existing = await getDb().query.userPreferences.findFirst({
+      where: eq(userPreferences.userId, session.user.id)
+    });
+
+    if (existing) {
+      await getDb()
+        .update(userPreferences)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(userPreferences.userId, session.user.id));
+    } else {
+      await getDb().insert(userPreferences).values({
+        userId: session.user.id,
+        ...data
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to update preferences" }, { status: 500 });
   }
 }
 

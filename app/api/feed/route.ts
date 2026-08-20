@@ -168,25 +168,22 @@ export async function GET(request: NextRequest) {
       await incrementGuestCount(viewerIp);
     }
 
-    const guestLimitReached = isGuest && !(await checkGuestFeedAccess(viewerIp)).ok;
+    const totalResults = articlesWithReactions.length;
+    const hasMore = totalResults === pageSize; // If we got a full page, there might be more
 
     return NextResponse.json({
       articles: articlesWithReactions,
-      totalResults: articlesWithReactions.length,
+      totalResults,
       page,
       pageSize,
-      hasMore: articlesWithReactions.length === pageSize,
-      provider,
-      ...(guestLimitReached ? { guestLimitReached: true } : {})
+      hasMore,
+      provider
     }, { headers });
-  } catch {
-    const { DEMO_ARTICLES } = await import("@/lib/demo-articles");
-    return NextResponse.json({
-      articles: DEMO_ARTICLES,
-      totalResults: DEMO_ARTICLES.length,
-      page: 1,
-      pageSize: DEMO_ARTICLES.length,
-      hasMore: false
-    }, { headers });
+  } catch (error) {
+    console.error("[Feed] Error:", error);
+    return NextResponse.json(
+      { error: "Failed to load feed. Please try again." },
+      { status: 502, headers }
+    );
   }
 }
