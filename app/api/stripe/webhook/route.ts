@@ -146,6 +146,47 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case "customer.subscription.created": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
+        const userId = subscription.metadata?.userId;
+        const plan = (subscription.metadata?.plan as "pro" | "team") ?? "pro";
+
+        const sub = subscription as unknown as { current_period_end?: number };
+        const currentPeriodEnd = sub.current_period_end
+          ? new Date(sub.current_period_end * 1000)
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        if (userId) {
+          const existingRecord = await getDb().query.subscriptions.findFirst({
+            where: eq(subscriptions.userId, userId)
+          });
+
+          if (existingRecord) {
+            await getDb().update(subscriptions)
+              .set({
+                stripeCustomerId: customerId,
+                stripeSubscriptionId: subscription.id,
+                plan,
+                status: subscription.status === "active" ? "active" : subscription.status,
+                currentPeriodEnd,
+                updatedAt: new Date()
+              })
+              .where(eq(subscriptions.id, existingRecord.id));
+          } else {
+            await getDb().insert(subscriptions).values({
+              userId,
+              stripeCustomerId: customerId,
+              stripeSubscriptionId: subscription.id,
+              plan,
+              status: subscription.status === "active" ? "active" : subscription.status,
+              currentPeriodEnd
+            });
+          }
+        }
+        break;
+      }
+
       default:
         break;
     }

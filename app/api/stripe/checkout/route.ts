@@ -83,23 +83,32 @@ export async function POST(request: NextRequest) {
       customer: customerId,
       payment_method_types: ["card"],
       line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: planConfig.name,
-              description: plan === "pro"
-                ? "Access to AI-powered news distillation with advanced summaries"
-                : "Everything in Pro, plus team collaboration features"
-            },
-            unit_amount: planConfig.price * 100
-          },
-          quantity: 1
-        }
+        planConfig.priceId
+          ? { price: planConfig.priceId, quantity: 1 }
+          : {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: planConfig.name,
+                  description: plan === "pro"
+                    ? "Access to AI-powered news distillation with advanced summaries"
+                    : "Everything in Pro, plus team collaboration features"
+                },
+                unit_amount: planConfig.price * 100,
+                recurring: { interval: "month" }
+              },
+              quantity: 1
+            }
       ],
       mode: "subscription",
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/settings?success=true`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/billing?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing?canceled=true`,
+      subscription_data: {
+        metadata: {
+          userId: session.user.id,
+          plan
+        }
+      },
       metadata: {
         userId: session.user.id,
         plan
