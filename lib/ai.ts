@@ -476,6 +476,7 @@ export class DistillService {
             temperature: options.temperature ?? 0.2,
             top_p: options.topP ?? 0.9,
             max_tokens: options.maxTokens ?? 220,
+            chat_template_kwargs: { thinking: false },
             response_format: {
               type: "json_object"
             }
@@ -586,7 +587,8 @@ export class DistillService {
                 tools: CHAT_TOOLS,
                 temperature: options.temperature ?? 0.35,
                 top_p: options.topP ?? 0.95,
-                max_tokens: options.maxTokens ?? 512
+                max_tokens: options.maxTokens ?? 512,
+                chat_template_kwargs: { thinking: false }
               }),
               cache: "no-store"
             }, 15000);
