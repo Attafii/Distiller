@@ -131,7 +131,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     headlines = rows.map((r) => ({
       topic: r.topic,
       title: r.title,
-      href: `/article/${r.id}`,
+      href: "/RefinedFeed",
       color: topicColor(r.topic)
     }));
   } catch {
