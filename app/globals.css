@@ -90,6 +90,30 @@
 
   --shadow-lift: 0 1px 2px rgb(22 21 14 / 0.05), 0 14px 30px -14px rgb(22 21 14 / 0.2);
   --shadow-deep: 0 2px 4px rgb(22 21 14 / 0.06), 0 26px 60px -22px rgb(22 21 14 / 0.3);
+
+  /* Runtime aliases — components reference var(--color-*) from JS inline styles */
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-faint: var(--faint);
+  --color-ember: var(--ember);
+  --color-ember-2: var(--ember-2);
+  --color-ember-soft: var(--ember-soft);
+  --color-brass: var(--brass);
+  --color-brass-soft: var(--brass-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-sky: var(--sky);
+  --color-indigo: var(--indigo);
+  --color-violet: var(--violet);
+  --color-plum: var(--plum);
+  --color-rose: var(--rose);
+  --color-lime: var(--lime);
+  --color-forest: var(--forest);
+  --color-amber: var(--amber);
 }
 
 .dark {
