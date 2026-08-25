@@ -514,7 +514,7 @@
 .animated-border::before {
   content: "";
   position: absolute;
-  inset: -1px;
+  inset: 0;
   border-radius: inherit;
   padding: 1.5px;
   background: linear-gradient(90deg, var(--line), var(--ember), var(--teal), var(--indigo), var(--line));
