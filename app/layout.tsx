@@ -1,33 +1,36 @@
 import type { Metadata, Viewport } from "next";
-import { Crimson_Pro, DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import type { ReactNode } from "react";
+import { Fraunces, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { desc } from "drizzle-orm";
 
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
-import { Nav } from "@/components/Nav";
-import { Footer } from "@/components/Footer";
+import { Nav, type Headline, type NavUser } from "@/components/nav";
+import { Footer } from "@/components/footer";
 import { ConsentAnalytics } from "@/components/ConsentAnalytics";
-import { CookieBanner } from "@/components/CookieBanner";
+import { CookieBanner } from "@/components/cookie-banner";
+import { getSessionUser } from "@/lib/auth";
+import { db } from "@/db";
+import { articles } from "@/db/schema";
+import { ensureSeeded } from "@/db/seed";
+import { topicColor } from "@/lib/constants";
 import "./globals.css";
 
-const crimsonPro = Crimson_Pro({
+const interTight = Inter_Tight({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-crimson-pro",
-  display: "swap",
-  style: ["normal"]
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-inter-tight",
   display: "swap"
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-ibm-plex-mono",
+  variable: "--font-fraunces",
+  display: "swap"
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
   display: "swap"
 });
 
@@ -35,8 +38,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.d
 
 const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafaf9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1117" }
+    { media: "(prefers-color-scheme: light)", color: "#f7f3ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0d0a" }
   ],
   width: "device-width",
   initialScale: 1
@@ -45,10 +48,11 @@ const viewport: Viewport = {
 const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Distiller",
+    default: "Distiller — News Intelligence",
     template: "%s · Distiller"
   },
-  description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
+  description:
+    "The world's news, three bullets. Verified briefings grounded in source evidence — ask questions and get sourced answers in seconds.",
   keywords: [
     "news",
     "news summary",
@@ -86,7 +90,7 @@ const metadata: Metadata = {
     url: "/",
     siteName: "Distiller",
     title: "Distiller — News Intelligence",
-    description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
+    description: "The world's news, three bullets.",
     images: [
       {
         url: "/api/og",
@@ -99,7 +103,7 @@ const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Distiller — News Intelligence",
-    description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
+    description: "The world's news, three bullets.",
     images: ["/api/og"]
   },
   manifest: "/manifest.json",
@@ -112,9 +116,30 @@ const metadata: Metadata = {
 
 export { metadata, viewport };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const user = await getSessionUser();
+  const navUser: NavUser = user ? { email: user.email, name: user.name, plan: user.plan } : null;
+
+  let headlines: Headline[] = [];
+  try {
+    await ensureSeeded();
+    const rows = await db
+      .select({ id: articles.id, title: articles.title, topic: articles.topic })
+      .from(articles)
+      .orderBy(desc(articles.publishedAt))
+      .limit(14);
+    headlines = rows.map((r) => ({
+      topic: r.topic,
+      title: r.title,
+      href: `/article/${r.id}`,
+      color: topicColor(r.topic)
+    }));
+  } catch {
+    headlines = [];
+  }
+
   return (
-    <html lang="en" suppressHydrationWarning className={`${crimsonPro.variable} ${dmSans.variable} ${ibmPlexMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${interTight.variable} ${fraunces.variable} ${jetbrainsMono.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -137,7 +162,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               "@type": "WebSite",
               name: "Distiller",
               url: siteUrl,
-              description: "Stay informed in seconds. Get concise news briefings.",
+              description: "The world's news, three bullets.",
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
@@ -155,32 +180,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             })
           }}
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "Distiller",
-              url: siteUrl,
-              description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
-              contactPoint: {
-                "@type": "ContactPoint",
-                email: "hello@distiller.attafii.dev",
-                contactType: "customer support"
-              }
-            })
-          }}
-        />
       </head>
-      <body className="min-h-screen antialiased">
+      <body className="paper-grain relative flex min-h-screen flex-col bg-paper font-ui antialiased">
         <ThemeProvider defaultTheme="system" storageKey="distiller-theme">
           <ToastProvider>
-            <div className="relative flex min-h-screen flex-col">
-              <Nav />
-
-              <main className="flex-1">{children}</main>
-
+            <a
+              href="#main"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-ember focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-surface"
+            >
+              Skip to main content
+            </a>
+            <div className="relative z-10 flex min-h-screen flex-col">
+              <Nav user={navUser} headlines={headlines} />
+              <main id="main" className="flex-1">
+                {children}
+              </main>
               <Footer />
             </div>
             <ConsentAnalytics />

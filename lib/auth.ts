@@ -2,6 +2,7 @@ import "server-only";
 
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
@@ -99,3 +100,41 @@ function createAuth() {
 
 export const auth = createAuth();
 export const handler = auth.handler;
+
+/**
+ * Session shape expected by the landing Nav (ported from the static landing).
+ * Resolves the better-auth session and the user's plan from subscriptions.
+ */
+export type NavSessionUser = {
+  email: string;
+  name: string | null;
+  plan: "free" | "pro";
+};
+
+export async function getSessionUser(): Promise<NavSessionUser | null> {
+  try {
+    const { headers } = await import("next/headers");
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.email) return null;
+
+    let plan: "free" | "pro" = "free";
+    try {
+      if (db) {
+        const subscription = await db.query.subscriptions.findFirst({
+          where: eq(schema.subscriptions.userId, session.user.id)
+        });
+        if (subscription?.plan === "pro") plan = "pro";
+      }
+    } catch {
+      // subscription lookup is best-effort
+    }
+
+    return {
+      email: session.user.email,
+      name: session.user.name ?? null,
+      plan
+    };
+  } catch {
+    return null;
+  }
+}

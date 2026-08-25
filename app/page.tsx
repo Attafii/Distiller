@@ -1,371 +1,595 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { db } from "@/db";
+import { ensureSeeded } from "@/db/seed";
+import { articles } from "@/db/schema";
+import {
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  BoltIcon,
+  CheckIcon,
+  FlaskIcon,
+  LayersIcon,
+  ShieldIcon,
+  SparkleIcon,
+} from "@/components/icons";
+import { TheCut } from "@/components/distill";
+import { HeroDistill } from "@/components/hero-distill";
+import { TopicPicker } from "@/components/topic-picker";
+import { CountUp, LiveAskDemo, Reveal } from "@/components/motion";
+import { timeAgo } from "@/lib/format";
+import { count, desc, eq, sql } from "drizzle-orm";
 
-import { ArrowUpRight, Globe2, Layers, Sparkles, Rss, CheckCircle2, Star, Check, Minus } from "lucide-react";
+export const dynamic = "force-dynamic";
 
-import { AskTheNewsForm } from "@/components/AskTheNewsForm";
-import { HeroTerminal } from "@/components/HeroTerminal";
-import { ScrollReveal, StaggerChildren } from "@/components/ScrollReveal";
-import { RevealSection } from "@/components/RevealSection";
-import { ScrollProgress } from "@/components/ScrollProgress";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://distiller.attafii.dev";
-
-export const metadata: Metadata = {
-  title: "Distiller — News Intelligence",
-  description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
-  alternates: { canonical: `${siteUrl}/` },
-  openGraph: {
-    url: `${siteUrl}/`,
-    title: "Distiller — News Intelligence",
-    description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
-    images: [{ url: `${siteUrl}/api/og`, width: 1200, height: 630, alt: "Distiller" }]
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Distiller — News Intelligence",
-    description: "Stay informed in seconds. Get concise news briefings that cut through the noise.",
-    images: [`${siteUrl}/api/og`]
-  }
-};
-
-const features = [
-  {
-    icon: Layers,
-    title: "Verified Sources",
-    description: "Every brief pulls directly from the original article. No guesswork, no fabrication — just the facts."
-  },
-  {
-    icon: Sparkles,
-    title: "Three Bullets",
-    description: "Compact briefs with a key insight and a conclusion. Scan the world's news in minutes, not hours."
-  },
-  {
-    icon: Globe2,
-    title: "15 Topics, 15 Regions",
-    description: "From AI to finance to Tunisia — filter by what matters to you and get exactly your slice of the world."
-  },
-  {
-    icon: Rss,
-    title: "Live RSS Feed",
-    description: "Subscribe via RSS (Pro). Stay updated in your favorite reader app — Feedly, NetNewsWire, or any RSS client."
-  }
+const ASK = [
+  { q: "What happened in AI this week?", label: "ai" },
+  { q: "Latest on climate policy", label: "climate" },
+  { q: "How are markets doing today?", label: "markets" },
+  { q: "Biggest science breakthroughs", label: "science" },
 ];
 
-const stats = [
-  { value: "15", label: "Topics" },
-  { value: "15", label: "Regions" },
-  { value: "3", label: "Bullets/Article" },
-  { value: "Free", label: "To start" }
-];
-
-const sampleSummary = {
-  category: "Technology",
-  headline: "Large Language Models Show Emergent Reasoning Capabilities at Scale",
-  bullets: [
-    "Models above 70B parameters demonstrate chain-of-thought reasoning without explicit prompting",
-    "Scaling laws predict 2x improvement on complex tasks with 4x compute budget increase",
-    "Researchers confirm capability emergence is consistent across different architecture families"
-  ],
-  insight: "The study validates that reasoning emerges predictably at scale, suggesting current frontier models are still on the steep part of the learning curve.",
-  source: "arXiv · 2h ago"
-};
-
-export default function HomePage() {
+function Section({
+  children,
+  className = "",
+  id,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}) {
   return (
-    <main className="min-h-screen bg-background">
-      <ScrollProgress />
-      <a href="#main-content" className="skip-link">Skip to main content</a>
+    <section id={id} className={`px-5 py-16 sm:px-6 sm:py-24 lg:py-28 ${className}`}>
+      <div className="mx-auto max-w-6xl">{children}</div>
+    </section>
+  );
+}
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/8 via-transparent to-transparent" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-r from-primary/5 via-purple-500/5 to-blue-500/5 blur-3xl" />
-        </div>
+function Kicker({ children }: { children: React.ReactNode }) {
+  return <p className="t-micro text-ember">{children}</p>;
+}
 
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-16 sm:pt-24 pb-12 sm:pb-16 text-center">
-          <ScrollReveal animation="fade-up" delay={0}>
-            <Badge variant="outline" className="mb-6 sm:mb-8 border-border/60 bg-card/50 text-muted-foreground backdrop-blur-sm">
-              <Sparkles className="mr-1.5 h-3 w-3" />
-              News intelligence for curious minds
-            </Badge>
-          </ScrollReveal>
+function H2({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <h2 className={`t-h2 mt-3 font-display font-semibold text-ink ${className}`}>
+      {children}
+    </h2>
+  );
+}
 
-          <ScrollReveal animation="fade-up" delay={0.1}>
-            <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl md:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.1] sm:leading-[1.05]">
-              The world&apos;s news,<br />
-              <span className="gradient-text">three bullets.</span>
-            </h1>
-          </ScrollReveal>
+function Lead({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <p className={`t-lead mt-4 text-muted ${className}`}>{children}</p>;
+}
 
-          <ScrollReveal animation="fade-up" delay={0.2}>
-            <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-sm sm:text-base leading-relaxed text-muted-foreground md:text-lg">
-              Stop skimming hundreds of articles. Distiller delivers concise, verified briefings
-              that keep you informed without the information overload.
-            </p>
-          </ScrollReveal>
+export default async function HomePage() {
+  await ensureSeeded();
 
-          <ScrollReveal animation="fade-up" delay={0.3}>
-            <AskTheNewsForm />
-          </ScrollReveal>
+  const [stats] = await db
+    .select({
+      briefs: count(),
+      topics: sql<number>`count(distinct ${articles.topic})`,
+      regions: sql<number>`count(distinct ${articles.region})`,
+    })
+    .from(articles);
 
-          <ScrollReveal animation="fade-up" delay={0.4}>
-            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
-              <Button size="lg" asChild className="w-full sm:w-auto">
-                <Link href="/auth/signup">
-                  Start for free
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-                <Link href="/RefinedFeed">Browse the feed</Link>
-              </Button>
+  const rows = await db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(2);
+  const cut = rows[0];
+  const deep = rows[1] ?? rows[0];
+
+  const topicCount = Number(stats?.topics ?? 15);
+  const regionCount = Number(stats?.regions ?? 15);
+  const briefCount = Number(stats?.briefs ?? 0);
+  const intake = briefCount * 42;
+
+  return (
+    <div className="relative">
+      {/* ══ HERO ══════════════════════════════════════════════ */}
+      <section className="relative flex min-h-[calc(100svh-6.5rem)] flex-col justify-center overflow-hidden border-b border-line px-5 py-14 sm:px-6 sm:py-16">
+        {/* the full spectrum, dissolved into the background */}
+        <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-indigo/[0.05] blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-1/4 h-80 w-80 rounded-full bg-ember/[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-72 w-72 rounded-full bg-teal/[0.05] blur-3xl" />
+
+        <div className="relative mx-auto w-full max-w-6xl">
+          <div className="max-w-3xl">
+            <div className="rule">
+              <span className="t-micro text-ember">news intelligence</span>
             </div>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
-              7-day Pro trial included · No credit card required
+
+            <h1 className="t-hero mt-6 font-display font-semibold text-ink">
+              Hundreds of articles in.
+              <br />
+              <span className="bg-gradient-to-r from-ember via-amber to-teal bg-clip-text text-transparent">
+                Three bullets out.
+              </span>
+            </h1>
+
+            <p className="t-lead mt-6 max-w-lg text-muted">
+              Distiller reads the day&apos;s coverage, throws away{" "}
+              <span className="font-semibold text-ink">95% of it</span>, and keeps
+              only the part you needed — with the source still attached.
             </p>
-          </ScrollReveal>
-        </div>
 
-        {/* Terminal demo */}
-        <div className="px-4 sm:px-6">
-          <HeroTerminal />
-        </div>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href="/signup"
+                className="sheen group inline-flex items-center gap-2 rounded-lg bg-ink px-6 py-3 text-sm font-semibold text-paper transition-colors duration-300 hover:bg-ember"
+              >
+                Start for free
+                <ArrowRightIcon
+                  width={15}
+                  height={15}
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                />
+              </Link>
+              <Link
+                href="/feed"
+                className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-6 py-3 text-sm font-semibold text-ink transition-colors duration-300 hover:border-ember hover:text-ember"
+              >
+                Browse the feed
+              </Link>
+            </div>
+            <p className="t-mono mt-4 text-faint">
+              7-day Pro trial · no card required
+            </p>
+          </div>
 
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-20 pt-12 sm:pt-16">
-          <StaggerChildren staggerDelay={0.1} className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
-            {stats.map((stat) => (
-              <div key={stat.label} className="rounded-xl sm:rounded-2xl border border-border bg-card/50 p-3 sm:p-4 text-center transition-all hover:border-primary/30 hover:bg-card hover:shadow-soft">
-                <p className="font-display text-2xl sm:text-3xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
+          {/* the distillation, in motion */}
+          {cut && (
+            <div className="mt-12 sm:mt-14">
+              <HeroDistill
+                topic={cut.topic}
+                bullets={cut.bullets}
+                insight={cut.keyInsight}
+                source={cut.source}
+                articleId={cut.id}
+                intake={intake}
+              />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ══ THE THREE DROPS ═══════════════════════════════════ */}
+      <Section className="bg-surface">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-16">
+          <Reveal>
+            <Kicker>the brief</Kicker>
+            <H2>Everything that matters. Nothing that doesn&apos;t.</H2>
+            <Lead className="max-w-sm">
+              Every brief is three bullets, one key insight, and a conclusion —
+              traced back to the original reporting.
+            </Lead>
+
+            <ul className="mt-8 space-y-3.5">
+              {[
+                ["Three bullets", "The whole story, compressed"],
+                ["One key insight", "The line you&apos;ll still recall next week"],
+                ["Its source", "Named, linked, never fabricated"],
+              ].map(([t, d]) => (
+                <li key={t} className="flex gap-3">
+                  <span className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] bg-teal/12 text-teal">
+                    <CheckIcon width={10} height={10} />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold text-ink">{t}</span>
+                    <span className="block text-[13px] text-faint">{d}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/feed"
+              className="group mt-8 inline-flex items-center gap-2 text-sm font-semibold text-ember"
+            >
+              <span className="underline-draw">See the live feed</span>
+              <ArrowRightIcon
+                width={14}
+                height={14}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </Link>
+          </Reveal>
+
+          {cut && (
+            <Reveal delay={120}>
+              <article className="lift relative overflow-hidden rounded-xl border border-line bg-paper p-6 sm:p-8">
+                
+
+                <div className="flex flex-wrap items-center gap-2 t-mono">
+                  <span className="rounded-[4px] bg-ember-soft px-2 py-0.5 text-ember">
+                    {cut.topic}
+                  </span>
+                  <span className="text-faint">{cut.region}</span>
+                  <span className="ml-auto text-faint">{timeAgo(cut.publishedAt)}</span>
+                </div>
+
+                <h3 className="t-h3 mt-4 font-display font-semibold leading-snug text-ink">
+                  {cut.title}
+                </h3>
+
+                <ul className="mt-6 space-y-3.5">
+                  {cut.bullets.map((b, i) => (
+                    <li key={i} className="flex gap-3.5">
+                      <span className="mt-[9px] h-2 w-2 shrink-0 rotate-45 bg-ember" />
+                      <span className="t-body text-ink-2">{b}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6 border-l-2 border-ember bg-ember-soft/40 px-4 py-3.5">
+                  <p className="t-micro flex items-center gap-1.5 text-ember">
+                    <BoltIcon width={9} height={9} /> key insight
+                  </p>
+                  <p className="mt-1.5 text-[14px] leading-relaxed text-ink-2">
+                    {cut.keyInsight}
+                  </p>
+                </div>
+
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+                  <a
+                    href={cut.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="t-mono inline-flex items-center gap-1.5 text-muted transition-colors hover:text-ember"
+                  >
+                    {cut.source}
+                    <ArrowUpRightIcon width={10} height={10} />
+                  </a>
+                  <Link
+                    href={`/article/${cut.id}`}
+                    className="group inline-flex items-center gap-2 text-sm font-semibold text-ink"
+                  >
+                    <span className="underline-draw">Read brief</span>
+                    <ArrowRightIcon
+                      width={13}
+                      height={13}
+                      className="transition-transform duration-300 group-hover:translate-x-1"
+                    />
+                  </Link>
+                </div>
+              </article>
+            </Reveal>
+          )}
+        </div>
+      </Section>
+
+      {/* ══ THE CUT ═══════════════════════════════════════════ */}
+      <Section id="cut" className="border-y border-line">
+        <Reveal className="max-w-2xl">
+          <Kicker>the cut</Kicker>
+          <H2>A distiller&apos;s real skill is knowing what to throw away.</H2>
+          <Lead>
+            The heads are volatile noise. The tails are heavy filler. Only the
+            heart survives — and it&apos;s a small fraction of what went in.
+          </Lead>
+        </Reveal>
+
+        {cut && (
+          <Reveal delay={100}>
+            <div className="mt-10">
+              <TheCut
+                bullets={cut.bullets}
+                keyInsight={cut.keyInsight}
+                source={cut.source}
+                articleId={cut.id}
+              />
+            </div>
+          </Reveal>
+        )}
+      </Section>
+
+      {/* ══ PROOF ═════════════════════════════════════════════ */}
+      <Section className="bg-surface">
+        <Reveal className="max-w-2xl">
+          <Kicker>proof</Kicker>
+          <H2>Every bullet traces back to the article.</H2>
+          <Lead>
+            Nothing is invented. Each bullet is drawn from a retrieved passage of
+            the original report, and the source travels with it.
+          </Lead>
+        </Reveal>
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-3 sm:gap-5">
+          {[
+            {
+              n: "01",
+              t: "Fetch",
+              d: "The original story is pulled from the wire.",
+              Icon: FlaskIcon,
+            },
+            {
+              n: "02",
+              t: "Retrieve",
+              d: "Passages are ranked against the question.",
+              Icon: SparkleIcon,
+            },
+            {
+              n: "03",
+              t: "Ground",
+              d: "Bullets are written only from what was found.",
+              Icon: ShieldIcon,
+            },
+          ].map((s, i) => (
+            <Reveal key={s.n} delay={i * 90}>
+              <div className="group h-full border-t-2 border-line pt-5 transition-colors duration-400 hover:border-ember">
+                <div className="flex items-center gap-3">
+                  <span className="t-micro text-faint">{s.n}</span>
+                  <s.Icon width={15} height={15} className="text-ember" />
+                </div>
+                <h3 className="t-h3 mt-3 font-display font-semibold text-ink">{s.t}</h3>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-muted">{s.d}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
+
+      {/* ══ DOUBLE DISTILLED ══════════════════════════════════ */}
+      <Section className="border-y border-line">
+        <Reveal className="max-w-2xl">
+          <Kicker>double distilled</Kicker>
+          <H2>Run it through twice.</H2>
+          <Lead>
+            Deep mode passes the same story through a second time — more context,
+            more nuance, still no filler.
+          </Lead>
+        </Reveal>
+
+        {deep && (
+          <div className="mt-12 grid gap-6 lg:grid-cols-2">
+            <Reveal>
+              <div className="flex h-full flex-col rounded-xl border border-line bg-surface p-6 sm:p-7">
+                <div className="flex items-baseline justify-between">
+                  <p className="t-mono text-faint">single pass</p>
+                  <p className="t-mono text-faint">{deep.bullets.length} bullets</p>
+                </div>
+                <p className="t-h3 mt-3 font-display font-semibold text-ink">
+                  The brief
+                </p>
+                <ul className="mt-5 flex-1 space-y-3">
+                  {deep.bullets.map((b, i) => (
+                    <li key={i} className="flex gap-3 text-[14px] leading-relaxed text-muted">
+                      <span className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full bg-faint" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+
+            <Reveal delay={110}>
+              <div className="flex h-full flex-col rounded-xl border-2 border-brass/50 bg-brass-soft/30 p-6 sm:p-7">
+                <div className="flex items-baseline justify-between">
+                  <p className="t-mono text-brass">second pass · pro</p>
+                  <p className="t-mono text-brass">{deep.deepBullets.length} bullets</p>
+                </div>
+                <p className="t-h3 mt-3 flex items-center gap-2 font-display font-semibold text-ink">
+                  <LayersIcon width={16} height={16} className="text-brass" /> Deep
+                  summary
+                </p>
+                <ul className="mt-5 flex-1 space-y-3">
+                  {deep.deepBullets.map((b, i) => (
+                    <li key={i} className="flex gap-3 text-[14px] leading-relaxed text-ink-2">
+                      <span className="mt-[8px] h-1.5 w-1.5 shrink-0 rotate-45 bg-brass" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
+        )}
+      </Section>
+
+      {/* ══ LIVE ASK ══════════════════════════════════════════ */}
+      <Section id="ask" className="bg-surface">
+        <Reveal className="mx-auto max-w-xl text-center">
+          <Kicker>ask the news</Kicker>
+          <H2>One question. A sourced answer.</H2>
+          <Lead className="mx-auto">
+            Distiller searches today&apos;s coverage, finds the strongest match,
+            and answers with the source attached.
+          </Lead>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <div className="mx-auto mt-10 max-w-2xl">
+            <LiveAskDemo suggestions={ASK} />
+          </div>
+        </Reveal>
+      </Section>
+
+      {/* ══ FRACTIONS — the interactive picker ════════════════ */}
+      <Section>
+        <Reveal className="max-w-2xl">
+          <Kicker>fractions</Kicker>
+          <H2>Tune the still to your slice of the world.</H2>
+          <Lead>
+            A mixture separates into fractions — each at its own temperature.
+            We run {topicCount} of them across {regionCount} regions, from
+            frontier AI to Tunisia&apos;s olive harvest. Pick a topic, spin the
+            globe to a desk, and the feed re-tunes instantly.
+          </Lead>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <div className="mt-10">
+            <TopicPicker totalBriefs={briefCount} />
+          </div>
+        </Reveal>
+
+        <Reveal delay={150}>
+          <div className="mt-10 grid grid-cols-2 gap-6 border-t border-line pt-8 sm:grid-cols-4">
+            {[
+              [topicCount, "topics"],
+              [regionCount, "regions"],
+              [3, "bullets per brief"],
+              [briefCount, "live briefs"],
+            ].map(([n, l]) => (
+              <div key={l as string}>
+                <p className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+                  <CountUp value={n as number} />
+                </p>
+                <p className="t-micro mt-1 text-faint">{l as string}</p>
               </div>
             ))}
-          </StaggerChildren>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-5xl px-6 pb-24">
-        <Card className="overflow-hidden border-border bg-card shadow-soft">
-          <div className="flex flex-col lg:flex-row">
-            <div className="flex-1 p-6 lg:p-8">
-              <Badge variant="outline" className="mb-4 border-border text-muted-foreground">
-                {sampleSummary.category}
-              </Badge>
-              <h2 className="font-display text-2xl font-semibold leading-snug text-foreground mb-4">
-                {sampleSummary.headline}
-              </h2>
-
-              <div className="bullet-list mb-6">
-                {sampleSummary.bullets.map((bullet, i) => (
-                  <li key={i} className="text-sm leading-relaxed text-muted-foreground">
-                    {bullet}
-                  </li>
-                ))}
-              </div>
-
-              <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-wider text-primary mb-1.5 font-medium">Key insight</p>
-                <p className="text-sm leading-relaxed text-foreground">{sampleSummary.insight}</p>
-              </div>
-            </div>
-
-            <div className="border-t border-border lg:border-t-0 lg:border-l lg:w-72 bg-muted/10 p-6 lg:p-8">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Sample summary</p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm text-muted-foreground">3 concise bullets</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm text-muted-foreground">Verified source</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm text-muted-foreground">Key insight + conclusion</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm text-muted-foreground">Source attribution</span>
-                </div>
-              </div>
-              <div className="mt-5 pt-4 border-t border-border/50">
-                <p className="text-xs text-muted-foreground">{sampleSummary.source}</p>
-              </div>
-            </div>
           </div>
-        </Card>
-      </section>
+        </Reveal>
+      </Section>
 
-      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((feature) => (
-            <Card key={feature.title} className="border-border bg-card p-4 sm:p-5">
-              <div className="flex size-8 sm:size-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-primary/10 mb-3 sm:mb-4">
-                <feature.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </div>
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-display text-sm sm:text-base font-semibold text-foreground">{feature.title}</h3>
-                {feature.title === "Live RSS Feed" && (
-                  <Badge variant="default" className="text-[10px] sm:text-xs">Pro</Badge>
-                )}
-              </div>
-              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
-            </Card>
-          ))}
-        </div>
-      </RevealSection>
-
-      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24" aria-label="How Distiller grounds every brief">
-        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground text-center mb-2">
-          How Distiller grounds every brief
-        </h2>
-        <p className="text-center text-xs sm:text-sm text-muted-foreground mb-8 sm:mb-10">Every bullet traces back to source evidence. No guessing, no fabrication.</p>
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-3 lg:grid-cols-5">
-          {[
-            { step: "1", label: "Article", desc: "We fetch the original story from trusted sources" },
-            { step: "2", label: "Chunks", desc: "Text split into ~900-char semantic blocks" },
-            { step: "3", label: "Embeddings", desc: "AI encodes query + chunks for relevance" },
-            { step: "4", label: "Snippets", desc: "Top 3 retrieved by semantic similarity" },
-            { step: "5", label: "Summary", desc: "AI generates 3 grounded bullets" }
-          ].map(({ step, label, desc }) => (
-            <div key={step} className="flex flex-col items-center text-center">
-              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-base sm:text-lg mb-2 sm:mb-3">{step}</div>
-              <p className="text-xs sm:text-sm font-medium text-foreground">{label}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </RevealSection>
-
-      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
-        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground text-center mb-8 sm:mb-10">
-          Free vs Pro
-        </h2>
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-          <Card className="border-border bg-card p-5 sm:p-6">
-            <p className="font-display text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Free</p>
-            <div className="space-y-2 sm:space-y-3">
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> 50 articles/month</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> 2 topics</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> 2 regions</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Basic filters</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> Deep summaries</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> Bookmarks</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> Daily email briefing</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> RSS feed</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground/50"><Minus className="h-4 w-4 shrink-0" /> Shareable briefs</div>
-            </div>
-          </Card>
-          <Card className="border-border bg-card p-5 sm:p-6 ring-1 ring-primary/15">
-            <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <p className="font-display text-lg sm:text-xl font-semibold">Pro</p>
-              <Badge variant="default" className="text-[10px] sm:text-xs">Most popular</Badge>
-            </div>
-            <div className="space-y-2 sm:space-y-3">
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Unlimited articles</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> All 15 topics</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> All 15 regions</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Advanced filters + Deep mode</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Bookmarks</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Daily email briefing</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> RSS feed</div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" /> Shareable briefs</div>
-            </div>
-            <Button className="mt-4 sm:mt-5 w-full" asChild>
-              <Link href="/auth/signup">Start 7-day free trial</Link>
-            </Button>
-          </Card>
-        </div>
-      </RevealSection>
-
-      <section className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
-        <div className="rounded-xl sm:rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-            <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl border border-primary/30 bg-primary/10">
-              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-display text-sm sm:text-base font-semibold text-foreground mb-1">Deep Summary Mode</h3>
-              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                Pro readers get extended briefs — more context, more nuance, same zero fluff. Switch modes per article or set it as your default.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
-        <Card className="border-border bg-card p-6 sm:p-8 text-center">
-          <Badge variant="outline" className="mb-3 sm:mb-4 border-border text-muted-foreground">
-            100% free to start
-          </Badge>
-          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground mb-3 sm:mb-4">
-            No credit card. No catch.
-          </h2>
-          <p className="mx-auto max-w-lg text-xs sm:text-sm leading-relaxed text-muted-foreground mb-6 sm:mb-8">
-            Begin with 50 articles per month on the free plan. Upgrade to Pro for unlimited access,
-            advanced filters, and bookmarking. Cancel anytime.
+      {/* ══ PRICING — THE CUT ═════════════════════════════════ */}
+      <Section id="pricing" className="border-t border-line bg-surface">
+        <Reveal className="max-w-2xl text-center">
+          <Kicker>pricing</Kicker>
+          <H2>Two cuts. One choice.</H2>
+          <p className="t-lead mx-auto mt-4 max-w-md text-muted">
+            The raw feed, or the heart of it. Choose what you keep.
           </p>
-          <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
-            <Button size="lg" asChild className="w-full sm:w-auto">
-              <Link href="/auth/signup">Create free account</Link>
-            </Button>
-            <Button variant="ghost" size="lg" asChild className="w-full sm:w-auto">
-              <Link href="/pricing">View all plans</Link>
-            </Button>
-          </div>
-        </Card>
-      </RevealSection>
+        </Reveal>
 
-      <RevealSection className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
-        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground text-center mb-8 sm:mb-10">
-          Topics we cover
-        </h2>
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-          {[
-            "World", "Politics", "Technology", "AI", "Science",
-            "Business", "Finance", "Stocks", "Climate",
-            "Health", "Education", "Sports", "Entertainment", "Culture", "LLM"
-          ].map((topic) => (
-            <Link key={topic} href={`/RefinedFeed?category=${topic.toLowerCase()}`}>
-              <Button variant="outline" size="sm" className="rounded-full text-xs sm:text-sm">
-                {topic}
-              </Button>
-            </Link>
-          ))}
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {/* THE TAILS — Free */}
+          <Reveal>
+            <div className="group relative h-full overflow-hidden rounded-2xl border border-line bg-paper p-8 transition-all duration-500 hover:border-faint/60">
+              {/* muted, "uncut" visual treatment */}
+              <div className="absolute inset-0 opacity-40 [background-image:repeating-linear-gradient(45deg,transparent,transparent_6px,var(--color-line)_6px,var(--color-line)_7px)]" />
+              
+              <div className="relative">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-faint/15 px-3 py-0.5 t-micro text-faint">uncut</span>
+                </div>
+                <h3 className="mt-5 font-display text-3xl font-semibold text-ink">The Tails</h3>
+                <p className="mt-1 text-[15px] text-muted">Everything, unfiltered. You do the work.</p>
+
+                <div className="mt-6 border-t border-line pt-6">
+                  <p className="font-display text-5xl font-semibold text-ink tabular-nums">
+                    $0<span className="text-2xl font-normal text-faint">/mo</span>
+                  </p>
+                </div>
+
+                <ul className="mt-8 space-y-4 text-[14px]">
+                  {[
+                    "50 briefs per month",
+                    "2 topics, 2 regions",
+                    "Three-bullet summaries",
+                    "Basic search & filters",
+                  ].map((f, i) => (
+                    <li key={i} className="flex items-start gap-3 text-ink-2">
+                      <span className="mt-1.5 h-1 w-1 rounded-full bg-faint" />
+                      {f}
+                    </li>
+                  ))}
+                  {["Deep summaries", "Bookmarks", "RSS feed", "Unlimited access"].map((f, i) => (
+                    <li key={`x-${i}`} className="flex items-start gap-3 text-faint/60 line-through">
+                      <span className="mt-1.5 h-1 w-1 rounded-full bg-faint/40" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href="/signup"
+                  className="mt-9 block rounded-xl border border-line py-3 text-center text-sm font-semibold text-ink transition-all duration-300 group-hover:border-faint group-hover:bg-surface"
+                >
+                  Start with the raw feed
+                </Link>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* THE HEART — Pro */}
+          <Reveal delay={80}>
+            <div className="group relative h-full overflow-hidden rounded-2xl border-2 border-ember bg-gradient-to-br from-paper via-surface to-brass-soft/30 p-8 shadow-[var(--shadow-deep)] transition-all duration-500 hover:border-ember-2">
+              {/* distilled visual treatment — three drops motif */}
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-ember/[0.06] blur-2xl transition-all duration-500 group-hover:bg-ember/[0.12]" />
+              <div className="absolute -left-4 bottom-12 h-16 w-16 rounded-full bg-brass/[0.08] blur-xl" />
+
+              <div className="relative">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-ember px-3 py-0.5 t-micro text-paper">the heart</span>
+                  <span className="rounded-full bg-brass/20 px-2.5 py-0.5 t-micro text-brass">most kept</span>
+                </div>
+                <h3 className="mt-5 font-display text-3xl font-semibold text-ink">The Heart</h3>
+                <p className="mt-1 text-[15px] text-muted">The only fraction that matters. Everything else, discarded.</p>
+
+                <div className="mt-6 border-t border-line pt-6">
+                  <p className="font-display text-5xl font-semibold text-ink tabular-nums">
+                    $9<span className="text-2xl font-normal text-faint">/mo</span>
+                  </p>
+                  <p className="t-mono mt-1 text-faint">7-day free trial</p>
+                </div>
+
+                <ul className="mt-8 space-y-4 text-[14px]">
+                  {[
+                    "Unlimited briefs",
+                    "All 15 topics, all 15 regions",
+                    "Deep summary mode — the second pass",
+                    "Bookmarks, RSS, daily briefing",
+                    "Advanced filters & saved queries",
+                  ].map((f, i) => (
+                    <li key={i} className="flex items-start gap-3 text-ink-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 rotate-45 bg-ember" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href="/signup?plan=pro"
+                  className="sheen mt-9 block rounded-xl bg-gradient-to-r from-ember via-ember-2 to-brass py-3 text-center text-sm font-semibold text-paper shadow-lg transition-all duration-300 hover:brightness-105"
+                >
+                  Keep only what matters
+                </Link>
+              </div>
+            </div>
+          </Reveal>
         </div>
-      </RevealSection>
 
-      <section id="main-content" className="mx-auto max-w-5xl px-4 sm:px-6 pb-16 sm:pb-24">
-        <Card className="border-border bg-card p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-            <div className="flex size-12 sm:size-14 items-center justify-center rounded-xl sm:rounded-2xl border border-border bg-primary/10 shrink-0">
-              <Star className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+        <Reveal delay={160}>
+          <p className="mt-8 text-center t-mono text-faint">
+            Cancel anytime. No questions. The cut is yours to make.
+          </p>
+        </Reveal>
+      </Section>
+
+      {/* ══ CTA ═══════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden border-t border-line px-5 py-20 sm:px-6 sm:py-28">
+        <div className="pointer-events-none absolute -bottom-40 left-1/2 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-ember/[0.08] blur-3xl" />
+        <div className="relative mx-auto max-w-2xl text-center">
+          <Reveal>
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-ink text-paper">
+              <FlaskIcon width={20} height={20} />
+            </span>
+            <h2 className="t-h1 mt-7 font-display font-semibold text-ink">
+              Stop skimming. Start distilling.
+            </h2>
+            <p className="t-lead mx-auto mt-4 max-w-sm text-muted">
+              The world&apos;s news, three bullets. Free to start — no card, no
+              catch.
+            </p>
+            <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/signup"
+                className="sheen group inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-6 py-3 text-sm font-semibold text-paper transition-colors duration-300 hover:bg-ember"
+              >
+                Get started free
+                <ArrowRightIcon
+                  width={15}
+                  height={15}
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                />
+              </Link>
+              <Link
+                href="/feed"
+                className="inline-flex items-center justify-center rounded-lg border border-line bg-surface px-6 py-3 text-sm font-semibold text-ink transition-colors duration-300 hover:border-ember hover:text-ember"
+              >
+                Browse feed
+              </Link>
             </div>
-            <div className="text-center sm:text-left flex-1">
-              <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-foreground mb-2">
-                Ready to cut through the noise?
-              </h2>
-              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground max-w-md">
-                Join researchers, developers, and curious readers who stay informed in seconds, not hours.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
-              <Button asChild className="w-full sm:w-auto">
-                <Link href="/auth/signup">Get started free</Link>
-              </Button>
-              <Button variant="outline" asChild className="w-full sm:w-auto">
-                <Link href="/RefinedFeed">Browse feed</Link>
-              </Button>
-            </div>
-          </div>
-        </Card>
+          </Reveal>
+        </div>
       </section>
-    </main>
+    </div>
   );
 }
