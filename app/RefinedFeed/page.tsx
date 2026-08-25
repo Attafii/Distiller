@@ -45,12 +45,12 @@ function FeedSkeleton() {
           key={index}
           className="animate-pulse rounded-3xl border border-border bg-card p-6 shadow-soft"
         >
-          <div className="mb-4 h-4 w-28 rounded-full bg-muted" />
-          <div className="mb-3 h-6 w-4/5 rounded-full bg-muted" />
+          <div className="mb-4 h-4 w-28 rounded-full bg-muted-2" />
+          <div className="mb-3 h-6 w-4/5 rounded-full bg-muted-2" />
           <div className="space-y-3">
-            <div className="h-16 rounded-2xl bg-muted/80" />
-            <div className="h-16 rounded-2xl bg-muted/80" />
-            <div className="h-16 rounded-2xl bg-muted/80" />
+            <div className="h-16 rounded-2xl bg-muted-2/80" />
+            <div className="h-16 rounded-2xl bg-muted-2/80" />
+            <div className="h-16 rounded-2xl bg-muted-2/80" />
           </div>
         </div>
       ))}

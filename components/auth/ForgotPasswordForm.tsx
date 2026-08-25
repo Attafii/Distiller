@@ -70,7 +70,7 @@ export function ForgotPasswordForm() {
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {success ? (
-            <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+            <div className="rounded-lg border border-border bg-muted-2/30 px-4 py-3 text-sm text-muted-foreground">
               If an account exists with that email, we&apos;ve sent a reset link.
             </div>
           ) : (

@@ -40,7 +40,7 @@ export function NotificationToggle({ label, description, checked, onChange }: No
         onClick={handleChange}
         disabled={loading}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          enabled ? "bg-primary" : "bg-muted"
+          enabled ? "bg-primary" : "bg-muted-2"
         } ${loading ? "opacity-50" : ""}`}
       >
         {loading ? (

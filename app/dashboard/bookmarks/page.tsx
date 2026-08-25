@@ -63,7 +63,7 @@ export default async function BookmarksPage() {
               {userBookmarks.map((bm) => (
                 <div
                   key={bm.id}
-                  className="flex items-start justify-between gap-4 rounded-xl border border-border p-4 hover:bg-muted/30 transition-colors"
+                  className="flex items-start justify-between gap-4 rounded-xl border border-border p-4 hover:bg-muted-2/30 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
                     <a

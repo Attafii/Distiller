@@ -11,8 +11,8 @@ export type ButtonSize = "sm" | "default" | "lg" | "icon";
 const variantStyles: Record<ButtonVariant, string> = {
   default: "bg-primary text-primary-foreground hover:brightness-95 shadow-sm",
   secondary: "border border-border bg-secondary text-secondary-foreground hover:brightness-95",
-  outline: "border border-border bg-transparent text-foreground hover:bg-muted",
-  ghost: "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+  outline: "border border-border bg-transparent text-foreground hover:bg-muted-2",
+  ghost: "bg-transparent text-muted-foreground hover:bg-muted-2 hover:text-foreground"
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

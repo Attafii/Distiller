@@ -15,7 +15,7 @@ const variantStyles: Record<string, string> = {
   default: "border-border bg-card",
   success: "border-emerald-500/30 bg-emerald-500/10",
   error: "border-destructive/30 bg-destructive/5",
-  info: "border-blue-500/30 bg-blue-500/10"
+  info: "border-info/30 bg-info/10 text-info"
 };
 
 const variantIcons: Record<string, string> = {
@@ -56,7 +56,7 @@ export function Toast({ children, variant = "default", onClose, duration = 4000 
           setVisible(false);
           onClose?.();
         }}
-        className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        className="rounded-lg p-1 text-muted-foreground hover:bg-muted-2 hover:text-foreground transition-colors"
         aria-label="Dismiss notification"
       >
         <X className="h-4 w-4" />
