@@ -59,8 +59,33 @@ export const TOPIC_META: Record<
   LLM: { color: "indigo", blurb: "Language models" },
 };
 
+/** Lowercase aliases — the app's feed categories resolve to the same spectrum. */
+const TOPIC_ALIASES: Record<string, { color: string; blurb: string }> = {
+  world: TOPIC_META.World,
+  politics: TOPIC_META.Politics,
+  tech: TOPIC_META.Technology,
+  technology: TOPIC_META.Technology,
+  ai: TOPIC_META.AI,
+  llm: TOPIC_META.LLM,
+  science: TOPIC_META.Science,
+  business: TOPIC_META.Business,
+  finance: TOPIC_META.Finance,
+  stocks: TOPIC_META.Stocks,
+  climate: TOPIC_META.Climate,
+  health: TOPIC_META.Health,
+  education: TOPIC_META.Education,
+  sports: TOPIC_META.Sports,
+  entertainment: TOPIC_META.Entertainment,
+  culture: TOPIC_META.Culture
+};
+
+export const TOPIC_META_FULL: Record<string, { color: string; blurb: string }> = {
+  ...TOPIC_META,
+  ...TOPIC_ALIASES
+};
+
 export function topicColor(topic: string): string {
-  return `var(--color-${TOPIC_META[topic]?.color ?? "ember"})`;
+  return `var(--color-${TOPIC_META_FULL[topic?.toLowerCase()]?.color ?? TOPIC_META[topic]?.color ?? "ember"})`;
 }
 
 export const REGION_GROUPS: { label: string; regions: string[] }[] = [

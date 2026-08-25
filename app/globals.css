@@ -215,6 +215,11 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+  /* The still: crisp edges. Clamp Tailwind's rounder tokens app-wide. */
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 0.875rem;
+  --radius-4xl: 1rem;
 }
 
 /* ── Type utilities ─────────────────────────────────────────── */

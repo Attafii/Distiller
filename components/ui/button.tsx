@@ -9,17 +9,17 @@ export type ButtonVariant = "default" | "secondary" | "outline" | "ghost";
 export type ButtonSize = "sm" | "default" | "lg" | "icon";
 
 const variantStyles: Record<ButtonVariant, string> = {
-  default: "bg-primary text-primary-foreground hover:brightness-95 shadow-sm",
-  secondary: "border border-border bg-secondary text-secondary-foreground hover:brightness-95",
-  outline: "border border-border bg-transparent text-foreground hover:bg-muted-2",
-  ghost: "bg-transparent text-muted-foreground hover:bg-muted-2 hover:text-foreground"
+  default: "sheen bg-ink text-paper hover:bg-ember",
+  secondary: "border border-line bg-surface-2 text-ink hover:border-ember/50 hover:text-ember",
+  outline: "border border-line bg-transparent text-ink hover:border-ember/50 hover:text-ember",
+  ghost: "bg-transparent text-muted hover:bg-surface-2 hover:text-ink"
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "h-8 rounded-full px-3 text-xs",
-  default: "h-10 rounded-full px-4 text-sm",
-  lg: "h-11 rounded-full px-5 text-sm",
-  icon: "h-9 w-9 rounded-full p-0"
+  sm: "h-8 rounded-md px-3 text-xs",
+  default: "h-10 rounded-md px-4 text-sm",
+  lg: "h-11 rounded-md px-5 text-sm",
+  icon: "h-9 w-9 rounded-md p-0"
 };
 
 export function buttonStyles({
