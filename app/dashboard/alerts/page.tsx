@@ -58,7 +58,7 @@ export default async function AlertsPage() {
               {userAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-border p-4 hover:bg-muted/30 transition-colors"
+                  className="flex items-center justify-between gap-4 rounded-xl border border-border p-4 hover:bg-muted-2/30 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{alert.keyword}</p>

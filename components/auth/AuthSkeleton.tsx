@@ -9,12 +9,12 @@ export function LoginSkeleton() {
       </div>
       <CardContent className="space-y-4 pt-4">
         <div className="space-y-1.5">
-          <div className="h-4 w-16 rounded bg-muted" />
-          <div className="h-10 w-full rounded-lg bg-muted" />
+          <div className="h-4 w-16 rounded bg-muted-2" />
+          <div className="h-10 w-full rounded-lg bg-muted-2" />
         </div>
         <div className="space-y-1.5">
-          <div className="h-4 w-20 rounded bg-muted" />
-          <div className="h-10 w-full rounded-lg bg-muted" />
+          <div className="h-4 w-20 rounded bg-muted-2" />
+          <div className="h-10 w-full rounded-lg bg-muted-2" />
         </div>
         <div className="h-10 w-full rounded-lg bg-primary/20" />
       </CardContent>
@@ -31,16 +31,16 @@ export function SignupSkeleton() {
       </div>
       <CardContent className="space-y-4 pt-4">
         <div className="space-y-1.5">
-          <div className="h-4 w-20 rounded bg-muted" />
-          <div className="h-10 w-full rounded-lg bg-muted" />
+          <div className="h-4 w-20 rounded bg-muted-2" />
+          <div className="h-10 w-full rounded-lg bg-muted-2" />
         </div>
         <div className="space-y-1.5">
-          <div className="h-4 w-16 rounded bg-muted" />
-          <div className="h-10 w-full rounded-lg bg-muted" />
+          <div className="h-4 w-16 rounded bg-muted-2" />
+          <div className="h-10 w-full rounded-lg bg-muted-2" />
         </div>
         <div className="space-y-1.5">
-          <div className="h-4 w-24 rounded bg-muted" />
-          <div className="h-10 w-full rounded-lg bg-muted" />
+          <div className="h-4 w-24 rounded bg-muted-2" />
+          <div className="h-10 w-full rounded-lg bg-muted-2" />
         </div>
         <div className="h-10 w-full rounded-lg bg-primary/20" />
       </CardContent>

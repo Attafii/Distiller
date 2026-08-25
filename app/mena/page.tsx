@@ -94,7 +94,7 @@ export default function MenaPage() {
                   <li key={j} className="text-sm text-muted-foreground">{b}</li>
                 ))}
               </ul>
-              <div className="rounded-xl border border-border/50 bg-muted/20 p-3 mb-4">
+              <div className="rounded-xl border border-border/50 bg-muted-2/20 p-3 mb-4">
                 <p className="text-xs uppercase tracking-wider text-primary mb-1 font-medium">Key insight</p>
                 <p className="text-sm text-foreground">{article.insight}</p>
               </div>

@@ -3,12 +3,6 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { motion } from "framer-motion";
-import { Bot, Loader2, Send, Sparkles, User2 } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { COUNTRY_OPTIONS, DATE_RANGE_OPTIONS, TOPIC_OPTIONS } from "@/lib/news-options";
 import type { Category, CountryCode, DateRange, NewsAssistantResponse } from "@/types/news";
 
@@ -17,6 +11,8 @@ interface NewsAssistantMessage {
   role: "user" | "assistant";
   content: string;
 }
+
+const PIPELINE = ["Parse question", "Search coverage", "Rank matches", "Ground answer"];
 
 function formatPublishedAt(publishedAt: string) {
   return new Intl.DateTimeFormat("en", {
@@ -161,159 +157,145 @@ export function NewsAssistant({
   }, [initialQuery, hasAutoSubmitted, messages.length]);
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      className="mb-6"
+    <section
+      className={`animated-border relative mb-8 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-deep)] ${
+        loading ? "active" : ""
+      }`}
     >
-      <Card className="overflow-hidden border-border bg-card/80 shadow-soft">
-        <CardContent className="space-y-5 p-5 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="default">
-                  <Bot className="mr-1.5 h-3.5 w-3.5" />
-                  News assistant
-                </Badge>
-                <Badge variant="outline" className="border-border text-muted-foreground">
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  Search + answer
-                </Badge>
-              </div>
+      {/* header strip */}
+      <div className="flex items-center gap-3 border-b border-line bg-surface-2 px-4 py-2.5 sm:px-5">
+        <p className="t-micro text-faint">news assistant · live retrieval</p>
+      </div>
 
-              <div className="space-y-2">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                  Ask for a specific story, fact, or update and get a detailed answer.
-                </h2>
-                <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  The assistant parses your question, searches the current coverage, ranks the best matches, and answers
-                  with the strongest source material it can find.
-                </p>
-              </div>
-            </div>
+      <div className="p-4 sm:p-6">
+        <div className="rule">
+          <span className="t-micro text-ember">ask the news</span>
+        </div>
+        <h2 className="t-h3 mt-3 font-display font-semibold text-ink">
+          One question. A sourced answer.
+        </h2>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="border-border text-muted-foreground">
-                {categoryLabel}
-              </Badge>
-              <Badge variant="outline" className="border-border text-muted-foreground">
-                {countryLabel}
-              </Badge>
-              <Badge variant="outline" className="border-border text-muted-foreground">
-                {dateRangeLabel}
-              </Badge>
-            </div>
-          </div>
+        <form ref={formRef} onSubmit={submitQuestion} className="mt-5 grid gap-2.5 lg:grid-cols-[1fr_auto]">
+          <label htmlFor="news-assistant-question" className="sr-only">
+            Ask the news assistant
+          </label>
 
-          <form ref={formRef} onSubmit={submitQuestion} className="grid gap-3 lg:grid-cols-[1fr_auto]">
-            <label htmlFor="news-assistant-question" className="sr-only">
-              Ask the news assistant
-            </label>
+          <textarea
+            id="news-assistant-question"
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            rows={2}
+            placeholder="Ask for a specific story, person, company, or issue…"
+            className="min-h-20 w-full resize-y rounded-lg border border-line bg-paper px-3.5 py-2.5 text-sm leading-relaxed text-ink placeholder:text-faint focus:border-ember focus:outline-none"
+          />
 
-            <textarea
-              id="news-assistant-question"
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              rows={3}
-              placeholder="Ask for a specific story, person, company, or issue..."
-              className="min-h-28 w-full resize-y rounded-3xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
-            />
-
-            <Button type="submit" size="lg" className="lg:self-stretch" disabled={loading || question.trim().length === 0}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Ask
-            </Button>
-          </form>
-
-          <div className="flex flex-wrap gap-2">
-            {starterPrompts.map((prompt) => (
-              <Button
-                key={prompt}
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="border border-border bg-card text-muted-foreground hover:border-primary/40 hover:bg-secondary hover:text-foreground"
-                onClick={() => setQuestion(prompt)}
-              >
-                {prompt}
-              </Button>
-            ))}
-          </div>
-
-          <div aria-live="polite" className="space-y-3 rounded-3xl border border-border bg-card/75 p-4 sm:p-5">
-            {messages.length === 0 ? (
-              <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-                <p>Try asking about a named person, a headline, a company, or a current event.</p>
-                <p>The assistant will search the current news coverage, pull in the full article text when available, and keep the conversation natural.</p>
-              </div>
-            ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
-                    message.role === "user"
-                      ? "ml-auto max-w-3xl border-primary/25 bg-primary/12 text-foreground"
-                      : "mr-auto max-w-4xl border-border bg-card text-foreground"
-                  }`}
-                >
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
-                    {message.role === "user" ? <User2 className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                  </div>
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                </div>
-              ))
-            )}
-
+          <button
+            type="submit"
+            disabled={loading || question.trim().length === 0}
+            className="sheen inline-flex h-auto items-center justify-center gap-2 rounded-lg bg-ink px-5 py-2.5 text-sm font-semibold text-paper transition-colors duration-300 hover:bg-ember disabled:pointer-events-none disabled:opacity-40 lg:self-stretch"
+          >
             {loading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Searching articles and drafting the answer...
-              </div>
-            ) : null}
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-paper/30 border-t-paper" />
+                Distilling
+              </>
+            ) : (
+              "Ask"
+            )}
+          </button>
+        </form>
 
-            {error ? <p className="text-xs uppercase tracking-[0.24em] text-red-300/80">{error}</p> : null}
-          </div>
+        <div className="scrollbar-none -mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          {starterPrompts.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              onClick={() => setQuestion(prompt)}
+              className="t-mono shrink-0 rounded-full border border-line px-3 py-1 text-muted transition hover:border-ember/50 hover:text-ink"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
 
-          {latestSources.length > 0 ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Top sources</p>
-                <Badge variant="outline" className="border-border text-muted-foreground">
-                  {latestSources.length} matches
-                </Badge>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {latestSources.map((source) => (
-                  <a
-                    key={source.id}
-                    href={source.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-3xl border border-border bg-card p-4 transition hover:border-primary/45 hover:bg-secondary/40"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-snug text-foreground">{source.title}</p>
-                        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-                          {source.source} · {formatPublishedAt(source.publishedAt)}
-                        </p>
-                      </div>
-
-                      <Badge variant="outline" className="border-border text-muted-foreground">
-                        {source.relevance}%
-                      </Badge>
-                    </div>
-
-                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{source.snippet}</p>
-                  </a>
-                ))}
-              </div>
+        {/* conversation */}
+        <div aria-live="polite" className="mt-5 space-y-3 border-t border-line pt-5">
+          {messages.length === 0 && !loading ? (
+            <div className="space-y-2.5">
+              {PIPELINE.map((label, i) => (
+                <div key={label} className="t-mono flex items-center gap-2.5 text-faint/70">
+                  <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border border-line text-[8px]">
+                    {i + 1}
+                  </span>
+                  {label}
+                </div>
+              ))}
+              <p className="pt-1 text-[13px] leading-relaxed text-muted">
+                Try a named person, a headline, a company, or a current event — the assistant searches current
+                coverage and answers with the source attached.
+              </p>
             </div>
           ) : null}
-        </CardContent>
-      </Card>
-    </motion.section>
+
+          {messages.map((message) =>
+            message.role === "user" ? (
+              <div
+                key={message.id}
+                className="ml-auto max-w-3xl rounded-lg border border-ember/30 bg-ember-soft/40 px-4 py-3 text-sm leading-relaxed text-ink"
+              >
+                <p className="t-micro mb-1 text-ember">you</p>
+                {message.content}
+              </div>
+            ) : (
+              <div key={message.id} className="mr-auto max-w-4xl rounded-lg border border-line bg-paper px-4 py-3.5">
+                <p className="t-micro mb-2 flex items-center gap-1.5 text-teal">
+                  <span className="h-1.5 w-1.5 rotate-45 bg-teal" /> distilled
+                </p>
+                <p className="t-body whitespace-pre-wrap text-ink-2">{message.content}</p>
+              </div>
+            )
+          )}
+
+          {loading ? (
+            <div className="t-mono flex items-center gap-2 text-muted">
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-ember" />
+              searching articles, grounding the answer…
+            </div>
+          ) : null}
+
+          {error ? <p className="t-mono text-ember">{error}</p> : null}
+        </div>
+
+        {/* sources */}
+        {latestSources.length > 0 ? (
+          <div className="mt-5 border-t border-line pt-5">
+            <div className="rule">
+              <span className="t-micro text-faint">top sources · {latestSources.length} matches</span>
+            </div>
+
+            <div className="mt-4 grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+              {latestSources.map((source) => (
+                <a
+                  key={source.id}
+                  href={source.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="lift block rounded-lg border border-line bg-paper p-3.5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[13px] font-semibold leading-snug text-ink">{source.title}</p>
+                    <span className="t-mono shrink-0 text-teal">{source.relevance}%</span>
+                  </div>
+                  <p className="t-mono mt-2 text-faint">
+                    {source.source} · {formatPublishedAt(source.publishedAt)}
+                  </p>
+                  <p className="mt-2 line-clamp-2 text-[12.5px] leading-relaxed text-muted">{source.snippet}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 }

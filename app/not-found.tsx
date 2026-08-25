@@ -17,7 +17,7 @@ export default function NotFound() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
       <Card className="w-full max-w-md border-border bg-card shadow-elevated">
         <CardContent className="space-y-6 p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted-2">
             <Search className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
           </div>
 

@@ -50,7 +50,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Overview</h1>
+        <p className="t-micro text-ember">your desk</p>
+        <h1 className="t-h3 mt-1 font-display font-semibold tracking-tight">Overview</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Your personal news intelligence at a glance.
         </p>
@@ -59,7 +60,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Link key={stat.label} href={stat.href}>
-            <Card className="border-border bg-card transition-colors hover:border-primary/30 hover:bg-muted/30">
+            <Card className="border-border bg-card transition-colors hover:border-primary/30 hover:bg-muted-2/30">
               <CardContent className="flex items-center gap-4 p-5">
                 <div className="flex size-11 items-center justify-center rounded-xl border border-border bg-primary/10">
                   <stat.icon className="h-5 w-5 text-primary" />
@@ -75,13 +76,13 @@ export default async function DashboardPage() {
       </div>
 
       {isFreePlan && (
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+        <div className="rounded-xl border border-brass/30 bg-brass-soft/20 p-5">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-foreground">This month&apos;s usage</p>
-            <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-500/30">Free</Badge>
+            <Badge variant="outline" className="border-brass/40 t-mono text-brass">free</Badge>
           </div>
-          <div className="h-2 w-full rounded-full bg-muted mb-2">
-            <div className="h-2 rounded-full bg-amber-500 transition-all" style={{ width: `${Math.min(100, (monthlyUsage / FREE_MONTHLY_ARTICLE_LIMIT) * 100)}%` }} />
+          <div className="h-2 w-full rounded-full bg-muted-2 mb-2">
+            <div className="h-2 rounded-full bg-brass transition-all" style={{ width: `${Math.min(100, (monthlyUsage / FREE_MONTHLY_ARTICLE_LIMIT) * 100)}%` }} />
           </div>
           <p className="text-xs text-muted-foreground">{monthlyUsage} of {FREE_MONTHLY_ARTICLE_LIMIT} articles read · {Math.max(0, FREE_MONTHLY_ARTICLE_LIMIT - monthlyUsage)} remaining</p>
           <div className="mt-3">
@@ -122,7 +123,7 @@ export default async function DashboardPage() {
                 <ul className="mt-4 space-y-2">
                   {plan.features.slice(0, 3).map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rotate-45 bg-primary" />
                       {f}
                     </li>
                   ))}
@@ -178,7 +179,7 @@ async function RecentBookmarks({ userId }: { userId: string }) {
                 href={bm.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-xl border border-border p-3 hover:bg-muted/30 transition-colors"
+                className="block rounded-xl border border-border p-3 hover:bg-muted-2/30 transition-colors"
               >
                 <p className="text-sm font-medium truncate">{bm.title}</p>
                 <p className="text-xs text-muted-foreground mt-1">{bm.source ?? "Unknown source"}</p>
@@ -225,7 +226,7 @@ async function RecentHistory({ userId }: { userId: string }) {
                 href={entry.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-xl border border-border p-3 hover:bg-muted/30 transition-colors"
+                className="block rounded-xl border border-border p-3 hover:bg-muted-2/30 transition-colors"
               >
                 <p className="text-sm font-medium truncate">{entry.title}</p>
                 <p className="text-xs text-muted-foreground mt-1">

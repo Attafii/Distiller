@@ -3,14 +3,11 @@
 import { memo, useState } from "react";
 
 import { motion } from "framer-motion";
-import { Bookmark, Copy, ExternalLink, Heart, Layers3, Share2, Sparkles } from "lucide-react";
+import { Bookmark, Copy, ExternalLink, Heart, Share2 } from "lucide-react";
 
-import { COPY } from "@/lib/copy";
 import { getPriorityLabel } from "@/lib/article-signals";
-import { buttonStyles, Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { TOPIC_OPTIONS } from "@/lib/news-options";
+import { topicColor } from "@/lib/constants";
 import { ShareButton } from "@/components/ShareButton";
 import type { DistilledArticle } from "@/types/news";
 
@@ -37,6 +34,7 @@ export const DistilledCard = memo(function DistilledCard({
 }) {
   const [copied, setCopied] = useState(false);
   const topicLabel = TOPIC_OPTIONS.find((option) => option.id === article.category)?.label ?? article.category;
+  const topicColorValue = topicColor(article.category);
   const priorityLabel = getPriorityLabel(article.priority);
 
   const copySummary = async () => {
@@ -51,140 +49,158 @@ export const DistilledCard = memo(function DistilledCard({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -6, transition: { duration: 0.3 } }}
-      className="h-full group"
+      className="group h-full"
     >
-      <Card className="flex h-full flex-col overflow-hidden border-border/60 bg-card/95 shadow-soft backdrop-blur-sm transition-all duration-500 hover:border-primary/30 hover:shadow-lg gradient-border relative">
-        {/* Shimmer effect on hover */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 shimmer pointer-events-none" />
-        
-        <CardHeader className="space-y-4 border-b border-border/50 bg-card/50">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="default" className="transition-all duration-300 group-hover:shadow-primary/20 group-hover:shadow-lg">
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                AI Summary
-              </Badge>
-              <Badge variant="outline" className="transition-colors duration-300">{topicLabel}</Badge>
-              {article.priority !== "normal" ? (
-                <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-500 dark:text-red-400 animate-pulse">
-                  <span className="mr-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
-                  {priorityLabel}
-                </Badge>
-              ) : null}
-            </div>
-
-            {article.likeCount > 0 ? (
-              <Badge variant="outline" className="border-border text-muted-foreground">
-                {article.likeCount} likes
-              </Badge>
-            ) : null}
-            <ShareButton
-              title={article.title}
-              briefSlug={article.id}
-              bullets={article.summary.bullets}
-              insight={article.summary.insight}
-              sourceName={article.source.name}
-              publishedAt={article.publishedAt}
-              url={article.url}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold leading-snug text-foreground sm:text-xl">
-              {article.title}
-            </h2>
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              <span>{article.source.name}</span>
-              <span aria-hidden="true">·</span>
-              <span>{formatPublishedAt(article.publishedAt)}</span>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="flex flex-1 flex-col gap-4 sm:gap-5 p-4 sm:p-6">
-          <section className="space-y-2 sm:space-y-3" aria-label="AI summary">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              <span>Distilled insights</span>
-              <span className="font-mono text-[10px] sm:text-[11px] text-muted-foreground" title={COPY.scoreTooltip}>
-                {Math.round(article.summary.confidence * 100)}% RAG retrieval confidence
+      <article className="lift flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface">
+        {/* header */}
+        <div className="border-b border-line px-5 pt-5 pb-4">
+          <div className="flex flex-wrap items-center gap-2 t-mono">
+            <span
+              className="rounded-[4px] px-2 py-0.5"
+              style={{
+                background: `color-mix(in oklab, ${topicColorValue} 14%, transparent)`,
+                color: topicColorValue
+              }}
+            >
+              {topicLabel}
+            </span>
+            {article.priority !== "normal" ? (
+              <span className="inline-flex items-center gap-1.5 text-rose">
+                <span className="pulse h-1.5 w-1.5 rounded-full bg-rose" />
+                {priorityLabel}
               </span>
-            </div>
+            ) : null}
+            <span className="ml-auto text-faint">{formatPublishedAt(article.publishedAt)}</span>
+          </div>
 
-            <ul className="space-y-2 sm:space-y-3">
-              {article.summary.bullets.map((bullet, index) => (
-                  <li
-                  key={`${article.id}-bullet-${index}`}
-                  className="rounded-xl sm:rounded-2xl border border-border bg-card/75 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm leading-relaxed text-muted-foreground"
-                >
-                  {bullet}
-                </li>
-              ))}
-            </ul>
-          </section>
-          <section className="space-y-2 sm:space-y-3 rounded-xl sm:rounded-2xl border border-border bg-card/40 p-3 sm:p-4">
-            <div className="flex items-center gap-2 text-[10px] sm:text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              <Layers3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span>RAG grounding</span>
-            </div>
-            <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
-              {article.description ?? "The article did not include a description, so the summary relies on retrieved source context."}
+          <h2 className="t-h3 mt-3 font-display font-semibold leading-snug text-ink">{article.title}</h2>
+
+          <p className="t-mono mt-2.5 text-faint">
+            {article.source.name}
+            {article.likeCount > 0 ? <span> · {article.likeCount} likes</span> : null}
+          </p>
+        </div>
+
+        {/* the three drops */}
+        <div className="flex-1 px-5 py-4">
+          <div className="t-micro flex items-center justify-between text-faint">
+            <span>the brief</span>
+            <span className="t-mono" title="RAG retrieval confidence">
+              {Math.round(article.summary.confidence * 100)}% grounded
+            </span>
+          </div>
+
+          <ul className="mt-3 space-y-2.5">
+            {article.summary.bullets.map((bullet, index) => (
+              <li key={`${article.id}-bullet-${index}`} className="flex gap-2.5">
+                <span
+                  className="mt-[7px] h-1.5 w-1.5 shrink-0 rotate-45"
+                  style={{
+                    background: ["var(--ember)", "var(--amber)", "var(--teal)"][index % 3]
+                  }}
+                />
+                <span className="text-[13.5px] leading-relaxed text-ink-2">{bullet}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-4 border-l-2 border-ember bg-ember-soft/40 px-3.5 py-2.5">
+            <p className="t-micro flex items-center gap-1.5 text-ember">key insight</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+              {article.summary.insight}
             </p>
-            <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
-              <Badge variant="outline">{article.summary.retrievedContext.length} snippets</Badge>
-            </div>
-          </section>
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-1.5 sm:gap-2 border-t border-border p-4 sm:p-6 pt-4 sm:pt-5">
-          <Button
-            variant="outline"
-            size="sm"
-            className={`text-xs sm:text-sm ${article.likedByViewer ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/10" : "border-border text-foreground hover:bg-card"}`}
-            onClick={() => onLikeAction?.(article)}
+          </div>
+
+          <div className="mt-4 border-t border-line pt-3">
+            <p className="t-micro text-faint">
+              grounding · {article.summary.retrievedContext.length} snippets
+            </p>
+            <p className="mt-1.5 line-clamp-2 text-[12.5px] leading-relaxed text-muted">
+              {article.description ?? "The summary relies on retrieved source context."}
+            </p>
+          </div>
+        </div>
+
+        {/* actions */}
+        <div className="flex flex-wrap items-center gap-1 border-t border-line px-3 py-2.5">
+          <button
+            type="button"
+            aria-label="Like"
+            title={article.likedByViewer ? "Liked" : "Like"}
             disabled={article.likedByViewer}
+            onClick={() => onLikeAction?.(article)}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-surface-2 ${
+              article.likedByViewer ? "text-rose" : "text-muted hover:text-ink"
+            } disabled:opacity-60`}
           >
-            <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill={article.likedByViewer ? "currentColor" : "none"} />
-            <span className="hidden sm:inline">{article.likedByViewer ? "Liked" : "Like"}</span>
-          </Button>
+            <Heart width={15} height={15} fill={article.likedByViewer ? "currentColor" : "none"} />
+          </button>
 
-          <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground" onClick={() => onShareAction?.(article)}>
-            <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Share</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`text-xs sm:text-sm hover:text-foreground ${article.bookmarked ? "text-primary" : "text-muted-foreground"}`}
+          <button
+            type="button"
+            aria-label="Bookmark"
+            title={article.bookmarked ? "Saved" : "Save"}
             onClick={() => onBookmarkAction?.(article)}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-surface-2 ${
+              article.bookmarked ? "text-ember" : "text-muted hover:text-ink"
+            }`}
           >
-            <Bookmark className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill={article.bookmarked ? "currentColor" : "none"} />
-            <span className="hidden sm:inline">{article.bookmarked ? "Saved" : "Save"}</span>
-          </Button>
+            <Bookmark width={15} height={15} fill={article.bookmarked ? "currentColor" : "none"} />
+          </button>
 
-          <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground" onClick={copySummary}>
-            <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs sm:text-sm border-border text-foreground hover:bg-card" onClick={() => onOpenAction?.(article)}>
-            See more
-          </Button>
-
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noreferrer"
-            className={buttonStyles({ variant: "secondary", size: "sm", className: "ml-auto text-xs sm:text-sm" })}
+          <button
+            type="button"
+            aria-label="Copy summary"
+            title={copied ? "Copied" : "Copy summary"}
+            onClick={copySummary}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-ink"
           >
-            <span className="hidden sm:inline">Read original</span>
-            <span className="sm:hidden">Read</span>
-            <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </a>
-        </CardFooter>
-      </Card>
+            <Copy width={15} height={15} />
+          </button>
+
+          <ShareButton
+            title={article.title}
+            briefSlug={article.id}
+            bullets={article.summary.bullets}
+            insight={article.summary.insight}
+            sourceName={article.source.name}
+            publishedAt={article.publishedAt}
+            url={article.url}
+          />
+
+          <button
+            type="button"
+            onClick={() => onShareAction?.(article)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            aria-label="Share"
+            title="Share"
+          >
+            <Share2 width={15} height={15} />
+          </button>
+
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onOpenAction?.(article)}
+              className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink"
+            >
+              <span className="underline-draw">Read brief</span>
+            </button>
+            <a
+              href={article.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[13px] font-semibold text-ember"
+            >
+              <span className="underline-draw">Source</span>
+              <ExternalLink width={12} height={12} />
+            </a>
+          </div>
+        </div>
+      </article>
     </motion.article>
   );
 });

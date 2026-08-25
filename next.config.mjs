@@ -11,6 +11,18 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"]
+  },
+  async redirects() {
+    return [
+      // Static-landing routes → the app's real pages
+      { source: "/signup", destination: "/auth/signup", permanent: false },
+      { source: "/signin", destination: "/auth/login", permanent: false },
+      { source: "/feed", destination: "/RefinedFeed", permanent: false },
+      { source: "/ask", destination: "/RefinedFeed", permanent: false },
+      { source: "/bookmarks", destination: "/dashboard/bookmarks", permanent: false },
+      { source: "/legal/privacy", destination: "/privacy", permanent: false },
+      { source: "/legal/terms", destination: "/terms", permanent: false }
+    ];
   }
 };
 

@@ -72,19 +72,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar - desktop only */}
-      <aside className="hidden w-64 flex-col border-r border-border bg-card lg:flex 2xl:w-72">
+      <aside className="relative hidden w-64 flex-col border-r border-border bg-surface lg:flex 2xl:w-72">
+        <span className="gradient-rule absolute inset-x-0 top-0 h-[2px]" />
         <div className="flex items-center gap-3 border-b border-border px-6 py-5">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-lg border border-border bg-primary text-primary-foreground">
-              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M4 6h16M4 12h12M4 18h8" />
+          <Link href="/" className="group flex items-center gap-3">
+            <div className="flex size-9 items-center justify-center rounded-md bg-ink text-paper transition-colors duration-300 group-hover:bg-ember">
+              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 3h4M11 3v6.2L5.6 18.4A2 2 0 0 0 7.3 21.5h9.4a2 2 0 0 0 1.7-3.1L13 9.2V3" />
+                <path d="M8 15.5h8" opacity={0.6} />
               </svg>
             </div>
-            <span className="font-display text-base font-semibold">Distiller</span>
+            <span className="font-display text-[17px] font-semibold tracking-tight">Distiller</span>
           </Link>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <p className="t-micro px-6 pb-1 pt-4 text-faint">the still</p>
+        <nav className="flex-1 space-y-1 px-3 py-2">
           {navItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
@@ -94,7 +97,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted-2 hover:text-foreground"
                 }`}
               >
                 <item.icon className="h-4 w-4" />
@@ -105,7 +108,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="border-t border-border p-4">
-          <Card className="border-border bg-muted/40">
+          <Card className="border-border bg-muted-2/40">
             <CardContent className="space-y-3 p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
@@ -130,12 +133,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 lg:hidden">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg border border-border bg-primary text-primary-foreground">
-              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M4 6h16M4 12h12M4 18h8" />
+            <div className="flex size-8 items-center justify-center rounded-md bg-ink text-paper">
+              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 3h4M11 3v6.2L5.6 18.4A2 2 0 0 0 7.3 21.5h9.4a2 2 0 0 0 1.7-3.1L13 9.2V3" />
+                <path d="M8 15.5h8" opacity={0.6} />
               </svg>
             </div>
-            <span className="font-display text-base font-semibold">Distiller</span>
+            <span className="font-display text-[17px] font-semibold tracking-tight">Distiller</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -143,7 +147,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background transition-colors hover:bg-muted"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background transition-colors hover:bg-muted-2"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
             >
@@ -193,7 +197,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
                                 active
                                   ? "bg-primary/10 text-primary"
-                                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                  : "text-muted-foreground hover:bg-muted-2 hover:text-foreground"
                               }`}
                             >
                               <item.icon className="h-4 w-4" />

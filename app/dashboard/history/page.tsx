@@ -67,7 +67,7 @@ export default async function HistoryPage() {
                   href={entry.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between gap-4 rounded-xl border border-border p-4 hover:bg-muted/30 transition-colors"
+                  className="flex items-center justify-between gap-4 rounded-xl border border-border p-4 hover:bg-muted-2/30 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{entry.title}</p>

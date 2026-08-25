@@ -5,15 +5,11 @@ import { useSearchParams } from "next/navigation";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { motion } from "framer-motion";
-import { Loader2, Newspaper, RefreshCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { Newspaper, RefreshCcw, Search } from "lucide-react";
 
 import { DistilledCard } from "@/components/DistilledCard";
 import { NewsArticleModal } from "@/components/NewsArticleModal";
 import { NewsAssistant } from "@/components/NewsAssistant";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { COUNTRY_OPTIONS, DATE_RANGE_OPTIONS, TOPIC_OPTIONS } from "@/lib/news-options";
 import { DEMO_ARTICLES } from "@/lib/demo-articles";
 import type { ArticleLikeResponse, ArticlePriority, Category, CountryCode, DateRange, DistilledArticle, FeedResponse, SummarizationMode } from "@/types/news";
@@ -41,16 +37,13 @@ function FeedSkeleton() {
   return (
     <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div
-          key={index}
-          className="animate-pulse rounded-3xl border border-border bg-card p-6 shadow-soft"
-        >
-          <div className="mb-4 h-4 w-28 rounded-full bg-muted" />
-          <div className="mb-3 h-6 w-4/5 rounded-full bg-muted" />
-          <div className="space-y-3">
-            <div className="h-16 rounded-2xl bg-muted/80" />
-            <div className="h-16 rounded-2xl bg-muted/80" />
-            <div className="h-16 rounded-2xl bg-muted/80" />
+        <div key={index} className="animate-pulse rounded-xl border border-line bg-surface p-6">
+          <div className="t-mono mb-4 text-faint">distilling</div>
+          <div className="mb-3 h-5 w-4/5 rounded-md bg-surface-2" />
+          <div className="space-y-2.5">
+            <div className="h-3 w-full rounded-full bg-surface-2/80" />
+            <div className="h-3 w-11/12 rounded-full bg-surface-2/80" />
+            <div className="h-3 w-3/4 rounded-full bg-surface-2/80" />
           </div>
         </div>
       ))}
@@ -60,12 +53,43 @@ function FeedSkeleton() {
 
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <Card className="border-border bg-card/70">
-      <CardContent className="px-6 py-12 text-center">
-        <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">{title}</p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border border-line bg-surface px-6 py-14 text-center">
+      <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-paper">
+        <Newspaper className="h-4.5 w-4.5" width={18} height={18} />
+      </span>
+      <p className="t-micro mt-5 text-ember">{title}</p>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted">{description}</p>
+    </div>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+  tone = "ember"
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  tone?: "ember" | "brass" | "rose";
+}) {
+  const activeTone =
+    tone === "brass"
+      ? "border-brass bg-brass/10 text-brass"
+      : tone === "rose"
+        ? "border-rose bg-rose/10 text-rose"
+        : "border-ember bg-ember/10 text-ember";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`t-mono shrink-0 rounded-full border px-3 py-1 transition ${
+        active ? activeTone : "border-line text-muted hover:border-ember/50 hover:text-ink"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -406,265 +430,170 @@ export default function RefinedFeedPage() {
 
   return (
     <main className="min-h-screen bg-transparent text-foreground">
-      <section className="mx-auto max-w-[1440px] px-4 md:px-6 lg:px-8 py-6">
+      <section className="mx-auto max-w-[1440px] px-4 md:px-6 lg:px-8 py-8">
         <NewsAssistant category={category} country={country} dateRange={dateRange} initialQuery={assistantQuery} />
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="mb-8 grid gap-5 rounded-3xl border border-border bg-background/75 p-6 shadow-soft lg:grid-cols-[1.25fr_0.75fr] lg:p-8"
-        >
-          <div className="space-y-4">
-            <Badge variant="outline" className="border-border text-muted-foreground">
-              <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
-              Verified + distilled
-            </Badge>
-            <div className="space-y-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Refine the global feed into signals you can scan in seconds.
-              </h1>
-              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Distiller fetches stories from our API-backed pipeline, grounds them with embeddings, and uses RAG to
-                render exactly three concise bullets per article.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
+        {/* search */}
         <form
           onSubmit={submitSearch}
-          className="mb-4 grid gap-3 rounded-3xl border border-border bg-card/80 p-4 shadow-soft sm:grid-cols-[1fr_auto_auto]"
+          className="mb-3 grid gap-2.5 rounded-xl border border-line bg-surface p-3 sm:grid-cols-[1fr_auto_auto]"
         >
           <label htmlFor="distiller-search" className="sr-only">
             Search news topics
           </label>
 
           <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
             <input
               id="distiller-search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search topics, regions, or headlines"
-              className="h-11 w-full rounded-full border border-border bg-card/90 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              className="h-10 w-full rounded-lg border border-line bg-paper pl-10 pr-4 text-sm text-ink placeholder:text-faint focus:border-ember focus:outline-none"
             />
           </div>
 
-          <Button type="submit" variant="default" size="sm">
+          <button
+            type="submit"
+            className="sheen h-10 rounded-lg bg-ink px-5 text-sm font-semibold text-paper transition-colors duration-300 hover:bg-ember"
+          >
             Search
-          </Button>
+          </button>
 
-          <Button type="button" variant="ghost" size="sm" onClick={clearSearch}>
-            <X className="h-4 w-4" />
+          <button
+            type="button"
+            onClick={clearSearch}
+            className="h-10 rounded-lg border border-line px-4 text-sm font-medium text-muted transition-colors hover:border-ink hover:text-ink"
+          >
             Clear
-          </Button>
+          </button>
         </form>
 
         {searchQuery ? (
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.28em] text-muted-foreground">
-            <span>Search:</span>
-            <Badge variant="outline" className="border-border text-muted-foreground normal-case tracking-normal">
+          <div className="t-mono mb-4 flex flex-wrap items-center gap-2 text-faint">
+            <span>search ·</span>
+            <span className="rounded-full border border-ember/40 bg-ember/10 px-3 py-0.5 normal-case tracking-normal text-ember">
               {searchQuery}
-            </Badge>
+            </span>
           </div>
         ) : null}
 
-        <Card className="mb-4 border-border bg-card/80 shadow-soft">
-          <CardContent className="space-y-5 p-4 sm:p-5">
-            <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-              Use the topic chips to widen or narrow the story set, the region chips to focus on Tunisia, China, Russia, or another market,
-              and the mode chips to switch between faster and deeper summaries.
-            </p>
-
-            <div className="grid gap-4 xl:grid-cols-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Topics</p>
-                  {isGuest && (
-                    <Badge variant="outline" className="border-border text-muted-foreground">
-                      Free: {GUEST_FREE_ARTICLES} articles / month
-                    </Badge>
-                  )}
-                  {!isGuest && (
-                    <Badge variant="outline" className="border-border text-muted-foreground">
-                      {TOPIC_OPTIONS.length} topics
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {isGuest
-                    ? GUEST_ALLOWED_TOPICS.map((option) => {
-                        const active = option.id === category;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => resetFeed(option.id)}
-                            className={`rounded-full border px-4 py-2 text-sm transition ${
-                              active
-                                ? "border-primary bg-primary-foreground text-primary"
-                                : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })
-                    : TOPIC_OPTIONS.map((option) => {
-                        const active = option.id === category;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => resetFeed(option.id)}
-                            className={`rounded-full border px-4 py-2 text-sm transition ${
-                              active
-                                ? "border-primary bg-primary-foreground text-primary"
-                                : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                </div>
+        {/* filters */}
+        <div className="mb-6 rounded-xl border border-line bg-surface p-4 sm:p-5">
+          <div className="grid gap-x-6 gap-y-5 lg:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="t-micro text-faint">topics</p>
+                <p className="t-mono text-faint">
+                  {isGuest ? `free · ${GUEST_FREE_ARTICLES}/mo` : `${TOPIC_OPTIONS.length} topics`}
+                </p>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Region</p>
-                  <Badge variant="outline" className="border-border text-muted-foreground">
-                    {activeCountryLabel}
-                  </Badge>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {isGuest ? (
-                    <span className="rounded-full border border-border bg-card px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Global only
-                    </span>
-                  ) : (
-                    COUNTRY_OPTIONS.map((option) => {
-                      const active = option.id === country;
-
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => updateCountry(option.id)}
-                          className={`rounded-full border px-3 py-2 text-xs uppercase tracking-[0.18em] transition ${
-                            active
-                              ? "border-primary bg-primary-foreground text-primary"
-                              : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(isGuest ? GUEST_ALLOWED_TOPICS : TOPIC_OPTIONS).map((option) => (
+                  <Chip key={option.id} active={option.id === category} onClick={() => resetFeed(option.id)}>
+                    {option.label}
+                  </Chip>
+                ))}
               </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Date range</p>
-                  <Badge variant="outline" className="border-border text-muted-foreground">
-                    {activeDateLabel}
-                  </Badge>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {DATE_RANGE_OPTIONS.map((option) => {
-                    const active = option.id === dateRange;
-
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => updateDateRange(option.id)}
-                        className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.2em] transition ${
-                          active
-                            ? "border-primary bg-primary-foreground text-primary"
-                            : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Priority</p>
-                  <Badge variant="outline" className="border-border text-muted-foreground">
-                    {activePriorityLabel}
-                  </Badge>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {priorityFilters.map((option) => {
-                    const active = option.id === priorityFilter;
-
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setPriorityFilter(option.id)}
-                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.2em] transition ${
-                          active
-                            ? "border-red-400/70 bg-red-500/15 text-red-50"
-                            : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
-                        }`}
-                      >
-                        {option.id === "all" ? null : <span className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]" />}
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {summaryModes.map((mode) => {
-                const active = mode.id === summaryMode;
+            <div className="space-y-2.5">
+              <p className="t-micro text-faint">region · {activeCountryLabel}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {isGuest ? (
+                  <span className="t-mono rounded-full border border-dashed border-line px-3 py-1 text-faint">
+                    global only · pro
+                  </span>
+                ) : (
+                  COUNTRY_OPTIONS.map((option) => (
+                    <Chip
+                      key={option.id}
+                      active={option.id === country}
+                      onClick={() => updateCountry(option.id)}
+                    >
+                      {option.label}
+                    </Chip>
+                  ))
+                )}
+              </div>
+            </div>
 
-                return (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => updateMode(mode.id)}
-                    className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${
-                        active
-                          ? "border-primary bg-primary-foreground text-primary"
-                          : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"
-                      }`}
+            <div className="space-y-2.5">
+              <p className="t-micro text-faint">date · {activeDateLabel}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {DATE_RANGE_OPTIONS.map((option) => (
+                  <Chip
+                    key={option.id}
+                    active={option.id === dateRange}
+                    onClick={() => updateDateRange(option.id)}
                   >
-                    {mode.label}
-                  </button>
-                );
-              })}
-
-              <Button variant="secondary" size="sm" className="ml-auto" onClick={refreshFeed}>
-                <RefreshCcw className="h-4 w-4" />
-                Refresh
-              </Button>
+                    {option.label}
+                  </Chip>
+                ))}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="space-y-2.5">
+              <p className="t-micro text-faint">priority · {activePriorityLabel}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {priorityFilters.map((option) => {
+                  const active = option.id === priorityFilter;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setPriorityFilter(option.id)}
+                      className={`t-mono inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 transition ${
+                        active && option.id !== "all"
+                          ? "border-rose bg-rose/10 text-rose"
+                          : active
+                            ? "border-ember bg-ember/10 text-ember"
+                            : "border-line text-muted hover:border-ember/50 hover:text-ink"
+                      }`}
+                    >
+                      {option.id === "breaking" ? (
+                        <span className={`h-1.5 w-1.5 rounded-full bg-rose ${active ? "pulse" : ""}`} />
+                      ) : null}
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+            <span className="t-micro text-faint">depth</span>
+            <div className="flex flex-wrap gap-1.5">
+              {summaryModes.map((mode) => (
+                <Chip
+                  key={mode.id}
+                  active={mode.id === summaryMode}
+                  onClick={() => updateMode(mode.id)}
+                  tone={mode.id === "deep" ? "brass" : "ember"}
+                >
+                  {mode.id === "deep" ? "deep · pro" : mode.label}
+                </Chip>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={refreshFeed}
+              className="t-mono ml-auto inline-flex items-center gap-2 rounded-full border border-line px-3 py-1 text-muted transition hover:border-ink hover:text-ink"
+            >
+              <RefreshCcw width={11} height={11} />
+              refresh
+            </button>
+          </div>
+        </div>
 
         {error ? (
-          <Card className="mb-6 border-border bg-card/90">
-            <CardContent className="space-y-2 px-6 py-5">
-              <p className="text-sm font-medium text-foreground">Unable to load the feed</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">{error}</p>
-            </CardContent>
-          </Card>
+          <div className="mb-6 rounded-xl border border-ember/40 bg-ember-soft/30 px-5 py-4">
+            <p className="t-micro text-ember">the still jammed</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{error}</p>
+          </div>
         ) : null}
 
         {loading && articles.length === 0 ? <FeedSkeleton /> : null}
@@ -675,13 +604,13 @@ export default function RefinedFeedPage() {
 
         {isGuest && !loading && articles.length === 0 && !error ? (
           <>
-            <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4 text-sm text-foreground flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-                <Newspaper className="h-4 w-4 text-primary" />
-              </div>
-              <p>
-                <span className="font-medium">Sign in to unlock your full personalized feed.</span>{" "}
-                <span className="text-muted-foreground">These are sample previews to show you how Distiller works.</span>
+            <div className="mb-6 flex items-center gap-3.5 rounded-xl border border-ember/30 bg-ember-soft/30 px-5 py-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-ink text-paper">
+                <Newspaper width={16} height={16} />
+              </span>
+              <p className="text-sm leading-relaxed">
+                <span className="font-semibold text-ink">Sign in to unlock your full personalized feed.</span>{" "}
+                <span className="text-muted">These are sample previews to show you how Distiller works.</span>
               </p>
             </div>
             <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
@@ -715,23 +644,30 @@ export default function RefinedFeedPage() {
             </div>
 
             {isGuest && guestLimitReached && (
-              <div className="relative mt-6 rounded-3xl border border-border bg-card/40 p-8 text-center backdrop-blur-sm">
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-transparent to-background/80" />
+              <div className="animated-border animated-border-pro relative mt-8 overflow-hidden rounded-xl border border-line bg-surface p-8 text-center">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-brass/10 blur-2xl" />
                 <div className="relative space-y-4">
-                  <div>
-                    <p className="text-lg font-semibold">You have reached your free daily limit</p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Create a free account to get {GUEST_FREE_ARTICLES} free articles every day, unlimited bookmarks,
-                      personalized alerts, and more.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-center gap-3">
-                    <Button asChild>
-                      <Link href="/auth/signup">Create free account</Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link href="/pricing">View pricing</Link>
-                    </Button>
+                  <span className="t-micro inline-block rounded-full bg-brass/20 px-3 py-0.5 text-brass">the cut</span>
+                  <p className="t-h3 font-display font-semibold text-ink">
+                    You have reached your free limit
+                  </p>
+                  <p className="mx-auto max-w-md text-sm leading-relaxed text-muted">
+                    Create a free account for {GUEST_FREE_ARTICLES} articles every day, unlimited bookmarks,
+                    personalized alerts — or go Pro and keep only the heart.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                    <Link
+                      href="/auth/signup"
+                      className="sheen rounded-lg bg-gradient-to-r from-ember via-ember-2 to-brass px-6 py-2.5 text-sm font-semibold text-paper shadow-lg transition hover:brightness-105"
+                    >
+                      Create free account
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      className="rounded-lg border border-line px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ember hover:text-ember"
+                    >
+                      View pricing
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -742,16 +678,18 @@ export default function RefinedFeedPage() {
         <div ref={sentinelRef} className="h-12" />
 
         {loading && articles.length > 0 ? (
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading more stories
+          <div className="t-mono mt-6 flex items-center justify-center gap-2 text-muted">
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-ember" />
+            loading more stories
           </div>
         ) : null}
 
         {!hasMore && articles.length > 0 ? (
-          <p className="mt-8 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            You reached the end of the current feed
-          </p>
+          <div className="mt-10">
+            <div className="rule">
+              <span className="t-micro text-faint">end of the current feed</span>
+            </div>
+          </div>
         ) : null}
       </section>
 
