@@ -157,15 +157,9 @@ export function NewsAssistant({
   }, [initialQuery, hasAutoSubmitted, messages.length]);
 
   return (
-    <section className="relative mb-8 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-deep)]">
-      <span className="gradient-rule absolute inset-x-0 top-0 z-10 h-[2px]" />
+    <section className="animated-border active relative mb-8 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-deep)]">
       {/* header strip */}
       <div className="flex items-center gap-3 border-b border-line bg-surface-2 px-4 py-2.5 sm:px-5">
-        <div className="flex gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-ember/70" />
-          <span className="h-2 w-2 rounded-full bg-brass/70" />
-          <span className="h-2 w-2 rounded-full bg-teal/70" />
-        </div>
         <p className="t-micro text-faint">news assistant · live retrieval</p>
         <span className="t-mono ml-auto flex items-center gap-1.5 text-muted">
           <span className="t-mono hidden items-center gap-3 sm:flex">
