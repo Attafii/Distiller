@@ -157,21 +157,14 @@ export function NewsAssistant({
   }, [initialQuery, hasAutoSubmitted, messages.length]);
 
   return (
-    <section className="animated-border active relative mb-8 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-deep)]">
+    <section
+      className={`animated-border relative mb-8 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-deep)] ${
+        loading ? "active" : ""
+      }`}
+    >
       {/* header strip */}
       <div className="flex items-center gap-3 border-b border-line bg-surface-2 px-4 py-2.5 sm:px-5">
         <p className="t-micro text-faint">news assistant · live retrieval</p>
-        <span className="t-mono ml-auto flex items-center gap-1.5 text-muted">
-          <span className="t-mono hidden items-center gap-3 sm:flex">
-            <span className="text-faint">{categoryLabel}</span>
-            <span className="text-faint">{countryLabel}</span>
-            <span className="text-faint">{dateRangeLabel}</span>
-          </span>
-          <span className={`flex items-center gap-1.5 ${loading ? "text-brass" : "text-teal"}`}>
-            <span className={`h-1.5 w-1.5 rounded-full bg-current ${loading ? "pulse" : ""}`} />
-            {loading ? "RUNNING" : "READY"}
-          </span>
-        </span>
       </div>
 
       <div className="p-4 sm:p-6">

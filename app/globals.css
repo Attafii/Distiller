@@ -553,13 +553,17 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.7s ease;
   pointer-events: none;
   z-index: 10;
 }
 .animated-border:hover::before,
 .animated-border.active::before {
   opacity: 1;
+}
+/* while generating, the current spins faster — the AI is doing its magic */
+.animated-border.active::before {
+  animation-duration: 2.2s;
 }
 .animated-border-pro::before {
   background: linear-gradient(90deg, var(--ember), var(--brass), var(--ember));
