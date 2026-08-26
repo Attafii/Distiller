@@ -1,5 +1,5 @@
-import { db } from "@/db";
-import { articles } from "@/db/schema";
+import { getDb } from "@/lib/db";
+import { articles } from "@/lib/db/schema";
 import { TOPICS } from "@/lib/constants";
 import { truncate } from "@/lib/format";
 import { desc } from "drizzle-orm";
@@ -138,7 +138,7 @@ function pickSentence(snippet: string, queryVec: Map<string, number>): string {
 }
 
 export async function askTheNews(question: string): Promise<AnswerResult | null> {
-  const rows = await db
+  const rows = await getDb()
     .select()
     .from(articles)
     .orderBy(desc(articles.publishedAt))

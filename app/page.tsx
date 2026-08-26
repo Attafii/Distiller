@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { db } from "@/db";
-import { ensureSeeded } from "@/db/seed";
-import { articles } from "@/db/schema";
+import { getDb } from "@/lib/db";
+import { ensureSeeded } from "@/lib/db/seed";
+import { articles } from "@/lib/db/schema";
 import {
   ArrowRightIcon,
   ArrowUpRightIcon,
@@ -17,7 +17,7 @@ import { HeroDistill } from "@/components/hero-distill";
 import { TopicPicker } from "@/components/topic-picker";
 import { CountUp, LiveAskDemo, Reveal } from "@/components/motion";
 import { timeAgo } from "@/lib/format";
-import { count, desc, eq, sql } from "drizzle-orm";
+import { count, desc, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +62,7 @@ function Lead({ children, className = "" }: { children: React.ReactNode; classNa
 
 export default async function HomePage() {
   await ensureSeeded();
+  const db = getDb();
 
   const [stats] = await db
     .select({

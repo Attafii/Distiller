@@ -10,9 +10,9 @@ import { Footer } from "@/components/footer";
 import { ConsentAnalytics } from "@/components/ConsentAnalytics";
 import { CookieBanner } from "@/components/cookie-banner";
 import { getSessionUser } from "@/lib/auth";
-import { db } from "@/db";
-import { articles } from "@/db/schema";
-import { ensureSeeded } from "@/db/seed";
+import { getDb } from "@/lib/db";
+import { articles } from "@/lib/db/schema";
+import { ensureSeeded } from "@/lib/db/seed";
 import { topicColor } from "@/lib/constants";
 import "./globals.css";
 
@@ -123,7 +123,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let headlines: Headline[] = [];
   try {
     await ensureSeeded();
-    const rows = await db
+    const rows = await getDb()
       .select({ id: articles.id, title: articles.title, topic: articles.topic })
       .from(articles)
       .orderBy(desc(articles.publishedAt))

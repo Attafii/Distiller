@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { articles } from "@/db/schema";
+import { getDb } from "@/lib/db";
+import { articles } from "@/lib/db/schema";
 import { REGIONS, TOPICS } from "@/lib/constants";
 import { and, count, eq } from "drizzle-orm";
 
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const [row] = await db
+    const [row] = await getDb()
       .select({ n: count() })
       .from(articles)
       .where(conditions.length ? and(...conditions) : undefined);
