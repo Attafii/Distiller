@@ -38,7 +38,6 @@
     "lucide-react": "^0.475.0",
     "nanoid": "^5.1.11",
     "next": "15.5.15",
-    "pg": "^8.23.0",
     "postgres": "^3.4.9",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -51,7 +50,6 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.13.4",
-    "@types/pg": "^8.20.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "drizzle-kit": "^0.31.10",
