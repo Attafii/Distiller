@@ -1,4 +1,24 @@
-import { pgTable, text, timestamp, boolean, integer, serial, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, serial, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
+
+export const articles = pgTable("articles", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  source: text("source").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  topic: text("topic").notNull(),
+  region: text("region").notNull(),
+  excerpt: text("excerpt").notNull(),
+  bullets: jsonb("bullets").$type<string[]>().notNull(),
+  deepBullets: jsonb("deep_bullets").$type<string[]>().notNull(),
+  keyInsight: text("key_insight").notNull(),
+  conclusion: text("conclusion").notNull(),
+  publishedAt: timestamp("published_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow()
+}, (t) => ({
+  topicIdx: index("articles_topic_idx").on(t.topic),
+  regionIdx: index("articles_region_idx").on(t.region),
+  publishedIdx: index("articles_published_idx").on(t.publishedAt)
+}));
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -178,6 +198,7 @@ export const userStreaks = pgTable("user_streaks", {
 });
 
 export type User = typeof users.$inferSelect;
+export type Article = typeof articles.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
