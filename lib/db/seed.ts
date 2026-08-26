@@ -1,5 +1,5 @@
-import { db } from "@/db";
-import { articles, type Article } from "@/db/schema";
+import { getDb } from "@/lib/db";
+import { articles, type Article } from "@/lib/db/schema";
 import { count } from "drizzle-orm";
 
 type SeedArticle = Omit<Article, "id" | "createdAt">;
@@ -792,6 +792,7 @@ const seeds: SeedArticle[] = [
 /** Seed the database with sample briefs if it is empty. Safe to call on every request. */
 export async function ensureSeeded(): Promise<void> {
   try {
+    const db = getDb();
     const existing = await db.select({ c: count() }).from(articles);
     if (existing[0].c > 0) return;
     await db.insert(articles).values(seeds);

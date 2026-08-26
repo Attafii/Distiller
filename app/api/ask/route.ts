@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureSeeded } from "@/db/seed";
+import { ensureSeeded } from "@/lib/db/seed";
 import { askTheNews } from "@/lib/retrieval";
 
 export const dynamic = "force-dynamic";
